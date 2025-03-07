@@ -4,7 +4,13 @@
 
 <h2>🛠️ Installation Steps:</h2>
 
-<p>1. criação de módulos</p>
+<p>1. Git clone</p>
+
+```
+git clone < link-repo >
+```
+
+<p>2. criação de módulos</p>
 
 ```
 npm i
