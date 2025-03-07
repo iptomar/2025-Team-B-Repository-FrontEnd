@@ -12,4 +12,10 @@ npm i
 
 <h2>🍰 Contribution Guidelines:</h2>
 
-Projeto realizado por: - Ricardo Gonçalves. - Afonso Costa. - António Gonçalves. - Beatriz Moreira. - João Amoroso. - Rui Simões.
+Projeto realizado por:  
+\- Ricardo Gonçalves.  
+\- Afonso Costa.  
+\- António Gonçalves.  
+\- Beatriz Moreira.  
+\- João Amoroso.  
+\- Rui Simões.
