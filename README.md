@@ -1,1 +1,15 @@
-# 2025-Team-B-Repository
+<h1 align="center" id="title">Gestão de horários - 2025-Team-B-FrontEnd</h1>
+
+<p id="description">Ferramenta que visa a facilitação da realização de horários através de drag and drop.</p>
+
+<h2>🛠️ Installation Steps:</h2>
+
+<p>1. criação de módulos</p>
+
+```
+npm i
+```
+
+<h2>🍰 Contribution Guidelines:</h2>
+
+Projeto realizado por: - Ricardo Gonçalves. - Afonso Costa. - António Gonçalves. - Beatriz Moreira. - João Amoroso. - Rui Simões.
