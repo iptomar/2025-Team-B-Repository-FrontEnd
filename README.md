@@ -1,27 +1,35 @@
-<h1 align="center" id="title">Gestão de horários - 2025-Team-B-FrontEnd</h1>
+# gp25
 
-<p id="description">Ferramenta que visa a facilitação da realização de horários através de drag and drop.</p>
+This template should help get you started developing with Vue 3 in Vite.
 
-<h2>🛠️ Installation Steps:</h2>
+## Recommended IDE Setup
 
-<p>1. Git clone</p>
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
+## Customize configuration
+
+See [Vite Configuration Reference](https://vite.dev/config/).
+
+## Project Setup
+
+```sh
+npm install
 ```
-git clone < link-repo >
+
+### Compile and Hot-Reload for Development
+
+```sh
+npm run dev
 ```
 
-<p>2. criação de módulos</p>
+### Compile and Minify for Production
 
+```sh
+npm run build
 ```
-npm i
+
+### Lint with [ESLint](https://eslint.org/)
+
+```sh
+npm run lint
 ```
-
-<h2>🍰 Contribution Guidelines:</h2>
-
-Projeto realizado por:  
-\- Ricardo Gonçalves.  
-\- Afonso Costa.  
-\- António Gonçalves.  
-\- Beatriz Moreira.  
-\- João Amoroso.  
-\- Rui Simões.
