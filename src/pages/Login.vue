@@ -1,11 +1,12 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onBeforeMount } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import * as z from 'zod'
 
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
+import { useRouter } from 'vue-router'
 
 import {
   FormControl,
@@ -27,10 +28,20 @@ const form = useForm({
 
 const loading = ref(false)
 const error = ref(null)
+const router = useRouter();
+
+
+
+onBeforeMount(() => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    router.push('/dashboard')
+  }
+})
 
 async function login(values) { 
   loading.value = true;
-  const url = "https://localhost:5143/api/auth/login";
+  const url = "https://localhost:7110/api/auth/login";
 
   try {
     const response = await fetch(url, {
@@ -47,7 +58,7 @@ async function login(values) {
 
     const json = await response.json();
     localStorage.setItem("token", json.token);
-    router.push("/dashboard");
+    router.push('/dashboard')
   } catch (error) {
     console.error("Erro ao fazer login:", error.message);
   } finally {
