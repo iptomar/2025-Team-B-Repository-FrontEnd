@@ -15,9 +15,16 @@ export default {
 };
 </script>
 <template>
-    <div>
-        <h1>Dashboard</h1>
-        <p>Bem-vindo ao seu painel!</p>
-        <button @click="logout">Logout</button>
-    </div>
+    <SidebarProvider>
+        <AppSidebar />
+        <main>
+            <SidebarTrigger />
+            <slot />
+            <div>
+                <h1>Dashboard</h1>
+                <p>Bem-vindo ao seu painel!</p>
+                <button @click="logout">Logout</button>
+            </div>
+        </main>
+    </SidebarProvider>
 </template>
