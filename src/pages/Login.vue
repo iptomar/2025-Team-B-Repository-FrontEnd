@@ -18,14 +18,14 @@ import {
 
 const formSchema = toTypedSchema(z.object({
   email: z.string().email('Email inválido').min(5, 'O email deve ter pelo menos 5 caracteres').max(100, 'O email deve ter no máximo 100 caracteres'),
-  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres').max(50, 'A senha deve ter no máximo 50 caracteres')
+  password: z.string().min(6, 'A password deve ter pelo menos 6 caracteres').max(50, 'A password deve ter no máximo 50 caracteres')
 }))
 
 const form = useForm({
   validationSchema: formSchema
 })
 
-const loading = ref(false) // ✅ Agora está corretamente declarado
+const loading = ref(false)
 const error = ref(null)
 
 async function login(values) { 
@@ -70,7 +70,7 @@ const onSubmit = form.handleSubmit((values) => {
       <FormField v-slot="{ componentField }" name="email">
         <FormItem class="justify-items-center">
           <FormControl>
-            <Input class="w-1/2 justify-items-center" type="email" placeholder="Insira o seu email" v-bind="componentField" />
+            <Input class="w-1/2 justify-items-center focus:border-iptGreen" type="email" placeholder="Insira o seu email" v-bind="componentField" />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -80,14 +80,14 @@ const onSubmit = form.handleSubmit((values) => {
       <FormField v-slot="{ componentField }" name="password">
         <FormItem class="justify-items-center">
           <FormControl>
-            <Input class="w-1/2 justify-items-center" type="password" placeholder="Insira a sua senha" v-bind="componentField" />
+            <Input class="w-1/2 justify-items-center focus:border-iptGreen" type="password" placeholder="Insira a sua senha" v-bind="componentField" />
           </FormControl>
           <FormMessage />
         </FormItem>
       </FormField>
 
-      <Button type="submit">
-        Submit
+      <Button class="bg-iptGreen hover:bg-iptGreen hover:border-iptGreen" type="submit">
+       Entrar
       </Button>
     </form>
   </div>
