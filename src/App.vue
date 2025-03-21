@@ -1,8 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { RouterView } from 'vue-router';
-import { Button } from '@/components/ui/button'
-
+import Button from './components/ui/button/Button.vue';
 
 const data = ref([
   { text: "hello" },
@@ -14,8 +12,7 @@ const data = ref([
 
 <template>
 
-  
-<h1 class="text-3xl font-bold underline">
+<h1 class="text-3xl font-bold underline text-center text-red-600">
     Hello world!
   </h1>
 
@@ -26,5 +23,5 @@ const data = ref([
   <Button>Button</Button>
 
   {{ data }}
-  <RouterView />
+  <Button class="text-red-500">CLICA ME</Button>
 </template>
