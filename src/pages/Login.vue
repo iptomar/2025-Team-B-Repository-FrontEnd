@@ -30,7 +30,7 @@ const error = ref(null)
 
 async function login(values) { 
   loading.value = true;
-  const url = "https://localhost:7110/api/auth/login";
+  const url = "https://localhost:5143/api/auth/login";
 
   try {
     const response = await fetch(url, {
@@ -46,7 +46,8 @@ async function login(values) {
     }
 
     const json = await response.json();
-    console.log(json); // guardar token
+    localStorage.setItem("token", json.token);
+    router.push("/dashboard");
   } catch (error) {
     console.error("Erro ao fazer login:", error.message);
   } finally {
