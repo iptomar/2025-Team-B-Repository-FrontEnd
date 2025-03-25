@@ -1,36 +1,19 @@
 <script setup>
 import {ref, useTemplateRef} from "vue";
+import CalendarEvent from "@/components/ui/calendar/CalendarEvent.vue";
+import {getTimeFrames, weekdays, shortened_weekdays} from "@/utils/date-utils.js"
+const { width, height, cell_width, cell_height, use_shortened_names } = defineProps(['width', 'height', 'cell_width', 'cell_height', 'use_shortened_names']);
 
-const CELL_HEIGHT = 30;
-const CELL_WIDTH = 100;
+const WEEKDAYS = use_shortened_names ? shortened_weekdays : weekdays
 
-var date_times = [
-  "09:00", "09:30",
-  "10:00", "10:30",
-  "11:00", "11:30",
-  "12:00", "12:30",
-  "13:00", "13:30",
-  "14:00", "14:30",
-  "15:00", "15:30",
-  "16:00", "16:30",
-  "17:00", "17:30",
-  "18:00", "18:30",
-  "19:00", "19:30",
-  "20:00", "20:30",
-  "21:00", "21:30",
-  "22:00", "22:30",
-  "23:00", "23:30",
-  "24:00"
-]
+let CELL_HEIGHT = cell_height;
+let CELL_WIDTH = cell_width;
 
-const weekdays = [
-  "SEG", "TER", "QUA", "QUI", "SEX"
-]
 
-const date_times_generated = [];
-for(let i = 0; i < date_times.length-1; i++){
-  date_times_generated.push(date_times[i] + "-" + date_times[i+1])
-}
+if(cell_width === undefined)
+  CELL_WIDTH = width/(WEEKDAYS.length+1)
+
+const time_frames = getTimeFrames();
 
 const events = ref([
   {
@@ -94,13 +77,13 @@ const ghost_data = ref({
 
 function isSpaceClear(id, x, y, time){
   for(var j = 0; j < events.value.length; j++) {
-    if(events.value[j].x != x)
+    if(events.value[j].x !== x)
       continue;
 
-    if(events.value[j].id == id)
+    if(events.value[j].id === id)
       continue;
 
-    var result = !(y < events.value[j].y + events.value[j].time && y + time > events.value[j].y);
+    let result = !(y < events.value[j].y + events.value[j].time && y + time > events.value[j].y);
     if(result)
       continue;
     return false;
@@ -113,7 +96,7 @@ function validatePos(id){
   var x = events.value[id].x;
   var y = events.value[id].y;
   x = Math.max(Math.min(x,4),0)
-  y = Math.max(Math.min(y,date_times_generated.length - events.value[id].time),0)
+  y = Math.max(Math.min(y,time_frames.length - events.value[id].time),0)
   events.value[id].x = x;
   events.value[id].y = y;
 
@@ -127,7 +110,7 @@ function validateGhostPos(id){
   var x = ghost_data.value.x;
   var y = ghost_data.value.y;
   x = Math.max(Math.min(x,4),0)
-  y = Math.max(Math.min(y,date_times_generated.length - ghost_data.value.time),0)
+  y = Math.max(Math.min(y,time_frames.length - ghost_data.value.time),0)
   ghost_data.value.x = x;
   ghost_data.value.y = y;
 
@@ -141,7 +124,7 @@ function validateGhostPos(id){
 
 function onDragEnd(e){
 
-  e.target.classList.remove("data-grid-front");
+  e.target.classList.remove("calendar-front");
   ghost_data.value.hidden = true;
   moveToPos(e.target.id, e)
   clampPos(e.target.id, e)
@@ -153,7 +136,7 @@ const droppableArea = useTemplateRef('droppable-area')
 const ghost = useTemplateRef('ghost');
 
 function onDrag(e){
-  if(e.screenX == 0 && e.screenY == 0)
+  if(e.screenX === 0 && e.screenY === 0)
     return;
   e.dataTransfer.dropEffect = "copy";
   moveToPos(e.target.id, e);
@@ -170,7 +153,7 @@ function clampVisualPos(id){
   var x = events.value[id].x;
   var y = events.value[id].y;
   x = Math.max(Math.min(x,4),0)
-  y = Math.max(Math.min(y,date_times_generated.length - events.value[id].time),0)
+  y = Math.max(Math.min(y,time_frames.length - events.value[id].time),0)
   events.value[id].x = x;
   events.value[id].y = y;
 }
@@ -190,11 +173,11 @@ function moveToPos(id, e){
 
 }
 
-var draggedElement = null;
+let draggedElement = null;
 
 function onDragStart(e){
   e.dataTransfer.effectAllowed = "copyMove";
-  e.target.classList.add("data-grid-front");
+  e.target.classList.add("calendar-front");
   draggedElement = e.target.id;
   events.value[e.target.id].tempX = events.value[e.target.id].x;
   events.value[e.target.id].tempY = events.value[e.target.id].y;
@@ -209,55 +192,42 @@ function onDragStart(e){
 </script>
 
 <template>
-  <div class="data-grid-container">
+  <div class="calendar-container">
     <div class="outer-div">
 
-      <div class="data-grid-empty">
-        <div class="data-grid-timeslot-line-container">
-          <div v-for="() in date_times_generated" class="data-grid-timeslot-line"/>
+      <div class="calendar-empty">
+        <div class="calendar-timeslot-line-container">
+          <div v-for="() in time_frames" class="calendar-timeslot-line"/>
         </div>
       </div>
 
-      <div class="data-grid-empty">
-        <div class="data-grid-timeslot-container">
-          <div class="data-grid-timeslot">HORAS: </div>
-          <div v-for="(item) in date_times_generated" class="data-grid-timeslot">
+      <div class="calendar-empty">
+        <div class="calendar-timeslot-container">
+          <div class="calendar-timeslot">HORAS: </div>
+          <div v-for="(item) in time_frames" class="calendar-timeslot">
             {{item}}
           </div>
         </div>
       </div>
-      <div class="data-grid-empty">
-        <div class="data-grid-weekday-container">
-          <div v-for="(item) in weekdays" class="data-grid-weekday">
+      <div class="calendar-empty">
+        <div class="calendar-weekday-container">
+          <div v-for="(item) in WEEKDAYS" class="calendar-weekday">
             {{item}}
           </div>
         </div>
       </div>
 
-      <div class="data-grid-empty">
-        <div class="data-grid-event-container" ref="droppable-area">
-          <div draggable="true"
-               @dragend="onDragEnd"
-               @drag="onDrag"
-               @dragstart="onDragStart"
-               v-for="(item) in events"
-               :style="
-          {left: item.x * CELL_WIDTH + 'px',
-          top: item.y * CELL_HEIGHT + 'px',
-          height: item.time * (CELL_HEIGHT) + 'px'}"
-               :id="item.id"
-               class="data-grid-event">
-            <p>{{item.classroom}}</p>
-            <p>{{item.teacher}}</p>
-          </div>
+      <div class="calendar-empty">
+        <div class="calendar-event-container" ref="droppable-area">
+          <CalendarEvent v-bind:cell_width="CELL_WIDTH" v-bind:cell_height="CELL_HEIGHT" v-for="(item) in events" v-bind:event="item"/>
           <div
                ref="ghost"
                :style="
                   {left: ghost_data.x * CELL_WIDTH + 'px',
                   top: ghost_data.y * CELL_HEIGHT + 'px',
                   height: ghost_data.time * (CELL_HEIGHT) + 'px'}"
-               class="data-grid-event data-grid-ghost"
-               :class="{'data-grid-hidden' : ghost_data.hidden, 'data-grid-error' : ghost_data.error}"
+               class="calendar-event calendar-ghost"
+               :class="{'calendar-hidden' : ghost_data.hidden, 'calendar-error' : ghost_data.error}"
                >
           </div>
         </div>
@@ -268,57 +238,42 @@ function onDragStart(e){
 
 <style scoped>
 
-.data-grid-container{
-  height: 600px;
+.calendar-container{
+  height: v-bind("height + 'px'");
   overflow-y: scroll;
   overflow-x: hidden;
 }
 
 .outer-div{
-  min-width: 200px;
+  min-width: v-bind("width + 'px'");
 
   height: 930px;
   flex-grow: 1;
 }
 
-.data-grid-empty{
+.calendar-empty{
   position: relative;
-  width: 600px;
+  width: v-bind("width + 'px'");
 }
 
-.data-grid-timeslot-line-container{
+.calendar-timeslot-line-container{
   position: absolute;
   width: 1000px;
   height: 100%;
 }
 
-.data-grid-event-container{
+.calendar-event-container{
   position: absolute;
   top: v-bind('CELL_HEIGHT + "px"');
   left: v-bind('CELL_WIDTH + "px"');
 }
 
-.data-grid-event{
-  display: flex;
-  flex-direction: column;
-  background-color: darkslategray;
-  border: 3px double #41b883;
-  position: absolute;
-  left: v-bind('CELL_WIDTH + "px"');
-  top: v-bind('CELL_HEIGHT * 3 + "px"');
-  width: v-bind('CELL_WIDTH + "px"');
-  height: v-bind('CELL_HEIGHT * 3 + "px"');
-}
-
-.data-grid-event > p {
-}
-
-.data-grid-timeslot-container{
+.calendar-timeslot-container{
   position: absolute;
   width: v-bind('CELL_WIDTH + "px"');
 }
 
-.data-grid-timeslot{
+.calendar-timeslot{
   width: 100%;
   height: v-bind('CELL_HEIGHT + "px"');
 
@@ -327,14 +282,14 @@ function onDragStart(e){
   z-index: 1;
 }
 
-.data-grid-weekday-container{
+.calendar-weekday-container{
   position: absolute;
   height: v-bind('CELL_HEIGHT + "px"');
   left: v-bind('CELL_WIDTH + "px"');
   display: flex;
 }
 
-.data-grid-weekday{
+.calendar-weekday{
   width: v-bind('CELL_WIDTH + "px"');
   height: 100%;
   display: inline-block;
@@ -344,27 +299,27 @@ function onDragStart(e){
   border: 1px solid #181818;
 }
 
-.data-grid-timeslot-line{
+.calendar-timeslot-line{
   width: 1000px;
   height: v-bind("CELL_HEIGHT + "px"");
   border-bottom: 1px dashed #181818;
   z-index: 1;
 }
 
-.data-grid-front{
+.calendar-front{
   z-index: 2;
 }
 
-.data-grid-ghost{
+.calendar-ghost{
   background-color: black;
   z-index: -1;
 }
 
-.data-grid-error{
+.calendar-error{
   background-color: red;
 }
 
-.data-grid-hidden{
+.calendar-hidden{
   display: none;
 }
 </style>
