@@ -98,7 +98,7 @@ const onSubmit = form.handleSubmit((values) => {
         </FormItem>
       </FormField>
 
-      <Button class="bg-iptGreen hover:bg-iptGreen hover:border-iptGreen" type="submit">
+      <Button class="bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen" type="submit">
        Entrar
       </Button>
     </form>
