@@ -3,13 +3,49 @@ import './style.css';
 import App from './App.vue';
 import { createWebHistory, createRouter } from 'vue-router';
 import Login from './pages/Login.vue';
-import Dashboard from './pages/Dashboard.vue';
+import Inicio from './pages/Inicio.vue';
+import Salas from './pages/Salas.vue';
+import Horarios from './pages/Horarios.vue';
+import Cursos from './pages/Cursos.vue';
+import Professores from './pages/Professores.vue';
+import Utilizadores from './pages/Utilizadores.vue';
+import Definicoes from './pages/Definicoes.vue';
 
 const routes = [
   { path: '/', component: Login },
   {
-    path: '/dashboard',
-    component: Dashboard,
+    path: '/inicio',
+    component: Inicio,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/horarios',
+    component: Horarios,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/salas',
+    component: Salas,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/cursos',
+    component: Cursos,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/professores',
+    component: Professores,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/utilizadores',
+    component: Utilizadores,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/definicoes',
+    component: Definicoes,
     meta: { requiresAuth: true }
   },
 ];

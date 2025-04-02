@@ -1,0 +1,94 @@
+<script setup lang="ts">
+import { CalendarDays, DoorClosed, GraduationCap, Home, Settings, University, Users, LogOut } from "lucide-vue-next";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { useRoute, useRouter } from "vue-router";
+
+const route = useRoute();
+const router = useRouter();
+
+const logout = () => {
+  localStorage.removeItem("token");
+  router.push("/");
+};
+
+const items = [
+  {
+    title: "Inicio",
+    url: "/inicio",
+    icon: Home,
+  },
+  {
+    title: "Horários",
+    url: "/horarios",
+    icon: CalendarDays,
+  },
+  {
+    title: "Salas",
+    url: "/salas",
+    icon: DoorClosed,
+  },
+  {
+    title: "Cursos",
+    url: "/cursos",
+    icon: GraduationCap,
+  },
+  {
+    title: "Professores",
+    url: "/professores",
+    icon: University,
+  },
+  {
+    title: "Utilizadores",
+    url: "/utilizadores",
+    icon: Users,
+  },
+  {
+    title: "Definições",
+    url: "/definicoes",
+    icon: Settings,
+  },
+];
+</script>
+
+<template>
+  <Sidebar>
+    <SidebarContent class="bg-iptGreen flex flex-col justify-between h-full">
+      <div>
+        <SidebarGroup>
+          <SidebarGroupLabel class="mt-10 text-bold text-white text-xl">IPT</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem v-for="item in items" :key="item.title" :class="{ 'active-menu-item': route.path === item.url }">
+                <SidebarMenuButton asChild>
+                  <a :href="item.url" class="text-white flex items-center gap-2">
+                    <component :is="item.icon" />
+                    <span>{{ item.title }}</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </div>
+      
+      <div class="p-4">
+        <button 
+          class="flex items-center gap-2 w-full text-white bg-iptGreen hover:bg-white border-0 hover:text-black p-2 rounded-md"
+          @click="logout"
+        >
+          <LogOut />
+          Sair
+        </button>
+      </div>
+    </SidebarContent>
+  </Sidebar>
+</template>

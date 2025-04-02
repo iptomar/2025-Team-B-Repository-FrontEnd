@@ -14,10 +14,9 @@ export default {
     },
 };
 </script>
+
 <template>
     <div>
-        <h1>Dashboard</h1>
-        <p>Bem-vindo ao seu painel!</p>
-        <button @click="logout">Logout</button>
+        <h1>Início</h1>
     </div>
 </template>
