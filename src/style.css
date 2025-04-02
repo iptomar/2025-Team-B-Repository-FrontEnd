@@ -101,3 +101,14 @@ button:focus-visible {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+
+.active-menu-item {
+  background-color: #ffffff;
+  color: #000000;
+  font-weight: bold;
+  border-radius: 8px;
+}
+
+.active-menu-item a {
+  color: #000000 !important;
+}
