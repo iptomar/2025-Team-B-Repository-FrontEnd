@@ -1,5 +1,14 @@
 <script setup lang="ts">
-const { cell_width, cell_height, event } = defineProps(['cell_width', 'cell_height', 'event']);
+import {inject} from "vue";
+
+const { event } = defineProps(['cell_width', 'cell_height', 'event']);
+const cell_width = inject('cell_width');
+const cell_height = inject('cell_height');
+console.log(event)
+
+const onDrag = inject('calendar_on_drag');
+const onDragStart = inject('calendar_on_drag_start');
+const onDragEnd = inject('calendar_on_drag_end');
 
 </script>
 
@@ -10,6 +19,9 @@ const { cell_width, cell_height, event } = defineProps(['cell_width', 'cell_heig
           top: event.y * cell_height + 'px',
           height: event.time * (cell_height) + 'px'}"
        :id="event.id"
+       @drag="onDrag"
+       @dragstart="onDragStart"
+       @dragend="onDragEnd"
        class="calendar-event">
     <div class="calendar-event-data">
       <p class="calendar-event-header">{{event.name}}</p>
@@ -30,7 +42,7 @@ const { cell_width, cell_height, event } = defineProps(['cell_width', 'cell_heig
 }
 
 .calendar-event-data{
-  @apply h-full w-full bg-emerald-500 drop-shadow flex flex-col justify-between pb-1;
+  @apply h-full w-full bg-white drop-shadow flex flex-col justify-between pb-1;
 }
 
 .calendar-event-header{
