@@ -24,7 +24,7 @@ const onDragEnd = inject('calendar_on_drag_end');
        @dragend="onDragEnd"
        class="calendar-event">
     <div class="calendar-event-data">
-      <p class="calendar-event-header">{{event.name}}</p>
+      <p class="calendar-event-header overflow-hidden whitespace-nowrap">{{event.name}}</p>
       <p class="calendar-event-label">{{event.type}}</p>
       <p class="calendar-event-label">{{event.teacher}}</p>
       <p class="calendar-event-label">{{event.classroom}}</p>
@@ -34,7 +34,7 @@ const onDragEnd = inject('calendar_on_drag_end');
 
 <style scoped>
 .calendar-event{
-  @apply border border-white absolute;
+  @apply absolute;
   left: v-bind('cell_width + "px"');
   top: v-bind('cell_height * 3 + "px"');
   width: v-bind('cell_width + "px"');
@@ -42,7 +42,7 @@ const onDragEnd = inject('calendar_on_drag_end');
 }
 
 .calendar-event-data{
-  @apply h-full w-full bg-white drop-shadow flex flex-col justify-between pb-1;
+  @apply h-full w-full bg-white border border-b-gray-300 flex flex-col justify-between pb-1 overflow-hidden;
 }
 
 .calendar-event-header{
@@ -50,6 +50,6 @@ const onDragEnd = inject('calendar_on_drag_end');
 }
 
 .calendar-event-label{
-  @apply text-xs;
+  @apply text-xs m-0;
 }
 </style>

@@ -2,7 +2,7 @@
 
 import CalendarEvent from "@/components/ui/calendar/CalendarEvent.vue";
 import {inject, useTemplateRef} from "vue";
-const { table, slots, cell_height } = defineProps(['table', 'slots', 'cell_height']);
+const { table,slotsW, slotsH, cell_height } = defineProps(['table', 'slotsW', 'slotsH', 'cell_height']);
 const events = inject("events")
 console.log(events)
 const cell_width = inject('cell_width', 20)
@@ -14,7 +14,7 @@ registerDropTarget({drop_area, table,  offsetX: 0, offsetY: 0});
 </script>
 
 <template>
-  <div ref="drop_area" class="calendar-empty" id="calendar-holder">
+  <div ref="drop_area" id="calendar-holder">
     <div class="calendar-event-container" id="calendar-event-container" ref="droppable-area">
       <CalendarEvent
           v-bind:cell_width="cell_width"
@@ -30,8 +30,8 @@ registerDropTarget({drop_area, table,  offsetX: 0, offsetY: 0});
 
 <style scoped>
   #calendar-holder{
-    height: v-bind('(slots * cell_height) + "px"');
-    width: v-bind("cell_width + 'px'");
+    height: v-bind('(slotsH * cell_height) + "px"');
+    width: v-bind("(slotsW * cell_width) + 'px'");
     flex: 0 0 auto;
     flex-shrink: 0;
   }

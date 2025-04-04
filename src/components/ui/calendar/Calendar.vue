@@ -49,7 +49,7 @@ const width = CELL_WIDTH * 7;
 
 //Use of shortened names like "Seg" instead of "Segunda-feira" for short screens.
 //Usage is currently defined as when cells are smaller than 150px in size.
-const use_shortened_names = CELL_WIDTH < 150;
+const use_shortened_names = CELL_WIDTH < 100;
 const WEEKDAYS = use_shortened_names ? shortened_weekdays : weekdays
 
 const time_frames = getTimeFrames();
@@ -192,41 +192,38 @@ function onDragStart(e){
 </script>
 
 <template>
-  <div class="calendar-container">
-    <div class="calendar-outer-div" ref="drop_area">
-
-      <div class="calendar-empty">
-        <div class="calendar-timeslot-line-container">
-          <div v-for="() in time_frames" class="content-center calendar-timeslot-line"/>
-        </div>
-      </div>
-
-      <div class="calendar-empty">
-        <div class="calendar-timeslot-container">
-          <div class="calendar-timeslot calendar-header">HORAS</div>
-          <div v-for="(item) in time_frames" class="calendar-label calendar-timeslot">
-            {{item}}
+  <div>
+    <div class="calendar-weekday-container bg-gray-200 rounded-t-2xl overflow-hidden max-w-screen-lg">
+      <div class="calendar-header calendar-weekday"></div>
+      <div class="calendar-header calendar-weekday" v-for="(item) in WEEKDAYS">{{item}}</div>
+    </div>
+    <div class="calendar-container rounded-b-2xl border border-gray-300 max-w-screen-lg ">
+      <div class="calendar-outer-div" ref="drop_area">
+        <div class="calendar-empty">
+          <div class="calendar-timeslot-line-container max-w-screen-lg">
+            <div v-for="() in time_frames" class="content-center calendar-timeslot-line"/>
           </div>
         </div>
-      </div>
-      <div class="calendar-empty">
-        <div class="calendar-weekday-container">
-          <div v-for="(item) in WEEKDAYS" class="calendar-header calendar-weekday">
-            {{item}}
+
+        <div class="calendar-empty">
+          <div class="calendar-timeslot-container">
+            <div v-for="(item) in time_frames" class="calendar-label calendar-timeslot">
+              {{item}}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="calendar-empty">
-        <div class="calendar-event-container">
-          <CalendarEvent
-              v-bind:cell_width="CELL_WIDTH"
-              v-bind:cell_height="CELL_HEIGHT"
-              v-for="(item) in EVENTS.filter( item => {
-                return item.table == table;
-              })"
-              v-bind:event="item"
-          />
+        <div class="calendar-empty">
+          <div class="calendar-event-container">
+            <CalendarEvent
+                v-bind:cell_width="CELL_WIDTH"
+                v-bind:cell_height="CELL_HEIGHT"
+                v-for="(item) in EVENTS.filter( item => {
+                  return item.table == table;
+                })"
+                v-bind:event="item"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -243,13 +240,13 @@ function onDragStart(e){
 }
 
 .calendar-label{
-  @apply text-white bg-iptGreen content-center;
+  @apply text-white bg-white text-black border-r border-r-black border-b border-b-gray-300 content-center;
 }
 
 .calendar-container{
   height: v-bind("height + 'px'");
   max-height: v-bind("CELL_HEIGHT * (time_frames.length + 2) + 'px'");
-  overflow-y: scroll;
+  overflow-y: hidden;
   overflow-x: hidden;
 }
 
@@ -260,7 +257,6 @@ function onDragStart(e){
 
 .calendar-timeslot-line-container{
   position: absolute;
-  top: v-bind('CELL_HEIGHT + "px"');
   height: 100%;
 }
 
@@ -284,7 +280,6 @@ function onDragStart(e){
 
 
 .calendar-weekday-container{
-  position: absolute;
   height: v-bind('CELL_HEIGHT * 2 + "px"');
   left: v-bind('CELL_WIDTH + "px"');
   display: flex;
@@ -297,8 +292,8 @@ function onDragStart(e){
 }
 
 .calendar-timeslot-line{
-  @apply border-b border-b-white;
-  width: v-bind("width + 'px'");
+  @apply border-b border-b-gray-300;
+  width: v-bind("width * 2 + 'px'");
   height: v-bind("CELL_HEIGHT + "px"");
   z-index: 1;
 }
@@ -308,7 +303,7 @@ function onDragStart(e){
 }
 
 .calendar-header{
-  @apply text-2xl text-white bg-emerald-800 content-center;
+  @apply text-xl bg-gray-200 content-center border-b border-b-gray-300;
   height: v-bind('CELL_HEIGHT * 2 + "px"');
 
 }

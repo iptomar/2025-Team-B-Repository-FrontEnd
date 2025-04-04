@@ -1,12 +1,10 @@
 <template>
     <div>
       <h1>Horários</h1>
-        <CalendarProvider :events="EVENTS" cell_width="130" cell_height="30">
-          <div class="flex flex-row gap-10">
-            <Calendar table="0"/>
-            <CalendarHolder table="1" slots="50"/>
-          </div>
-        </CalendarProvider>
+      <CalendarProvider :events="EVENTS" cell_width="130" cell_height="30">
+        <Calendar table="0"/>
+        <!--<CalendarHolder table="1" slotsW="2" slotsH="4"/>-->
+      </CalendarProvider>
       </div>
 </template>
 
