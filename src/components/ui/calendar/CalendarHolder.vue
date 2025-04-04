@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 
 import CalendarEvent from "@/components/ui/calendar/CalendarEvent.vue";
 import {inject, useTemplateRef} from "vue";

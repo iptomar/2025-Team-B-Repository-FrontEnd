@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import {inject} from "vue";
 
 const { event } = defineProps(['cell_width', 'cell_height', 'event']);
