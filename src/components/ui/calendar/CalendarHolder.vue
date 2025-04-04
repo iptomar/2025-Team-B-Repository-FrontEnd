@@ -8,7 +8,7 @@ console.log(events)
 const cell_width = inject('cell_width', 20)
 const drop_area = useTemplateRef('drop_area')
 let registerDropTarget = inject("register_drop_target")
-registerDropTarget({drop_area, table});
+registerDropTarget({drop_area, table,  offsetX: 0, offsetY: 0});
 
 
 </script>
@@ -32,7 +32,6 @@ registerDropTarget({drop_area, table});
   #calendar-holder{
     height: v-bind('(slots * cell_height) + "px"');
     width: v-bind("cell_width + 'px'");
-    background-color: tomato;
     flex: 0 0 auto;
     flex-shrink: 0;
   }

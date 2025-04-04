@@ -40,6 +40,8 @@ import {provide, ref} from "vue";
 
 function onDrag(e){
     e.dataTransfer.dropEffect = "copy";
+    moveToPos(e);
+    clampPos(e)
   }
 
   let draggedElement = null;
@@ -52,23 +54,44 @@ function onDrag(e){
   }
 
   function onDragEnd(e){
+    moveToPos(e)
+    clampPos(e)
+    draggedElement = null;
+  }
+
+  function moveToPos(e){
     e.target.classList.remove("calendar-front");
-    console.log(e);
     let drop_target = null;
     drop_targets.forEach(target => {
       var rect = target.drop_area.value.getBoundingClientRect();
-
-      console.log(rect)
       if(e.clientX > rect.left && e.clientY > rect.top && e.clientX < rect.right && e.clientY < rect.bottom) {
         drop_target = target;
       }
     })
-    console.log(drop_target)
     events.forEach(event => {
-      if(event.id == e.target.id)
+      if(event.id == draggedElement && drop_target != null){
         event.table = drop_target?.table;
+        var rect = drop_target?.drop_area.value.getBoundingClientRect();
+        var y = (e.clientY  - (rect.top + drop_target.offsetY)) / cell_height;
+        var x = (e.clientX  - (rect.left + drop_target.offsetX)) / cell_width;
+        x = Math.min(x, rect.left)
+        y = Math.min(y, rect.top)
+        event.y = y-1;
+        event.x = x-1;
+        console.log("x: " + x + " y: " + y)
+      }
     })
   }
+
+  function clampPos(e){
+    events.forEach(event => {
+      if(event.id == draggedElement){
+        event.x = Math.trunc(event.x)
+        event.y = Math.trunc(event.y)
+      }
+    })
+  };
+
   let drop_targets = [];
   function registerDropTarget(object){
     drop_targets.push(object);

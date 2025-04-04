@@ -2,9 +2,11 @@
     <div>
       <h1>Horários</h1>
         <CalendarEditor :events="EVENTS" cell_width="100" cell_height="20">
-          <div class="flex flex-row">
+          <div class="flex flex-row gap-10">
             <Calendar table="0"/>
-            <CalendarHolder table="1" slots="50"/>
+            <div class="card">
+              <CalendarHolder table="1" slots="50"/>
+            </div>
           </div>
         </CalendarEditor>
       </div>

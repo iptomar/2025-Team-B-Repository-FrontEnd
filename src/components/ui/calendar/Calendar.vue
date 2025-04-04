@@ -9,7 +9,7 @@ const cell_height = inject("cell_height");
 var events = inject("events")
 const drop_area = useTemplateRef('drop_area')
 let registerDropTarget = inject("register_drop_target")
-registerDropTarget({drop_area, table});
+registerDropTarget({drop_area, table, offsetX: cell_width, offsetY: cell_height});
 
 /* PROPS:
 *
