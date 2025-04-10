@@ -1,11 +1,16 @@
 <script setup>
-import {provide, ref} from "vue";
+import {getCurrentInstance, provide, ref} from "vue";
+import {useElementSize, useResizeObserver} from "@vueuse/core";
 
   const { events, width, height, cell_width, cell_height } = defineProps(['events', 'width', 'height', 'cell_width', 'cell_height']);
-  provide("cell_width", cell_width);
+  const instance = getCurrentInstance()
+  var max_width = 1024.0;
+  const size = useElementSize()
+  var calculated_width = max_width/7;
+  var CELL_WIDTH = Math.min(calculated_width,cell_width)
+  provide("cell_width", CELL_WIDTH);
   provide("cell_height", cell_height);
   provide("events", events);
-
   function generateEvent(table, weekday, timeslot, time, name, type, classroom, teacher){
     events.push(
         {
@@ -59,7 +64,6 @@ function onDragStart(e){
       pickedHeight.value = event.time;
       event.tempX = event.x;
       event.tempY = event.y;
-      console.log(pickedHeight.value)
     }
   })
   e.dataTransfer.setDragImage(new Image(), 0, 0);
@@ -85,12 +89,12 @@ function moveToPos(e){
       event.table = drop_target?.table;
       var rect = drop_target?.drop_area.value.getBoundingClientRect();
       var y = (e.clientY  - (rect.top + parseInt(drop_target.offsetY))) / cell_height;
-      var x = (e.clientX  - (rect.left + parseInt(drop_target.offsetX))) / cell_width;
-      console.log(y)
+      var x = (e.clientX  - (rect.left + parseInt(drop_target.offsetX))) / CELL_WIDTH;
+
       x = Math.max(x, 0)
       y = Math.max(y, 0)
-      console.log()
-      event.y = y - 2;
+
+      event.y = y;
       event.x = x;
     }
   })
@@ -117,7 +121,10 @@ provide("calendar_on_drag_end", onDragEnd)
 </script>
 
 <template>
-  <slot></slot>
+  <div class="size-full">
+
+    <slot></slot>
+  </div>
 </template>
 
 <style scoped>

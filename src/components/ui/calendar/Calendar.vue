@@ -246,6 +246,7 @@ function onDragStart(e){
 .calendar-container{
   height: v-bind("height + 'px'");
   max-height: v-bind("CELL_HEIGHT * (time_frames.length + 2) + 'px'");
+  width: v-bind('width + "px"');
   overflow-y: hidden;
   overflow-x: hidden;
 }

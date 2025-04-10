@@ -1,9 +1,18 @@
 <template>
     <div>
       <h1>Horários</h1>
-      <CalendarProvider :events="EVENTS" cell_width="130" cell_height="30">
-        <Calendar table="0"/>
-        <!--<CalendarHolder table="1" slotsW="2" slotsH="4"/>-->
+      <div class="card p-2 m-5 justify-around flex gap-5 shadow">
+        <Button>Escolher Horário</Button>
+        <Button>Ajuda</Button>
+        <Button>Turma</Button>
+        <select>
+          <option>2024/2025</option>
+        </select>
+      </div>
+      <CalendarProvider :events="EVENTS" cell_width="148" cell_height="30" style={}>
+        <div class="flex">
+          <Calendar table="0"/>
+        </div>
       </CalendarProvider>
       </div>
 </template>
@@ -16,6 +25,7 @@ import Calendar from "@/components/ui/calendar/Calendar.vue";
 import CalendarHolder from "@/components/ui/calendar/CalendarHolder.vue";
 import CalendarProvider from "@/components/ui/calendar/CalendarProvider.vue";
 import {ref} from "vue";
+import {Button} from "@/components/ui/button";
 
 
 let events = [];
