@@ -35,7 +35,7 @@ const router = useRouter();
 onBeforeMount(() => {
   const token = localStorage.getItem('token')
   if (token) {
-    router.push('/dashboard')
+    router.push('/inicio')
   }
 })
 
@@ -58,7 +58,7 @@ async function login(values) {
 
     const json = await response.json();
     localStorage.setItem("token", json.token);
-    router.push('/dashboard')
+    router.push('/inicio')
   } catch (error) {
     console.error("Erro ao fazer login:", error.message);
   } finally {

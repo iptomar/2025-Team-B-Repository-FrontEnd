@@ -22,7 +22,7 @@ const logout = () => {
 
 const items = [
   {
-    title: "Inicio",
+    title: "Início",
     url: "/inicio",
     icon: Home,
   },
