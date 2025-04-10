@@ -1,8 +1,15 @@
 <script setup>
-import {ref, useTemplateRef} from "vue";
+import {inject, ref, useTemplateRef} from "vue";
 import CalendarEvent from "@/components/ui/calendar/CalendarEvent.vue";
 import {getTimeFrames, weekdays, shortened_weekdays} from "@/utils/date-utils.js"
-const { width, height, cell_width, cell_height, events } = defineProps(['width', 'height', 'cell_width', 'cell_height', 'events']);
+const {table,height } = defineProps(['table', 'height']);
+const cell_width = inject("cell_width");
+const cell_height = inject("cell_height");
+
+var events = inject("events")
+const drop_area = useTemplateRef('drop_area')
+let registerDropTarget = inject("register_drop_target")
+registerDropTarget({drop_area, table, offsetX: cell_width, offsetY: cell_height * 2});
 
 /* PROPS:
 *
@@ -37,9 +44,12 @@ if(cell_width === undefined)
   CELL_WIDTH = width/(weekdays.length+1)
 
 
+const width = CELL_WIDTH * 7;
+
+
 //Use of shortened names like "Seg" instead of "Segunda-feira" for short screens.
 //Usage is currently defined as when cells are smaller than 150px in size.
-const use_shortened_names = CELL_WIDTH < 150;
+const use_shortened_names = CELL_WIDTH < 100;
 const WEEKDAYS = use_shortened_names ? shortened_weekdays : weekdays
 
 const time_frames = getTimeFrames();
@@ -48,39 +58,7 @@ const time_frames = getTimeFrames();
 * Events can be generated through this function.
 * If no data is given then mock data will be provided using this same function.
  */
-function generateEvent(weekday, timeslot, time, name, type, classroom, teacher){
-  EVENTS.value.push(
-      {
-        id: EVENTS.value.length.toString(),
-        x: weekday,
-        y: timeslot,
-        tempX: 0,
-        tempY: 0,
-        offsetX: 0,
-        offsetY: 0,
-        time: time,
-        name: name,
-        type: type,
-        classroom: classroom,
-        teacher : teacher
-      });
-}
-let EVENTS = events !== undefined ? ref(events) : ref([]);
-
-function generateMockData(){
-  generateEvent( 0, 14, 4, "Internet das Coisas", "(TP)", "B255", "Luís M. Oliveira");
-  generateEvent( 0, 18, 4, "Internet das Coisas", "(PL)", "I153", "Luís M. Oliveira");
-  generateEvent( 1, 14, 4, "Sist. Inf. nas Org.", "(TP)", "I154", "Vasco Silva");
-  generateEvent( 1, 18, 4, "Desenv. Operações", "(PL)", "B255", "Renato E. Panda");
-  generateEvent( 2, 16, 4, "Sist. Inf. nas Org.", "(PL)", "I154", "Vasco Silva");
-  generateEvent( 3, 14, 4, "Desenv. Operações", "(TP)", "B255", "Luís A. Almeida");
-  generateEvent( 3, 18, 4, "Gestão de Proj.", "(TP)", "B128", "Paulo A. Santos");
-  generateEvent( 4, 15, 4, "Gestão de Proj.", "(PL)", "B128", "Paulo A. Santos");
-}
-
-if(EVENTS.value.length === 0)
-  generateMockData();
-
+const EVENTS = events;
 /*
 * Data for the ghost that shows while dragging an event over.
 * This can be used to indicate where exactly an event is going to be dropped,
@@ -146,7 +124,6 @@ function validateGhostPos(id){
 }
 
 function onDragEnd(e){
-
   e.target.classList.remove("calendar-front");
   ghost_data.value.hidden = true;
   moveToPos(e.target.id, e)
@@ -215,49 +192,45 @@ function onDragStart(e){
 </script>
 
 <template>
-  <div class="calendar-container">
-    <div class="calendar-outer-div">
-
-      <div class="calendar-empty">
-        <div class="calendar-timeslot-line-container">
-          <div v-for="() in time_frames" class="content-center calendar-timeslot-line"/>
-        </div>
-      </div>
-
-      <div class="calendar-empty">
-        <div class="calendar-timeslot-container">
-          <div class="calendar-timeslot calendar-header">HORAS</div>
-          <div v-for="(item) in time_frames" class="calendar-label calendar-timeslot">
-            {{item}}
+  <div>
+    <div class="calendar-weekday-container bg-gray-200 rounded-t-2xl overflow-hidden max-w-screen-lg">
+      <div class="calendar-header calendar-weekday"></div>
+      <div class="calendar-header calendar-weekday" v-for="(item) in WEEKDAYS">{{item}}</div>
+    </div>
+    <div class="calendar-container rounded-b-2xl border border-gray-300 max-w-screen-lg ">
+      <div class="calendar-outer-div" ref="drop_area">
+        <div class="calendar-empty">
+          <div class="calendar-timeslot-line-container max-w-screen-lg">
+            <div v-for="() in time_frames" class="content-center calendar-timeslot-line"/>
           </div>
         </div>
-      </div>
-      <div class="calendar-empty">
-        <div class="calendar-weekday-container">
-          <div v-for="(item) in WEEKDAYS" class="calendar-header calendar-weekday">
-            {{item}}
+
+        <div class="calendar-empty">
+          <div class="calendar-timeslot-container">
+            <div v-for="(item) in time_frames" class="calendar-label calendar-timeslot">
+              {{item}}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="calendar-empty">
-        <div class="calendar-event-container" ref="droppable-area">
-          <CalendarEvent
-              v-bind:cell_width="CELL_WIDTH"
-              v-bind:cell_height="CELL_HEIGHT"
-              v-for="(item) in EVENTS"
-              v-bind:event="item"
-              @dragstart="onDragStart"
-              @dragend="onDragEnd"
-              @drag="onDrag"
-          />
+        <div class="calendar-empty">
+          <div class="calendar-event-container">
+            <CalendarEvent
+                v-bind:cell_width="CELL_WIDTH"
+                v-bind:cell_height="CELL_HEIGHT"
+                v-for="(item) in EVENTS.filter( item => {
+                  return item.table == table;
+                })"
+                v-bind:event="item"
+            />
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style>
 
 .calendar-outer-div{
   min-width: v-bind("width + 'px'");
@@ -267,13 +240,14 @@ function onDragStart(e){
 }
 
 .calendar-label{
-  @apply text-white bg-emerald-500 content-center;
+  @apply text-white bg-white text-black border-r border-r-black border-b border-b-gray-300 content-center;
 }
 
 .calendar-container{
   height: v-bind("height + 'px'");
   max-height: v-bind("CELL_HEIGHT * (time_frames.length + 2) + 'px'");
-  overflow-y: scroll;
+  width: v-bind('width + "px"');
+  overflow-y: hidden;
   overflow-x: hidden;
 }
 
@@ -284,7 +258,6 @@ function onDragStart(e){
 
 .calendar-timeslot-line-container{
   position: absolute;
-  top: v-bind('CELL_HEIGHT + "px"');
   height: 100%;
 }
 
@@ -308,7 +281,6 @@ function onDragStart(e){
 
 
 .calendar-weekday-container{
-  position: absolute;
   height: v-bind('CELL_HEIGHT * 2 + "px"');
   left: v-bind('CELL_WIDTH + "px"');
   display: flex;
@@ -321,8 +293,8 @@ function onDragStart(e){
 }
 
 .calendar-timeslot-line{
-  @apply border-b border-b-white;
-  width: v-bind("width + 'px'");
+  @apply border-b border-b-gray-300;
+  width: v-bind("width * 2 + 'px'");
   height: v-bind("CELL_HEIGHT + "px"");
   z-index: 1;
 }
@@ -332,7 +304,7 @@ function onDragStart(e){
 }
 
 .calendar-header{
-  @apply text-2xl text-white bg-emerald-800 content-center;
+  @apply text-xl bg-gray-200 content-center border-b border-b-gray-300;
   height: v-bind('CELL_HEIGHT * 2 + "px"');
 
 }
