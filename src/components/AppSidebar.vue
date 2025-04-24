@@ -27,16 +27,6 @@ const items = [
     icon: Home,
   },
   {
-    title: "Horários",
-    url: "/horarios",
-    icon: CalendarDays,
-  },
-  {
-    title: "Salas",
-    url: "/salas",
-    icon: DoorClosed,
-  },
-  {
     title: "Cursos",
     url: "/cursos",
     icon: GraduationCap,
@@ -50,6 +40,11 @@ const items = [
     title: "Utilizadores",
     url: "/utilizadores",
     icon: Users,
+  },
+  {
+    title: "Salas",
+    url: "/salas",
+    icon: DoorClosed,
   },
   {
     title: "Definições",

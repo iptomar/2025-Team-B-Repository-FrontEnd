@@ -5,7 +5,6 @@ import { createWebHistory, createRouter } from 'vue-router';
 import Login from './pages/Login.vue';
 import Inicio from './pages/Inicio.vue';
 import Salas from './pages/Salas.vue';
-import Horarios from './pages/Horarios.vue';
 import Cursos from './pages/Cursos.vue';
 import Professores from './pages/Professores.vue';
 import Utilizadores from './pages/Utilizadores.vue';
@@ -16,11 +15,6 @@ const routes = [
   {
     path: '/inicio',
     component: Inicio,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/horarios',
-    component: Horarios,
     meta: { requiresAuth: true }
   },
   {
@@ -37,6 +31,11 @@ const routes = [
     path: '/curso/:id',
     name: 'CursoDetalhes',
     component: () => import('./pages/CursoDetalhes.vue'),
+  },  
+  {
+    path: '/turma/:id',
+    name: 'Turma',
+    component: () => import('./pages/Turma.vue'),
   },  
   {
     path: '/professores',
