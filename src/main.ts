@@ -9,6 +9,8 @@ import Cursos from './pages/Cursos.vue';
 import Professores from './pages/Professores.vue';
 import Utilizadores from './pages/Utilizadores.vue';
 import Definicoes from './pages/Definicoes.vue';
+import CreateUtilizador from './pages/CreateUtilizador.vue';
+import UpdateUtilizador from './pages/UpdateUtilizador.vue';
 
 const routes = [
   { path: '/', component: Login },
@@ -35,7 +37,7 @@ const routes = [
   {
     path: '/turma/:id',
     name: 'Turma',
-    component: () => import('./pages/Turma.vue'),
+    component: () => import('./pages/Cursos.vue'),
   },  
   {
     path: '/professores',
@@ -52,6 +54,16 @@ const routes = [
     component: Definicoes,
     meta: { requiresAuth: true }
   },
+  {
+    path: '/utilizadores/create-utilizador',
+    component: CreateUtilizador,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/utilizadores/update-utilizador/:id',
+    component: UpdateUtilizador,
+    meta: { requiresAuth: true }
+  },
 ];
 
 const router = createRouter({
@@ -63,7 +75,7 @@ router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('token');
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/');
+    next('');
   } else {
     next();
   }
