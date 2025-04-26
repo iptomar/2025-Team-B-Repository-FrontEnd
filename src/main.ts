@@ -1,56 +1,61 @@
-import { createApp } from 'vue';
-import './style.css';
-import App from './App.vue';
-import { createWebHistory, createRouter } from 'vue-router';
-import Login from './pages/Login.vue';
-import Inicio from './pages/Inicio.vue';
-import Salas from './pages/Salas.vue';
-import Cursos from './pages/Cursos.vue';
-import Professores from './pages/Professores.vue';
-import Utilizadores from './pages/Utilizadores.vue';
-import Definicoes from './pages/Definicoes.vue';
+import { createApp } from "vue";
+import "./style.css";
+import App from "./App.vue";
+import { createWebHistory, createRouter } from "vue-router";
+import Login from "./pages/Login.vue";
+import Inicio from "./pages/Inicio.vue";
+import Salas from "./pages/Salas.vue";
+import Cursos from "./pages/Cursos.vue";
+import Professores from "./pages/Professores.vue";
+import Utilizadores from "./pages/Utilizadores.vue";
+import Definicoes from "./pages/Definicoes.vue";
 
 const routes = [
-  { path: '/', component: Login },
+  { path: "/", component: Login },
   {
-    path: '/inicio',
+    path: "/inicio",
     component: Inicio,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
-    path: '/salas',
+    path: "/salas",
     component: Salas,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
-    path: '/cursos',
+    path: "/cursos",
     component: Cursos,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
-    path: '/curso/:id',
-    name: 'CursoDetalhes',
-    component: () => import('./pages/CursoDetalhes.vue'),
-  },  
+    path: "/curso/:id",
+    name: "CursoDetalhes",
+    component: () => import("./pages/CursoDetalhes.vue"),
+  },
   {
-    path: '/turma/:id',
-    name: 'Turma',
-    component: () => import('./pages/Turma.vue'),
-  },  
+    path: "/turma/:id",
+    name: "Turma",
+    component: () => import("./pages/Turma.vue"),
+  },
   {
-    path: '/professores',
+    path: "/cadeira/:id",
+    name: "Cadeira",
+    component: () => import("./pages/Cadeira.vue"),
+  },
+  {
+    path: "/professores",
     component: Professores,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
-    path: '/utilizadores',
+    path: "/utilizadores",
     component: Utilizadores,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
-    path: '/definicoes',
+    path: "/definicoes",
     component: Definicoes,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
 ];
 
@@ -59,11 +64,11 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('token');
+router.beforeEach((to, _from, next) => {
+  const isAuthenticated = localStorage.getItem("token");
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/');
+    next("/");
   } else {
     next();
   }
@@ -71,4 +76,4 @@ router.beforeEach((to, from, next) => {
 
 const app = createApp(App);
 app.use(router);
-app.mount('#app');
+app.mount("#app");

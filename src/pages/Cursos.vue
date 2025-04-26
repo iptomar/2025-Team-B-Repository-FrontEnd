@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import DataTable from '@/components/cursos/data-table.vue'
-import { columns, type Curso } from '@/components/cursos/columns'
 import { getData } from '@/api/api'
+import { columns } from '@/components/cursos/columns.ts'
+import type { Curso } from '@/components/interfaces'
 
 const data = ref<Curso[]>([])
 
 onMounted(async () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   data.value = await getData()
 })
 </script>

@@ -1,32 +1,7 @@
 import { h } from "vue";
 import type { ColumnDef } from "@tanstack/vue-table";
 import DropdownAction from "./data-table-dropdown.vue";
-
-export interface Curso {
-  id: number;
-  curso: string;
-  grau: string;
-  instituicao: string;
-  respProf: string;
-  anoLetivo: string;
-  cadeiras: Cadeira[];
-  turmas: Turma[]
-}
-
-export interface Cadeira {
-  id: number;
-  nome: string;
-  ano: number;
-  semestre: number;
-  ects: number;
-}
-
-export interface Turma {
-  id: number;
-  ano: number;
-  turma: string;
-  semestre: number;
-}
+import type { Curso } from "../interfaces";
 
 export const columns: ColumnDef<Curso>[] = [
   {

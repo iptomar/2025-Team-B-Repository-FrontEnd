@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="TData, TValue">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import {
   FlexRender,
@@ -19,20 +20,26 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const props = defineProps<{
   columns: ColumnDef<TData & { id: number }, TValue>[]
   data: (TData & { id: number })[]
 }>()
 
-const showModalTurma = ref(false)
+const router = useRouter()
+const isCreateOpen = ref(false);
 const novaTurma = ref({ nome: '', ano: 1, semestre: 1, turma: '' })
 
-const handleSubmitTurma = () => {
+const handleSubmit = () => {
   // Enviar para backend
   console.log(novaTurma.value);
-  showModalTurma.value = false;
+  isCreateOpen.value = false;
 };
+
+const goToTurma = (id: number) => {
+  router.push(`/turma/${id}`)
+}
 
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
@@ -68,7 +75,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
 <template>
   <div class="flex flex-col h-full w-full">
     <div class="flex justify-end items-center pb-4 w-full space-x-20">
-      <button @click="showModalTurma = true"
+      <button @click="isCreateOpen = true"
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Criar Turma
       </button>
@@ -88,7 +95,8 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <TableRow v-for="row in table.getRowModel().rows" :key="row.id"
-              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50">
+              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50 cursor-pointer"
+              @click="goToTurma(row.original.id)">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="p-2">
                 <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>
@@ -125,39 +133,46 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
     </div>
   </div>
 
-  <div v-if="showModalTurma" class="fixed inset-0 flex z-10 items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-xl mb-4">Criar Turma</h2>
-      <form @submit.prevent="handleSubmitTurma">
-        <div class="mb-4">
-          <label class="block mb-1">Turma</label>
+  <Dialog v-model:open="isCreateOpen">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Criar Turma</DialogTitle>
+        <DialogDescription>
+          Crie uma turma e clique em "Criar".
+        </DialogDescription>
+      </DialogHeader>
+
+      <form @submit.prevent="handleSubmit" class="space-y-4">
+        <div>
+          <label class="block text-sm mb-1">Turma</label>
           <input v-model="novaTurma.turma" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
             required />
         </div>
 
-        <div class="mb-4">
-          <label class="block mb-1">Ano</label>
+        <div>
+          <label class="block text-sm mb-1">Ano</label>
           <input v-model="novaTurma.ano" type="number" min="1" max="4" @input="limitValue('ano', 1, 4)"
             class="w-full border border-gray-300 rounded px-2 py-1" required />
         </div>
 
-        <div class="mb-4">
-          <label class="block mb-1">Semestre</label>
+        <div>
+          <label class="block text-sm mb-1">Semestre</label>
           <input v-model="novaTurma.semestre" type="number" min="1" max="3" @input="limitValue('semestre', 1, 3)"
             class="w-full border border-gray-300 rounded px-2 py-1" required />
         </div>
 
-        <div class="flex justify-center space-x-2">
-          <button type="submit"
-            class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded">
+        <DialogFooter class="mt-4">
+          <Button type="submit"
+            class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
             Criar
-          </button>
-          <button type="button" @click="showModalTurma = false"
-            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded">
+          </Button>
+          <Button type="button"
+            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+            variant="ghost" @click="isCreateOpen = false">
             Cancelar
-          </button>
-        </div>
+          </Button>
+        </DialogFooter>
       </form>
-    </div>
-  </div>
+    </DialogContent>
+  </Dialog>
 </template>

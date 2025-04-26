@@ -3,22 +3,28 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import DataTableCadeiras from '@/components/cadeiras/data-table.vue';
 import DataTableTurmas from '@/components/turmas/data-table.vue';
+import DataTableProfessores from '@/components/professores/data-table.vue';
 import { getData } from '@/api/api';
-import type { Curso, Cadeira, Turma } from '@/components/cursos/columns';
-import { columns as columnsCadeiras } from '@/components/cadeiras/columns';
-import { columns as columnsTurmas } from '@/components/turmas/columns';
+import { columns as columnsCadeiras } from '@/components/cadeiras/columns.ts';
+import { columns as columnsTurmas } from '@/components/turmas/columns.ts';
+import { columns as columnsProfessores } from '@/components/professores/columns.ts';
+import { BookCopy, Presentation, University } from 'lucide-vue-next';
+import type { Cadeira, Curso, Professor, Turma } from '@/components/interfaces';
 
 const data = ref<Curso[]>([]);
 const cursoSelecionado = ref<Curso | null>(null);
 const cadeirasCurso = ref<Cadeira[]>([]);
 const turmasCurso = ref<Turma[]>([]);
+const professoresCurso = ref<Professor[]>([]);
 
 const route = useRoute();
 const cursoId = ref(Number(route.params.id));
 
-const abaAtiva = ref<'turmas' | 'cadeiras'>('turmas');
+const abaAtiva = ref<'turmas' | 'cadeiras' | 'professores'>('turmas');
 
 onMounted(async () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   try {
     const cursos = await getData();
     data.value = cursos;
@@ -28,6 +34,7 @@ onMounted(async () => {
     if (cursoSelecionado.value) {
       cadeirasCurso.value = cursoSelecionado.value.cadeiras || [];
       turmasCurso.value = cursoSelecionado.value.turmas || [];
+      professoresCurso.value = cursoSelecionado.value.professores || [];
     }
   } catch (error) {
     console.error('Erro ao buscar os dados:', error);
@@ -48,26 +55,38 @@ onMounted(async () => {
 
     <div class="flex gap-4 justify-center">
       <button @click="abaAtiva = 'turmas'" :class="[
-        'px-6 py-2 rounded-2xl font-semibold transition duration-200',
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
         abaAtiva === 'turmas'
-          ? 'bg-iptGreen text-white shadow-md'
-          : 'bg-gray-100 text-black hover:bg-gray-200 hover:border-iptGreen'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
       ]">
-        👨‍🏫 Turmas
+        <Presentation class="w-5 h-5 mr-2 stroke-[2.5]" />
+        Turmas
       </button>
       <button @click="abaAtiva = 'cadeiras'" :class="[
-        'px-6 py-2 rounded-2xl font-semibold transition duration-200',
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
         abaAtiva === 'cadeiras'
-          ? 'bg-iptGreen text-white shadow-md'
-          : 'bg-gray-100 text-black hover:bg-gray-200 hover:border-iptGreen'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
       ]">
-        📚 Cadeiras
+        <BookCopy class="w-5 h-5 mr-2 stroke-[2.5]" />
+        Cadeiras
+      </button>
+      <button @click="abaAtiva = 'professores'" :class="[
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
+        abaAtiva === 'professores'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
+      ]">
+        <University class="w-5 h-5 mr-2 stroke-[2.5]" />
+        Professores
       </button>
     </div>
 
     <div class="mt-6">
       <DataTableTurmas v-if="abaAtiva === 'turmas'" :columns="columnsTurmas" :data="turmasCurso" />
-      <DataTableCadeiras v-else :columns="columnsCadeiras" :data="cadeirasCurso" />
+      <DataTableCadeiras v-if="abaAtiva === 'cadeiras'" :columns="columnsCadeiras" :data="cadeirasCurso" />
+      <DataTableProfessores v-if="abaAtiva === 'professores'" :columns="columnsProfessores" :data="professoresCurso" />
     </div>
   </div>
 </template>
