@@ -11,7 +11,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-vue-next";
 
-const editItem = ref<any>(null);
+const editarCurso = ref<any>(null);
 const isEditOpen = ref(false);
 const isDeleteOpen = ref(false);
 
@@ -22,22 +22,22 @@ defineProps({
 const professores = ['Dr. Silva', 'Dra. Costa', 'Dr. Rodrigues'];
 
 const handleEdit = (curso: any) => {
-  editItem.value = { ...curso };
+  editarCurso.value = { ...curso };
   isEditOpen.value = true;
 };
 
 const handleDelete = (curso: any) => {
-  editItem.value = curso;
+  editarCurso.value = curso;
   isDeleteOpen.value = true;
 };
 
 const handleSave = () => {
-  console.log("Salvando alterações no item:", editItem.value);
+  console.log("Salvando alterações no item:", editarCurso.value);
   isEditOpen.value = false;
 };
 
 const handleDeleteConfirm = () => {
-  console.log("Excluindo item:", editItem.value);
+  console.log("Excluindo item:", editarCurso.value);
   isDeleteOpen.value = false;
 };
 </script>
@@ -69,13 +69,13 @@ const handleDeleteConfirm = () => {
       <form @submit.prevent="handleSave" class="space-y-4">
         <div>
           <label class="block text-sm mb-1">Nome do Curso</label>
-          <input v-model="editItem.curso" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="editarCurso.curso" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
             required />
         </div>
 
         <div>
           <label class="block text-sm mb-1">Professor Responsável</label>
-          <select v-model="editItem.respProf" class="w-full border border-gray-300 rounded px-2 py-1" required>
+          <select v-model="editarCurso.respProf" class="w-full border border-gray-300 rounded px-2 py-1" required>
             <option value="">Selecione o professor</option>
             <option v-for="prof in professores" :key="prof" :value="prof">
               {{ prof }}
@@ -111,7 +111,9 @@ const handleDeleteConfirm = () => {
           @click="handleDeleteConfirm">
           Excluir
         </Button>
-        <Button type="button" class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400" variant="ghost" @click="isDeleteOpen = false">
+        <Button type="button"
+          class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+          variant="ghost" @click="isDeleteOpen = false">
           Cancelar
         </Button>
       </div>
