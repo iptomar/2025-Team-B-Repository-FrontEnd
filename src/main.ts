@@ -42,12 +42,6 @@ const routes = [
     component: () => import("./pages/Turma.vue"),
   },
   {
-
-    path: '/turma/:id',
-    name: 'Turma',
-    component: () => import('./pages/Cursos.vue'),
-  },  
-  {
     path: "/cadeira/:id",
     name: "Cadeira",
     component: () => import("./pages/Cadeira.vue"),
