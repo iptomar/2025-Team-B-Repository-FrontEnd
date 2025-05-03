@@ -9,20 +9,224 @@ export async function getData(): Promise<Curso[]> {
       curso: "Engenharia Informática",
       respProf: "Dr. Silva",
       cadeiras: [
-        { id: 1, nome: "Programação Web", ano: 1, ects: 5, semestre: 1 },
-        { id: 2, nome: "Banco de Dados", ano: 1, ects: 5, semestre: 2 },
-        { id: 3, nome: "Estruturas de Dados", ano: 1, ects: 2, semestre: 1 },
-        { id: 4, nome: "Sistemas Operativos", ano: 2, ects: 4, semestre: 1 },
-        { id: 5, nome: "Redes de Computadores", ano: 2, ects: 7, semestre: 2 },
-        { id: 6, nome: "Engenharia de Software", ano: 3, ects: 6, semestre: 1 },
+        {
+          id: 1,
+          nome: "Programação Web",
+          ano: 1,
+          ects: 5,
+          semestre: 1,
+          aulas: [
+            {
+              id: 3,
+              duração: "02:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+                {
+                  id: 2,
+                  ano: 1,
+                  turma: "B",
+                  semestre: 1,
+                },
+              ],
+            },
+            {
+              id: 4,
+              duração: "02:00",
+              tipologia: "Prática",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "B",
+                  semestre: 1,
+                },
+              ],
+            },
+            {
+              id: 5,
+              duração: "02:00",
+              tipologia: "Prática",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 2,
+          nome: "Banco de Dados",
+          ano: 1,
+          ects: 5,
+          semestre: 2,
+          aulas: [
+            {
+              id: 3,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 3,
+          nome: "Estruturas de Dados",
+          ano: 1,
+          ects: 2,
+          semestre: 1,
+          aulas: [
+            {
+              id: 3,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 4,
+          nome: "Sistemas Operativos",
+          ano: 2,
+          ects: 4,
+          semestre: 1,
+          aulas: [
+            {
+              id: 3,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 5,
+          nome: "Redes de Computadores",
+          ano: 2,
+          ects: 7,
+          semestre: 2,
+          aulas: [
+            {
+              id: 3,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 6,
+          nome: "Engenharia de Software",
+          ano: 3,
+          ects: 6,
+          semestre: 1,
+          aulas: [
+            {
+              id: 3,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
         {
           id: 7,
           nome: "Inteligência Artificial",
           ano: 3,
           ects: 4,
           semestre: 3,
+          aulas: [
+            {
+              id: 3,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
         },
-        { id: 8, nome: "Desenvolvimento Móvel", ano: 1, ects: 3, semestre: 1 },
+        {
+          id: 8,
+          nome: "Desenvolvimento Móvel",
+          ano: 1,
+          ects: 3,
+          semestre: 1,
+          aulas: [
+            {
+              id: 3,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
       ],
       instituicao: "ESTT",
       anoLetivo: "2024/2025",
@@ -46,9 +250,60 @@ export async function getData(): Promise<Curso[]> {
       curso: "Matemática",
       respProf: "Dra. Costa",
       cadeiras: [
-        { id: 1, nome: "Cálculo I", ano: 1, ects: 5, semestre: 1 },
-        { id: 2, nome: "Álgebra Linear", ano: 1, ects: 2, semestre: 1 },
-        { id: 3, nome: "Probabilidade", ano: 3, ects: 6, semestre: 2 },
+        {
+          id: 10,
+          nome: "Cálculo I",
+          ano: 1,
+          ects: 5,
+          semestre: 1,
+          aulas: [],
+        },
+        {
+          id: 2,
+          nome: "Álgebra Linear",
+          ano: 1,
+          ects: 2,
+          semestre: 1,
+          aulas: [
+            {
+              id: 2,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 3,
+          nome: "Probabilidade",
+          ano: 3,
+          ects: 6,
+          semestre: 2,
+          aulas: [
+            {
+              id: 3,
+              duração: "1:00",
+              tipologia: "Teórica",
+              professor: { id: 4, nome: "Dr. Fernando" },
+              turmas: [
+                {
+                  id: 1,
+                  ano: 1,
+                  turma: "A",
+                  semestre: 1,
+                },
+              ],
+            },
+          ],
+        },
       ],
       instituicao: "ESTA",
       anoLetivo: "2024/2025",

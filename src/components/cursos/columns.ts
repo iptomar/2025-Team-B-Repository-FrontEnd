@@ -48,26 +48,7 @@ export const columns: ColumnDef<Curso>[] = [
     cell: ({ row }) =>
       h("div", { class: "ml-2 text-left" }, row.getValue("instituicao")),
   },
-  {
-    accessorKey: "grau",
-    header: ({ column }) => {
-      return h(
-        "button",
-        {
-          class: "flex items-center space-x-2 bg-white hover:border-iptGreen",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-        },
-        [
-          h("span", "Grau"),
-          h("svg", { class: "ml-2 h-4 w-4", viewBox: "0 0 24 24" }, [
-            h("path", { d: "M7 10l5 5 5-5H7z", fill: "currentColor" }),
-          ]),
-        ]
-      );
-    },
-    cell: ({ row }) =>
-      h("div", { class: "ml-2 text-left" }, row.getValue("grau")),
-  },
+  
   {
     accessorKey: "respProf",
     header: () => h("div", "Professor Responsável"),
@@ -87,14 +68,6 @@ export const columns: ColumnDef<Curso>[] = [
         },
         h(DropdownAction, { curso })
       );
-    },
-  },
-  {
-    id: "cursoOuGrau",
-    accessorFn: (row) => `${row.curso} ${row.grau}`,
-    filterFn: (row, columnId, filterValue) => {
-      const value = row.getValue(columnId) as string;
-      return value.toLowerCase().includes(filterValue.toLowerCase());
     },
   },
   {

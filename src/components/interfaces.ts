@@ -16,6 +16,7 @@ export interface Cadeira {
   ano: number;
   semestre: number;
   ects: number;
+  aulas: Aula[];
 }
 
 export interface Turma {
@@ -28,4 +29,12 @@ export interface Turma {
 export interface Professor {
   id: number;
   nome: string;
+}
+
+export interface Aula {
+  id: number;
+  duração: string;
+  tipologia: string;
+  professor: Professor;
+  turmas: Turma[];
 }

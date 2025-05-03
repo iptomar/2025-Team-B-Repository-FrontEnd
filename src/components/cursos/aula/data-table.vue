@@ -1,49 +1,52 @@
 <script setup lang="ts" generic="TData, TValue">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
-import { FlexRender, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table'
-import { Input } from '@/components/ui/input'
+import {
+  FlexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  useVueTable,
+} from '@tanstack/vue-table'
 import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { Turma } from '../../interfaces'
 
 const props = defineProps<{
   columns: ColumnDef<TData & { id: number }, TValue>[]
   data: (TData & { id: number })[]
 }>()
 
-const graus = ['Licenciatura', 'Mestrado', 'Doutoramento'];
-const professores = ['Dr. Silva', 'Dra. Costa', 'Dr. Rodrigues'];
-const anosLetivos = ['2020/2021', '2021/2022', '2022/2023', '2023/2024', '2024/2025'];
-const instituicoes = ['ESTT', 'ESTA', 'ESTG'];
-
-const router = useRouter()
 const isCreateOpen = ref(false);
-const novoCurso = ref({
-  curso: '',
-  grau: '',
-  respProf: '',
-  anoLetivo: anosLetivos[anosLetivos.length - 1],
-  instituicao: ''
-});
+const novaAula = ref({
+  duração: '',
+  tipologia: '',
+  professor: { id: 0, nome: '' },
+  turma: { id: 0, ano: 1, turma: '', semestre: 1 }
+})
+
+const professores = ['Dr. Silva', 'Dra. Costa', 'Dr. Rodrigues'];
+const turmas = ref<Turma[]>([]) 
 
 const handleSubmit = () => {
   // Enviar para backend
-  console.log(novoCurso.value);
+  console.log(novaAula.value);
   isCreateOpen.value = false;
 };
 
-const goToCurso = (id: number) => {
-  router.push(`/curso/${id}`)
-}
-
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({
-  anoLetivo: false,
-})
+const columnVisibility = ref<VisibilityState>({})
 
 const currentPage = computed(() => table.getState().pagination.pageIndex + 1)
 const pageCount = computed(() => table.getPageCount())
@@ -63,45 +66,25 @@ const table = useVueTable({
     get columnFilters() { return columnFilters.value },
     get columnVisibility() { return columnVisibility.value },
   },
-});
+})
 
-onMounted(async () => {
-  const defaultAnoLetivo = anosLetivos[anosLetivos.length - 1];
-  table.getColumn('anoLetivo')?.setFilterValue(defaultAnoLetivo);
-});
 </script>
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <div class="flex items-center pb-4 w-full space-x-4">
-      <div class="flex-1">
-        <Input class="w-full h-[2.7rem]" placeholder="Procurar por curso..."
-          :model-value="table.getColumn('curso')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('curso')?.setFilterValue($event)" />
-      </div>
-
-      <div class="flex-1">
-        <select class="h-[2.6rem] border border-gray-300 rounded px-2 py-1"
-          :value="table.getColumn('anoLetivo')?.getFilterValue() || anosLetivos[anosLetivos.length - 1]"
-          @change="table.getColumn('anoLetivo')?.setFilterValue(($event.target as HTMLSelectElement).value)">
-          <option v-for="ano in anosLetivos.slice().reverse()" :key="ano" :value="ano">
-            {{ ano }}
-          </option>
-        </select>
-      </div>
-
+    <div class="flex justify-end items-center pb-4 w-full space-x-20">
       <button @click="isCreateOpen = true"
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
-        Criar Curso
+        Criar Aula
       </button>
     </div>
 
-
     <div class="flex justify-center items-center overflow-auto border rounded-md">
-      <Table class="w-full">
+      <Table class="w-[77vw]">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-            <TableHead v-for="header in headerGroup.headers" :key="header.id" class="bg-gray-100 p-2 text-left">
+            <TableHead v-for="header in headerGroup.headers" :key="header.id"
+              class="bg-gray-100 p-2 text-left font-semibold">
               <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header"
                 :props="header.getContext()" />
             </TableHead>
@@ -110,8 +93,7 @@ onMounted(async () => {
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <TableRow v-for="row in table.getRowModel().rows" :key="row.id"
-              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50 cursor-pointer"
-              @click="goToCurso(row.original.id)">
+              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="p-2">
                 <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>
@@ -120,7 +102,7 @@ onMounted(async () => {
           <template v-else>
             <TableRow>
               <TableCell :colspan="props.columns.length" class="h-24 text-center">
-                Sem Cursos
+                Sem Aulas
               </TableCell>
             </TableRow>
           </template>
@@ -151,50 +133,39 @@ onMounted(async () => {
   <Dialog v-model:open="isCreateOpen">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Criar Curso</DialogTitle>
-        <DialogDescription>
-          Crie um curso e clique em "Criar".
-        </DialogDescription>
+        <DialogTitle>Criar Aula</DialogTitle>
+        <DialogDescription>Preencha os dados da nova aula.</DialogDescription>
       </DialogHeader>
 
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
-          <label class="block text-sm mb-1">Nome do Curso</label>
-          <input v-model="novoCurso.curso" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+          <label class="block text-sm mb-1">Duração</label>
+          <input v-model="novaAula.duração" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
             required />
         </div>
 
         <div>
-          <label class="block text-sm mb-1">Grau</label>
-          <select v-model="novoCurso.grau" class="w-full border border-gray-300 rounded px-2 py-1" required>
-            <option value="">Selecione o grau</option>
-            <option v-for="grau in graus" :key="grau" :value="grau">{{ grau }}
-            </option>
+          <label class="block text-sm mb-1">Tipologia</label>
+          <input v-model="novaAula.tipologia" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+            required />
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">Professor</label>
+          <select v-model="novaAula.professor.id" class="w-full border border-gray-300 rounded px-2 py-1" required>
+            <option disabled value="0">Selecione um professor</option>
+            <option v-for="prof in professores" :value="prof">{{ prof }}</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-sm mb-1">Professor Responsável</label>
-          <select v-model="novoCurso.respProf" class="w-full border border-gray-300 rounded px-2 py-1" required>
-            <option value="">Selecione o professor</option>
-            <option v-for="prof in professores" :key="prof" :value="prof">{{ prof }}
+          <label class="block text-sm mb-1">Turma</label>
+          <select v-model="novaAula.turma.id" class="w-full border border-gray-300 rounded px-2 py-1" required>
+            <option disabled value="0">Selecione uma turma</option>
+            <option v-for="turma in turmas" :key="turma.id" :value="turma.id">
+              {{ turma.ano }}º - {{ turma.turma }} ({{ turma.semestre }}º Sem.)
             </option>
           </select>
-        </div>
-
-        <div>
-          <label class="block text-sm mb-1">Instituição</label>
-          <select v-model="novoCurso.instituicao" class="w-full border border-gray-300 rounded px-2 py-1" required>
-            <option value="">Selecione a instituição</option>
-            <option v-for="instituicao in instituicoes" :key="instituicao" :value="instituicao">{{ instituicao }}
-            </option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm mb-1">Ano Letivo</label>
-          <input v-model="novoCurso.anoLetivo" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
-            readonly />
         </div>
 
         <DialogFooter class="mt-4">
