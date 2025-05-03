@@ -37,16 +37,16 @@ const handleDeleteConfirm = () => {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem @click="handleDelete(turma)">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(turma)">Excluir</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
   <Dialog v-model:open="isDeleteOpen">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Confirmar Eliminação</DialogTitle>
+        <DialogTitle>Excluir</DialogTitle>
         <DialogDescription>
-          Tem certeza de que deseja apagar esta turma?
+          Tem certeza de que deseja excluir este professor deste curso?
         </DialogDescription>
       </DialogHeader>
       <div class="flex justify-center gap-4 mt-4">
