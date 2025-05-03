@@ -104,7 +104,7 @@ function moveToPos(e){
     }
   })
   events.forEach(event => {
-    if(event.id == draggedElement && drop_target != null){
+    if(event.id === draggedElement && drop_target != null){
       event.table = drop_target?.table;
       var rect = drop_target?.drop_area.value.getBoundingClientRect();
       var y = (e.clientY  - (rect.top + parseInt(drop_target.offsetY))) / cell_height;
