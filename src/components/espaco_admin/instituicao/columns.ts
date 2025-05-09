@@ -2,15 +2,15 @@ import { h } from 'vue'
 import type { ColumnDef } from '@tanstack/vue-table'
 import DropdownAction from './data-table-dropdown.vue'
 
-export interface Sala {
+export interface Instituicao {
   id: string
-  Nome_sala: string
-  Nome_localidade: string
+  instituicao: string
+  localidade: string
 }
 
-export const columns: ColumnDef<Sala>[] = [
+export const columns: ColumnDef<Instituicao>[] = [
   {
-    accessorKey: 'Nome_sala',
+    accessorKey: 'instituicao',
     header: ({ column }) => {
       return h(
         'button',
@@ -19,17 +19,17 @@ export const columns: ColumnDef<Sala>[] = [
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
         [
-          h('span', 'Sala'),
+          h('span', 'Instituição'),
           h('svg', { class: 'ml-2 h-4 w-4', viewBox: '0 0 24 24' }, [
             h('path', { d: 'M7 10l5 5 5-5H7z', fill: 'currentColor' })
           ])
         ]
       )
     },
-    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('Nome_sala')),
+    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('instituicao')),
   },
   {
-    accessorKey: 'Nome_localidade',
+    accessorKey: 'localidade',
     header: ({ column }) => {
       return h(
         'button',
@@ -45,20 +45,20 @@ export const columns: ColumnDef<Sala>[] = [
         ]
       )
     },
-    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('Nome_localidade')),
+    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('localidade')),
   },
   {
     id: 'actions',
     enableHiding: false,
     cell: ({ row }) => {
-      const sala = row.original as Sala
+      const instituicao = row.original as Instituicao
       return h(
         'div',
         {
           class: 'relative text-right',
           onClick: (event: Event) => event.stopPropagation(),
         },
-        h(DropdownAction, { sala })
+        h(DropdownAction, { instituicao })
       )
     },
   },

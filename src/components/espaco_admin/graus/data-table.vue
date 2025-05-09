@@ -16,20 +16,13 @@ const props = defineProps<{
 
 const router = useRouter()
 const showAddModal = ref(false)
-const novaSala = ref({
-  Nome_sala: '',
-  Nome_localidade: ''
+const novoGrau = ref({
+  grau: ''
 })
 
-const localidades = ['Abrantes', 'Mafra', 'Rio Maior', 'Tomar', 'Torres Novas']
-
 const handleSubmit = () => {
-  console.log(novaSala.value)
+  console.log(novoGrau.value)
   showAddModal.value = false
-}
-
-const goToSala = (id: string) => {
-  router.push(`/sala/${id}`)
 }
 
 const sorting = ref<SortingState>([])
@@ -63,18 +56,9 @@ const table = useVueTable({
       <div class="flex-1">
         <Input 
           class="w-full h-[2.7rem]" 
-          placeholder="Procurar por sala..."
-          :model-value="table.getColumn('Nome_sala')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('Nome_sala')?.setFilterValue($event)" 
-        />
-      </div>
-      
-      <div class="flex-1">
-        <Input 
-          class="w-full h-[2.7rem]" 
-          placeholder="Procurar por localidade..."
-          :model-value="table.getColumn('Nome_localidade')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('Nome_localidade')?.setFilterValue($event)" 
+          placeholder="Procurar por grau..."
+          :model-value="table.getColumn('grau')?.getFilterValue() as string"
+          @update:model-value="table.getColumn('grau')?.setFilterValue($event)" 
         />
       </div>
 
@@ -82,7 +66,7 @@ const table = useVueTable({
         @click="showAddModal = true" 
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2"
       >
-        Adicionar Sala
+        Adicionar Grau
       </button>
     </div>
 
@@ -100,18 +84,17 @@ const table = useVueTable({
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <TableRow v-for="row in table.getRowModel().rows" :key="row.id"
-              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50 cursor-pointer"
-              @click="goToSala(row.original.id)">
+              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="p-2">
                 <FlexRender v-if="cell.column.id !== 'actions'" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-                <DropdownAction v-else :sala="row.original" @click.stop />
+                <DropdownAction v-else :grau="row.original" @click.stop />
               </TableCell>
             </TableRow>
           </template>
           <template v-else>
             <TableRow>
               <TableCell :colspan="props.columns.length" class="h-24 text-center">
-                Sem Salas.
+                Sem Graus Académicos.
               </TableCell>
             </TableRow>
           </template>
@@ -143,19 +126,11 @@ const table = useVueTable({
 
     <div v-if="showAddModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div class="bg-white rounded-lg p-6 w-96">
-        <h2 class="text-xl mb-4">Adicionar Sala</h2>
+        <h2 class="text-xl mb-4">Adicionar Grau Académico</h2>
         <form @submit.prevent="handleSubmit">
           <div class="mb-4">
-            <label class="block mb-1">Nome da Sala</label>
-            <input v-model="novaSala.Nome_sala" type="text" class="w-full border border-gray-300 rounded px-2 py-1" required />
-          </div>
-          
-          <div class="mb-4">
-            <label class="block mb-1">Localidade</label>
-            <select v-model="novaSala.Nome_localidade" class="w-full border border-gray-300 rounded px-2 py-1" required>
-              <option value="">Selecione a localidade</option>
-              <option v-for="localidade in localidades" :key="localidade" :value="localidade">{{ localidade }}</option>
-            </select>
+            <label class="block mb-1">Nome do Grau</label>
+            <input v-model="novoGrau.grau" type="text" class="w-full border border-gray-300 rounded px-2 py-1" required />
           </div>
 
           <div class="flex justify-center space-x-2">

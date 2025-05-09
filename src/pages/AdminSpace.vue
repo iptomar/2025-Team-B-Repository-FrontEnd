@@ -9,36 +9,29 @@ import { columns as columnsInstituicao } from '@/components/espaco_admin/institu
 import DataTableInstituicao from '@/components/espaco_admin/instituicao/data-table.vue';
 import DataTableTipologia from '@/components/espaco_admin/tipologia/data-table.vue';
 import { columns as columnsTipologia } from '@/components/espaco_admin/tipologia/columns.ts'
-import { getData } from '@/api/api';
-import type { Cadeira, Curso, Professor, Turma } from '@/components/interfaces';
-
+import { getLocalidades, getInstituicoes, getGrau, getTipologia } from '@/api/api';
+import type { Cadeira, Curso, Instituicao, Localidade, Grau, Tipologia } from '@/components/interfaces';
 
 const abaAtiva = ref<'Localidades' | 'Instituicao' | 'Grau' | 'Tipologia'>('Localidades');
 
-const data = ref<Curso[]>([]);
 const cursoSelecionado = ref<Curso | null>(null);
 const cadeirasCurso = ref<Cadeira[]>([]);
-const turmasCurso = ref<Turma[]>([]);
-const professoresCurso = ref<Professor[]>([]);
-
-
-const cursoId = ref(Number(1));
-
-
+const instituicoesData = ref<Instituicao[]>([]);
+const localidadesData = ref<Localidade[]>([]);
+const grausData = ref<Grau[]>([]);
+const tipologiasData = ref<Tipologia[]>([]);
 
 onMounted(async () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   try {
-    const cursos = await getData();
-    data.value = cursos;
-
-    cursoSelecionado.value = cursos.find(curso => curso.id === cursoId.value) || null;
+    localidadesData.value = await getLocalidades();
+    instituicoesData.value = await getInstituicoes();
+    grausData.value = await getGrau();
+    tipologiasData.value = await getTipologia();
 
     if (cursoSelecionado.value) {
       cadeirasCurso.value = cursoSelecionado.value.cadeiras || [];
-      turmasCurso.value = cursoSelecionado.value.turmas || [];
-      professoresCurso.value = cursoSelecionado.value.professores || [];
     }
   } catch (error) {
     console.error('Erro ao buscar os dados:', error);
@@ -47,9 +40,8 @@ onMounted(async () => {
 </script>
 
 <template>
-
   <!-- Secção do titulo   -->
-   <div class="mx-auto space-y-8">
+  <div class="mx-auto space-y-8">
     <div class="border-b pb-6">
       <h1 class="text-3xl font-bold text-black">Espaço Administrador</h1>
     </div>
@@ -94,14 +86,12 @@ onMounted(async () => {
       </button>
     </div>
 
-
     <!-- Secção das tabelas-->
-
     <div class="mt-6">
-      <DataTableGraus v-if="abaAtiva === 'Grau'" :columns="columnsGraus" :data="turmasCurso" />
-      <DataTableLocalidade v-if="abaAtiva === 'Localidades'" :columns="columnsLocalidade" :data="cadeirasCurso" />
-      <DataTableInstituicao v-if="abaAtiva === 'Instituicao'" :columns="columnsInstituicao" :data="professoresCurso" />
-      <DataTableTipologia v-if="abaAtiva === 'Tipologia'" :columns="columnsTipologia" :data="professoresCurso" />
+      <DataTableGraus v-if="abaAtiva === 'Grau'" :columns="columnsGraus" :data="grausData" />
+      <DataTableLocalidade v-if="abaAtiva === 'Localidades'" :columns="columnsLocalidade" :data="localidadesData" />
+      <DataTableInstituicao v-if="abaAtiva === 'Instituicao'" :columns="columnsInstituicao" :data="instituicoesData" />
+      <DataTableTipologia v-if="abaAtiva === 'Tipologia'" :columns="columnsTipologia" :data="tipologiasData" />
     </div>
-   </div>
+  </div>
 </template>

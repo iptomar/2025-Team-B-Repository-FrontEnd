@@ -59,8 +59,8 @@ const table = useVueTable({
         <Input 
           class="w-full h-[2.7rem]" 
           placeholder="Procurar por localidade..."
-          :model-value="table.getColumn('nome')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('nome')?.setFilterValue($event)" 
+          :model-value="table.getColumn('Localidade')?.getFilterValue() as string"
+          @update:model-value="table.getColumn('Localidade')?.setFilterValue($event)" 
         />
       </div>
 

@@ -9,7 +9,7 @@ export interface Localidade {
 
 export const columns: ColumnDef<Localidade>[] = [
   {
-    accessorKey: 'nome',
+    accessorKey: 'Localidade',
     header: ({ column }) => {
       return h(
         'button',
@@ -25,7 +25,7 @@ export const columns: ColumnDef<Localidade>[] = [
         ]
       )
     },
-    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('nome')),
+    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('Localidade')),
   },
   {
     id: 'actions',

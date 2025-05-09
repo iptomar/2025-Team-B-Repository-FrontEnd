@@ -9,28 +9,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-vue-next";
-import type { Sala } from "./columns";
+import type { Instituicao } from "./columns";
 
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
-const editItem = ref<Sala | null>(null);
+const editItem = ref<Instituicao | null>(null);
 
 const props = defineProps({
-  sala: {
-    type: Object as () => Sala,
+  instituicao: {
+    type: Object as () => Instituicao,
     required: true
   }
 });
 
-const localidades = ['Lisboa', 'Porto', 'Coimbra', 'Braga', 'Faro']; // Exemplo de localidades
+const localidades = ['Tomar', 'Torres Novas', 'Abrantes']; // Should match your API data
 
-const handleEdit = (sala: Sala) => {
-  editItem.value = { ...sala };
+const handleEdit = (instituicao: Instituicao) => {
+  editItem.value = { ...instituicao };
   showEditModal.value = true;
 };
 
-const handleDelete = (sala: Sala) => {
-  editItem.value = { ...sala };
+const handleDelete = (instituicao: Instituicao) => {
+  editItem.value = { ...instituicao };
   showDeleteModal.value = true;
 };
 
@@ -40,14 +40,12 @@ const closeModals = () => {
 };
 
 const handleSave = () => {
-  // Lógica para salvar as alterações na sala
-  console.log("Salvando alterações na sala:", editItem.value);
+  console.log("Salvando alterações na instituição:", editItem.value);
   closeModals();
 };
 
 const handleDeleteConfirm = () => {
-  // Lógica para excluir a sala
-  console.log("Excluindo sala:", editItem.value);
+  console.log("Excluindo instituição:", editItem.value);
   closeModals();
 };
 </script>
@@ -64,9 +62,9 @@ const handleDeleteConfirm = () => {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem @click="handleEdit(sala)">Editar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleEdit(instituicao)">Editar</DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem @click="handleDelete(sala)">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(instituicao)">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
@@ -75,22 +73,21 @@ const handleDeleteConfirm = () => {
     class="fixed inset-0 flex items-center z-10 justify-center bg-black bg-opacity-50"
   >
     <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-xl mb-4 text-center">Editar Sala</h2>
+      <h2 class="text-xl mb-4 text-center">Editar Instituição</h2>
       <form @submit.prevent="handleSave">
         <div class="mb-4">
-          <label class="block mb-1 text-center">Nome da Sala</label>
+          <label class="block mb-1 text-center">Nome da Instituição</label>
           <input
-            v-model="editItem.Nome_sala"
+            v-model="editItem.instituicao"
             type="text"
             class="w-full border border-gray-300 rounded px-2 py-1"
             required
           />
         </div>
-
         <div class="mb-4">
           <label class="block mb-1 text-center">Localidade</label>
           <select
-            v-model="editItem.Nome_localidade"
+            v-model="editItem.localidade"
             class="w-full border border-gray-300 rounded px-2 py-1"
             required
           >
@@ -125,7 +122,7 @@ const handleDeleteConfirm = () => {
   >
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-xl mb-4 text-center">Confirmar Eliminação</h2>
-      <p class="mb-4 text-center">Tem certeza de que deseja apagar a sala {{ editItem?.Nome_sala }}?</p>
+      <p class="mb-4 text-center">Tem certeza de que deseja apagar a instituição {{ editItem?.instituicao }}?</p>
       <div class="flex justify-center space-x-2">
         <button
           type="button"
