@@ -1,4 +1,4 @@
-import type { Curso } from "@/components/interfaces";
+import type { Curso, Grau, Instituicao, Localidade, Tipologia } from "@/components/interfaces";
 
 export async function getData(): Promise<Curso[]> {
   // Simulação de chamada à API
@@ -263,6 +263,79 @@ export async function getData(): Promise<Curso[]> {
       anoLetivo: "2022/2023",
       turmas: [],
       professores: [],
+    },
+  ];
+}
+
+export async function getLocalidades(): Promise<Localidade[]> {
+  // Simulação de chamada à API
+  return [
+    {
+      id: 1,
+      Localidade: "Tomar",
+    },
+    {
+      id: 2,
+      Localidade: "Torres Novas",
+    },
+    {
+      id: 3,
+      Localidade: "Abrantes",
+    },
+  ];
+}
+
+
+export async function getInstituicoes(): Promise<Instituicao[]> {
+  // Simulação de chamada à API
+  return [
+    {
+      id: 1,
+      instituicao: "IPT",
+      localidade: "Tomar",
+    },
+    {
+      id: 2,
+      instituicao: "ESTT",
+      localidade: "Torres Novas",
+    },
+    {
+      id: 3,
+      instituicao: "ESTA",
+      localidade: "Abrantes",
+    },
+  ];
+}
+
+export async function getGrau(): Promise<Grau[]> {
+  // Simulação de chamada à API
+  return [
+    {
+      id: 1,
+      grau: "Licenciatura",
+    },
+    {
+      id: 2,
+      grau: "Mestrado"
+    },
+    {
+      id: 3,
+      grau: "Doutoramento"
+    },
+  ];
+}
+
+
+export async function getTipologia(): Promise<Tipologia[]> {
+  // Simulação de chamada à API
+  return [
+    {
+      id: 1,
+      tipologia: "Teórica-Prática",
+    },
+    {
+      id: 2,
+      tipologia: "Pratica-laboratorial"
     },
   ];
 }
