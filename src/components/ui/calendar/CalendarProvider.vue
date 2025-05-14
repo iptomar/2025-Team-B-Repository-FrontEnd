@@ -72,7 +72,26 @@ function onDragStart(e){
 function onDragEnd(e){
   moveToPos(e)
   clampPos(e)
+  validatePos(e)
   draggedElement = null;
+}
+
+function validatePos(e){
+  var ev = null;
+  for (var i = 0; i < events.length; i++){
+    if(events[i].id == draggedElement){
+      ev = events[i];
+      break;
+    }
+  }
+  events.forEach(event => {
+    if(event.id != ev.id && event.table == ev.table){
+      if(event.x == ev.x && ev.y < event.y + event.time && ev.y + ev.time > event.y ){
+        ev.y = ev.tempY;
+        ev.x = ev.tempX;
+      }
+    }
+  })
 }
 
 function moveToPos(e){
@@ -85,7 +104,7 @@ function moveToPos(e){
     }
   })
   events.forEach(event => {
-    if(event.id == draggedElement && drop_target != null){
+    if(event.id === draggedElement && drop_target != null){
       event.table = drop_target?.table;
       var rect = drop_target?.drop_area.value.getBoundingClientRect();
       var y = (e.clientY  - (rect.top + parseInt(drop_target.offsetY))) / cell_height;
