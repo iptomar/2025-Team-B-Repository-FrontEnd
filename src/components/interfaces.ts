@@ -47,6 +47,27 @@ export interface Turma {
   semestre: number;
 }
 
+export interface Localidade {
+  id: number;
+  Localidade: string;
+}
+
+export interface Instituicao {
+  id: number;
+  instituicao: string;
+  localidade: string;
+}
+
+export interface Grau {
+  id: number;
+  grau: string;
+}
+
+export interface Tipologia {
+  id: number;
+  tipologia: string;
+}
+
 export interface Professor {
   id: number;
   nome: string;
@@ -58,4 +79,10 @@ export interface Aula {
   tipologia: string;
   professor: Professor;
   turmas: Turma[];
+}
+
+export interface Sala {
+  id: string
+  Nome_sala: string
+  Nome_localidade: string
 }

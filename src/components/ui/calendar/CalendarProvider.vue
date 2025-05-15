@@ -72,7 +72,26 @@ function onDragStart(e){
 function onDragEnd(e){
   moveToPos(e)
   clampPos(e)
+  validatePos(e)
   draggedElement = null;
+}
+
+function validatePos(e){
+  var ev = null;
+  for (var i = 0; i < events.length; i++){
+    if(events[i].id == draggedElement){
+      ev = events[i];
+      break;
+    }
+  }
+  events.forEach(event => {
+    if(event.id != ev.id && event.table == ev.table){
+      if(event.x == ev.x && ev.y < event.y + event.time && ev.y + ev.time > event.y ){
+        ev.y = ev.tempY;
+        ev.x = ev.tempX;
+      }
+    }
+  })
 }
 
 function moveToPos(e){
@@ -85,16 +104,21 @@ function moveToPos(e){
     }
   })
   events.forEach(event => {
-    if(event.id == draggedElement && drop_target != null){
+    if(event.id === draggedElement && drop_target != null){
       event.table = drop_target?.table;
       var rect = drop_target?.drop_area.value.getBoundingClientRect();
       var y = (e.clientY  - (rect.top + parseInt(drop_target.offsetY))) / cell_height;
       var x = (e.clientX  - (rect.left + parseInt(drop_target.offsetX))) / CELL_WIDTH;
-
+      //var offset_y_cells = target.offsetY/cell_height
       x = Math.max(x, 0)
-      y = Math.max(y, 0)
+      console.log(drop_target)
+      var cell_offset_y = drop_target.offsetY/cell_height
+      y = Math.max(y, -cell_offset_y)
+      y = Math.min(y, drop_target.slotsH - (event.time + cell_offset_y))
 
-      event.y = y;
+      //y = Math.min(y, height)
+
+      event.y = y - 0.5;
       event.x = x;
     }
   })
@@ -104,7 +128,7 @@ function clampPos(e){
   events.forEach(event => {
     if(event.id == draggedElement){
       event.x = Math.trunc(event.x)
-      event.y = Math.trunc(event.y)
+      event.y = Math.round(event.y)
     }
   })
 };

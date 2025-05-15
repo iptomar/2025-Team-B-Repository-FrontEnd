@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDays, DoorClosed, GraduationCap, Home, Settings, University, Users, LogOut } from "lucide-vue-next";
+import { DoorClosed, GraduationCap, Home, Settings, ShieldUser, Users, LogOut } from "lucide-vue-next";
 import {
   Sidebar,
   SidebarContent,
@@ -32,11 +32,6 @@ const items = [
     icon: GraduationCap,
   },
   {
-    title: "Professores",
-    url: "/professores",
-    icon: University,
-  },
-  {
     title: "Utilizadores",
     url: "/utilizadores",
     icon: Users,
@@ -45,6 +40,11 @@ const items = [
     title: "Salas",
     url: "/salas",
     icon: DoorClosed,
+  },
+  {
+    title: "Espaço Admin",
+    url: "/admin",
+    icon: ShieldUser,
   },
   {
     title: "Definições",
