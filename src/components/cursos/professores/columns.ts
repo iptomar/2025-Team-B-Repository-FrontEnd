@@ -1,7 +1,7 @@
 import { h } from "vue";
 import type { ColumnDef } from "@tanstack/vue-table";
 import DropdownAction from "./data-table-dropdown.vue";
-import type { Professor } from "../interfaces";
+import type { Professor } from "../../interfaces";
 
 export const columns: ColumnDef<Professor>[] = [
   {

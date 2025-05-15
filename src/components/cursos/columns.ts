@@ -29,7 +29,7 @@ export const columns: ColumnDef<Curso>[] = [
       ),
   },
   {
-    accessorKey: "instituicao",
+    accessorKey: "instituicao.instituicao",
     header: ({ column }) => {
       return h(
         "button",
@@ -46,33 +46,14 @@ export const columns: ColumnDef<Curso>[] = [
       );
     },
     cell: ({ row }) =>
-      h("div", { class: "ml-2 text-left" }, row.getValue("instituicao")),
+      h("div", { class: "ml-2 text-left" }, row.original.instituicao?.instituicao),
   },
+  
   {
-    accessorKey: "grau",
-    header: ({ column }) => {
-      return h(
-        "button",
-        {
-          class: "flex items-center space-x-2 bg-white hover:border-iptGreen",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
-        },
-        [
-          h("span", "Grau"),
-          h("svg", { class: "ml-2 h-4 w-4", viewBox: "0 0 24 24" }, [
-            h("path", { d: "M7 10l5 5 5-5H7z", fill: "currentColor" }),
-          ]),
-        ]
-      );
-    },
-    cell: ({ row }) =>
-      h("div", { class: "ml-2 text-left" }, row.getValue("grau")),
-  },
-  {
-    accessorKey: "respProf",
+    accessorKey: "professor.userName",
     header: () => h("div", "Professor Responsável"),
     cell: ({ row }) =>
-      h("div", { class: "text-left" }, row.getValue("respProf")),
+      h("div", { class: "text-left" }, row.original.professor?.userName),
   },
   {
     id: "actions",
@@ -90,16 +71,8 @@ export const columns: ColumnDef<Curso>[] = [
     },
   },
   {
-    id: "cursoOuGrau",
-    accessorFn: (row) => `${row.curso} ${row.grau}`,
-    filterFn: (row, columnId, filterValue) => {
-      const value = row.getValue(columnId) as string;
-      return value.toLowerCase().includes(filterValue.toLowerCase());
-    },
-  },
-  {
-    accessorKey: "anoLetivo",
+    accessorKey: "anoLetivoFK",
     header: "Ano Letivo",
-    cell: ({ row }) => h("div", {}, row.getValue("anoLetivo")),
+    cell: ({ row }) => h("div", {}, row.getValue("anoLetivoFK")),
   },
 ];

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import DataTableCadeiras from '@/components/cadeiras/data-table.vue';
-import DataTableTurmas from '@/components/turmas/data-table.vue';
-import DataTableProfessores from '@/components/professores/data-table.vue';
+import DataTableCadeiras from '@/components/cursos/cadeiras/data-table.vue';
+import DataTableTurmas from '@/components/cursos/turmas/data-table.vue';
+import DataTableProfessores from '@/components/cursos/professores/data-table.vue';
 import { getData } from '@/api/api';
-import { columns as columnsCadeiras } from '@/components/cadeiras/columns.ts';
-import { columns as columnsTurmas } from '@/components/turmas/columns.ts';
-import { columns as columnsProfessores } from '@/components/professores/columns.ts';
+import { columns as columnsCadeiras } from '@/components/cursos/cadeiras/columns';
+import { columns as columnsTurmas } from '@/components/cursos/turmas/columns';
+import { columns as columnsProfessores } from '@/components/cursos/professores/columns';
 import { BookCopy, Presentation, University } from 'lucide-vue-next';
 import type { Cadeira, Curso, Professor, Turma } from '@/components/interfaces';
 
