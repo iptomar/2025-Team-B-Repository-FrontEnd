@@ -29,7 +29,7 @@ export const columns: ColumnDef<Curso>[] = [
       ),
   },
   {
-    accessorKey: "instituicao",
+    accessorKey: "instituicao.instituicao",
     header: ({ column }) => {
       return h(
         "button",
@@ -46,14 +46,14 @@ export const columns: ColumnDef<Curso>[] = [
       );
     },
     cell: ({ row }) =>
-      h("div", { class: "ml-2 text-left" }, row.getValue("instituicao")),
+      h("div", { class: "ml-2 text-left" }, row.original.instituicao?.instituicao),
   },
   
   {
-    accessorKey: "respProf",
+    accessorKey: "professor.userName",
     header: () => h("div", "Professor Responsável"),
     cell: ({ row }) =>
-      h("div", { class: "text-left" }, row.getValue("respProf")),
+      h("div", { class: "text-left" }, row.original.professor?.userName),
   },
   {
     id: "actions",
@@ -71,8 +71,8 @@ export const columns: ColumnDef<Curso>[] = [
     },
   },
   {
-    accessorKey: "anoLetivo",
+    accessorKey: "anoLetivoFK",
     header: "Ano Letivo",
-    cell: ({ row }) => h("div", {}, row.getValue("anoLetivo")),
+    cell: ({ row }) => h("div", {}, row.getValue("anoLetivoFK")),
   },
 ];

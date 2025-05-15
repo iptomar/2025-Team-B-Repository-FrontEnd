@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TData, TValue">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import { FlexRender, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table'
@@ -7,32 +7,65 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
+import { fetchAnosLetivos } from '@/api/anosLetivos.ts'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { fetchCoordenadores, createCurso, fetchCursosPorAnoLetivo } from '@/api/cursos'
+import type { anoLetivo } from '../interfaces'
+import { fetchGraus } from '@/api/graus'
+import { fetchInstituicoes } from '@/api/instituicoes'
 
 const props = defineProps<{
-  columns: ColumnDef<TData & { id: number }, TValue>[]
+  columns: ColumnDef<TData & { id: number }, TValue>[],
   data: (TData & { id: number })[]
 }>()
 
-const graus = ['Licenciatura', 'Mestrado', 'Doutoramento'];
-const professores = ['Dr. Silva', 'Dra. Costa', 'Dr. Rodrigues'];
-const anosLetivos = ['2020/2021', '2021/2022', '2022/2023', '2023/2024', '2024/2025'];
-const instituicoes = ['ESTT', 'ESTA', 'ESTG'];
+const anosLetivos = ref<string[]>([])
+const anosLetivosRaw = ref<anoLetivo[]>([])
+const graus = ref<{ id: number; grau: string }[]>([])
+const professores = ref<{ id: string; userName: string }[]>([])
+const instituicoes = ref<{ id: number; instituicao: string }[]>([])
 
 const router = useRouter()
 const isCreateOpen = ref(false);
-const novoCurso = ref({
+
+interface NovoCurso {
+  curso: string,
+  grauFK: number | null,
+  professorFK: string,
+  anoLetivoFK: number | null,
+  instituicaoFK: number | null,
+}
+
+const novoCurso = ref<NovoCurso>({
   curso: '',
-  grau: '',
-  respProf: '',
-  anoLetivo: anosLetivos[anosLetivos.length - 1],
-  instituicao: ''
+  grauFK: null,
+  professorFK: '',
+  anoLetivoFK: null,
+  instituicaoFK: null,
 });
 
-const handleSubmit = () => {
-  // Enviar para backend
-  console.log(novoCurso.value);
-  isCreateOpen.value = false;
+const resetNovoCurso = () => {
+  novoCurso.value = {
+    curso: '',
+    grauFK: null,
+    professorFK: '',
+    anoLetivoFK: null,
+    instituicaoFK: null,
+  };
+};
+
+const handleSubmit = async () => {
+  try {
+    await createCurso(novoCurso.value);
+    isCreateOpen.value = false;
+    resetNovoCurso();
+
+    alert("Curso criado com sucesso!");
+
+  } catch (error) {
+    console.error("Erro ao criar curso:", error);
+    alert("Erro ao criar curso. Verifique os campos e tente novamente.");
+  }
 };
 
 const goToCurso = (id: number) => {
@@ -42,14 +75,13 @@ const goToCurso = (id: number) => {
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
 const columnVisibility = ref<VisibilityState>({
-  anoLetivo: false,
+  anoLetivoFK: false,
 })
 
-const currentPage = computed(() => table.getState().pagination.pageIndex + 1)
-const pageCount = computed(() => table.getPageCount())
+const cursosFiltrados = ref<TData[]>([]) as unknown as Ref<(TData & { id: number })[]>
 
 const table = useVueTable({
-  get data() { return props.data },
+  get data() { return cursosFiltrados.value },
   get columns() { return props.columns },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
@@ -65,9 +97,58 @@ const table = useVueTable({
   },
 });
 
+const currentPage = computed(() => table.getState().pagination.pageIndex + 1)
+const pageCount = computed(() => table.getPageCount())
+
+const anoSelecionado = ref<number | null>(null)
+
+watch(anoSelecionado, async (novoAno) => {
+  if (novoAno !== null) {
+    try {
+      const cursos = await fetchCursosPorAnoLetivo(novoAno);
+      cursosFiltrados.value = cursos;
+    } catch (error) {
+      console.error(error);
+      cursosFiltrados.value = [];
+    }
+  } else {
+    cursosFiltrados.value = [];
+  }
+});
+
+watch(isCreateOpen, (open) => {
+  if (open && anosLetivosRaw.value.length) {
+    const ultimoAno = [...anosLetivosRaw.value].sort((a, b) => b.id - a.id)[0];
+    if (novoCurso.value.anoLetivoFK !== ultimoAno.id) {
+      novoCurso.value.anoLetivoFK = ultimoAno.id;
+    }
+  }
+});
+
 onMounted(async () => {
-  const defaultAnoLetivo = anosLetivos[anosLetivos.length - 1];
-  table.getColumn('anoLetivo')?.setFilterValue(defaultAnoLetivo);
+  try {
+    const [anosResponse, grausResponse, profsResponse, instsResponse] = await Promise.all([
+      fetchAnosLetivos(),
+      fetchGraus(),
+      fetchCoordenadores(),
+      fetchInstituicoes()
+    ]);
+
+    anosLetivosRaw.value = anosResponse;
+    anosLetivos.value = anosResponse.map((item: anoLetivo) => item.anoLetivo);
+    graus.value = grausResponse;
+    professores.value = profsResponse;
+    instituicoes.value = instsResponse;
+
+    if (anosLetivosRaw.value.length > 0) {
+      const ultimoAno = [...anosLetivosRaw.value].sort((a, b) => b.id - a.id)[0];
+      anoSelecionado.value = ultimoAno.id;
+      novoCurso.value.anoLetivoFK = ultimoAno.id; 
+    }
+
+  } catch (error) {
+    console.error("Erro ao carregar dados iniciais:", error);
+  }
 });
 </script>
 
@@ -81,11 +162,9 @@ onMounted(async () => {
       </div>
 
       <div class="flex-1">
-        <select class="h-[2.6rem] border border-gray-300 rounded px-2 py-1"
-          :value="table.getColumn('anoLetivo')?.getFilterValue() || anosLetivos[anosLetivos.length - 1]"
-          @change="table.getColumn('anoLetivo')?.setFilterValue(($event.target as HTMLSelectElement).value)">
-          <option v-for="ano in anosLetivos.slice().reverse()" :key="ano" :value="ano">
-            {{ ano }}
+        <select v-model="anoSelecionado" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1">
+          <option v-for="ano in anosLetivosRaw.slice().reverse()" :key="ano.id" :value="ano.id">
+            {{ ano.anoLetivo }}
           </option>
         </select>
       </div>
@@ -95,7 +174,6 @@ onMounted(async () => {
         Criar Curso
       </button>
     </div>
-
 
     <div class="flex justify-center items-center overflow-auto border rounded-md">
       <Table class="w-full">
@@ -166,35 +244,34 @@ onMounted(async () => {
 
         <div>
           <label class="block text-sm mb-1">Grau</label>
-          <select v-model="novoCurso.grau" class="w-full border border-gray-300 rounded px-2 py-1" required>
+          <select v-model="novoCurso.grauFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
             <option value="">Selecione o grau</option>
-            <option v-for="grau in graus" :key="grau" :value="grau">{{ grau }}
-            </option>
+            <option v-for="grau in graus" :key="grau.id" :value="grau.id">{{ grau.grau }}</option>
           </select>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Professor Responsável</label>
-          <select v-model="novoCurso.respProf" class="w-full border border-gray-300 rounded px-2 py-1" required>
+          <select v-model="novoCurso.professorFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
             <option value="">Selecione o professor</option>
-            <option v-for="prof in professores" :key="prof" :value="prof">{{ prof }}
-            </option>
+            <option v-for="prof in professores" :key="prof.id" :value="prof.id">{{ prof.userName }}</option>
           </select>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Instituição</label>
-          <select v-model="novoCurso.instituicao" class="w-full border border-gray-300 rounded px-2 py-1" required>
+          <select v-model="novoCurso.instituicaoFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
             <option value="">Selecione a instituição</option>
-            <option v-for="instituicao in instituicoes" :key="instituicao" :value="instituicao">{{ instituicao }}
+            <option v-for="instituicao in instituicoes" :key="instituicao.id" :value="instituicao.id">
+              {{ instituicao.instituicao }}
             </option>
           </select>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Ano Letivo</label>
-          <input v-model="novoCurso.anoLetivo" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
-            readonly />
+          <input :value="anosLetivosRaw.find(a => a.id === novoCurso.anoLetivoFK)?.anoLetivo || ''" type="text"
+            class="w-full border border-gray-300 rounded px-2 py-1" readonly />
         </div>
 
         <DialogFooter class="mt-4">
