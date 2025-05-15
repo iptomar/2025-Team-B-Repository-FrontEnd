@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TData, TValue">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import { FlexRender, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table'
@@ -21,6 +21,7 @@ const novaSala = ref({
   Nome_localidade: ''
 })
 
+
 const localidades = ['Abrantes', 'Mafra', 'Rio Maior', 'Tomar', 'Torres Novas']
 
 const handleSubmit = () => {
@@ -34,8 +35,9 @@ const goToSala = (id: string) => {
 
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({})
-
+const columnVisibility = ref<VisibilityState>({
+  SalaOuLocalidade: false,
+})
 const currentPage = computed(() => table.getState().pagination.pageIndex + 1)
 const pageCount = computed(() => table.getPageCount())
 
@@ -55,6 +57,14 @@ const table = useVueTable({
     get columnVisibility() { return columnVisibility.value },
   },
 })
+
+
+const search = ref('');
+
+watch(search, (value) => {
+  table.getColumn('SalaOuLocalidade')?.setFilterValue(value);
+});
+
 </script>
 
 <template>
@@ -62,19 +72,9 @@ const table = useVueTable({
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">
         <Input 
+          v-model="search"
           class="w-full h-[2.7rem]" 
-          placeholder="Procurar por sala..."
-          :model-value="table.getColumn('Nome_sala')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('Nome_sala')?.setFilterValue($event)" 
-        />
-      </div>
-      
-      <div class="flex-1">
-        <Input 
-          class="w-full h-[2.7rem]" 
-          placeholder="Procurar por localidade..."
-          :model-value="table.getColumn('Nome_localidade')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('Nome_localidade')?.setFilterValue($event)" 
+          placeholder="Procurar por sala ou localidade..."
         />
       </div>
 

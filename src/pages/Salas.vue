@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import DataTable from '@/components/salas/data-table.vue'
-import { columns, type Sala } from '@/components/salas/columns'
+import { columns } from '@/components/salas/columns'
+import type { Sala } from '@/components/interfaces'
 
 const data = ref<Sala[]>([])
 

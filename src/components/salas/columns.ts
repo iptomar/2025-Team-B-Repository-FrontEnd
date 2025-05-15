@@ -1,12 +1,7 @@
 import { h } from 'vue'
 import type { ColumnDef } from '@tanstack/vue-table'
 import DropdownAction from './data-table-dropdown.vue'
-
-export interface Sala {
-  id: string
-  Nome_sala: string
-  Nome_localidade: string
-}
+import type { Sala } from '../interfaces'
 
 export const columns: ColumnDef<Sala>[] = [
   {
@@ -46,6 +41,14 @@ export const columns: ColumnDef<Sala>[] = [
       )
     },
     cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('Nome_localidade')),
+  },
+  {
+    id: "SalaOuLocalidade",
+    accessorFn: (row) => `${row.Nome_sala} ${row.Nome_localidade}`,
+    filterFn: (row, columnId, filterValue) => {
+      const value = row.getValue(columnId) as string;
+      return value.toLowerCase().includes(filterValue.toLowerCase());
+    },
   },
   {
     id: 'actions',

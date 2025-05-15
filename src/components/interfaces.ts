@@ -29,3 +29,9 @@ export interface Professor {
   id: number;
   nome: string;
 }
+
+export interface Sala {
+  id: string
+  Nome_sala: string
+  Nome_localidade: string
+}
