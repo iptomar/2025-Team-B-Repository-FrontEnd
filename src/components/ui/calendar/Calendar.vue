@@ -9,7 +9,9 @@ const cell_height = inject("cell_height");
 var events = inject("events")
 const drop_area = useTemplateRef('drop_area')
 let registerDropTarget = inject("register_drop_target")
-registerDropTarget({drop_area, table, offsetX: cell_width, offsetY: cell_height * 2});
+
+const time_frames = getTimeFrames();
+registerDropTarget({drop_area, table, offsetX: cell_width, offsetY: cell_height * 2, slotsH: time_frames.length, slotsW: 6});
 
 /* PROPS:
 *
@@ -52,7 +54,6 @@ const width = CELL_WIDTH * 7;
 const use_shortened_names = CELL_WIDTH < 100;
 const WEEKDAYS = use_shortened_names ? shortened_weekdays : weekdays
 
-const time_frames = getTimeFrames();
 
 /*
 * Events can be generated through this function.

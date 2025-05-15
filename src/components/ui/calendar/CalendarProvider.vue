@@ -109,11 +109,16 @@ function moveToPos(e){
       var rect = drop_target?.drop_area.value.getBoundingClientRect();
       var y = (e.clientY  - (rect.top + parseInt(drop_target.offsetY))) / cell_height;
       var x = (e.clientX  - (rect.left + parseInt(drop_target.offsetX))) / CELL_WIDTH;
-
+      //var offset_y_cells = target.offsetY/cell_height
       x = Math.max(x, 0)
-      y = Math.max(y, 0)
+      console.log(drop_target)
+      var cell_offset_y = drop_target.offsetY/cell_height
+      y = Math.max(y, -cell_offset_y)
+      y = Math.min(y, drop_target.slotsH - (event.time + cell_offset_y))
 
-      event.y = y;
+      //y = Math.min(y, height)
+
+      event.y = y - 0.5;
       event.x = x;
     }
   })
@@ -123,7 +128,7 @@ function clampPos(e){
   events.forEach(event => {
     if(event.id == draggedElement){
       event.x = Math.trunc(event.x)
-      event.y = Math.trunc(event.y)
+      event.y = Math.round(event.y)
     }
   })
 };
