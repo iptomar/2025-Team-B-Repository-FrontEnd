@@ -4,23 +4,16 @@ import './style.css';
 import App from './App.vue';
 import { createWebHistory, createRouter } from 'vue-router';
 import Login from './pages/Login.vue';
-import Inicio from './pages/Inicio.vue';
 import Salas from './pages/Salas.vue';
 import AdminSpace from './pages/AdminSpace.vue';
 import Cursos from './pages/Cursos.vue';
 import Utilizadores from './pages/Utilizadores.vue';
-import Definicoes from './pages/Definicoes.vue';
 import CreateUtilizador from './pages/CreateUtilizador.vue';
 import UpdateUtilizador from './pages/UpdateUtilizador.vue';
 
 
 const routes = [
   { path: "/", component: Login },
-  {
-    path: "/inicio",
-    component: Inicio,
-    meta: { requiresAuth: true },
-  },
   {
     path: "/salas",
     component: Salas,
@@ -54,11 +47,6 @@ const routes = [
   {
     path: "/utilizadores",
     component: Utilizadores,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/definicoes",
-    component: Definicoes,
     meta: { requiresAuth: true },
   },
   {

@@ -35,13 +35,13 @@ const router = useRouter();
 onBeforeMount(() => {
   const token = localStorage.getItem('token')
   if (token) {
-    router.push('/inicio')
+    router.push('/cursos')
   }
 })
 
 async function login(values) { 
   loading.value = true;
-  const url = "https://localhost:7110/api/auth/login";
+  const url = "https://localhost:7223/api/auth/login";
 
   try {
     const response = await fetch(url, {
@@ -58,7 +58,7 @@ async function login(values) {
 
     const json = await response.json();
     localStorage.setItem("token", json.token);
-    router.push('/inicio')
+    router.push('/cursos')
   } catch (error) {
     console.error("Erro ao fazer login:", error.message);
   } finally {

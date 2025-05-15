@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DoorClosed, GraduationCap, Home, Settings, ShieldUser, Users, LogOut } from "lucide-vue-next";
+import { DoorClosed, GraduationCap, Home, ShieldUser, Users, LogOut } from "lucide-vue-next";
 import {
   Sidebar,
   SidebarContent,
@@ -22,11 +22,6 @@ const logout = () => {
 
 const items = [
   {
-    title: "Início",
-    url: "/inicio",
-    icon: Home,
-  },
-  {
     title: "Cursos",
     url: "/cursos",
     icon: GraduationCap,
@@ -45,11 +40,6 @@ const items = [
     title: "Espaço Admin",
     url: "/admin",
     icon: ShieldUser,
-  },
-  {
-    title: "Definições",
-    url: "/definicoes",
-    icon: Settings,
   },
 ];
 </script>
