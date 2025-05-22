@@ -3,7 +3,7 @@ import type { ColumnDef } from "@tanstack/vue-table";
 import DropdownAction from "./data-table-dropdown.vue";
 import type { Curso } from "../interfaces";
 
-export const columns: ColumnDef<Curso>[] = [
+export const getColumns = (onRefresh: () => void): ColumnDef<Curso>[] => [
   {
     accessorKey: "curso",
     header: ({ column }) => {
@@ -66,7 +66,10 @@ export const columns: ColumnDef<Curso>[] = [
           class: "relative text-right",
           onClick: (event: Event) => event.stopPropagation(),
         },
-        h(DropdownAction, { curso })
+        h(DropdownAction, {
+          curso,
+          onRefresh,
+        })
       );
     },
   },

@@ -13,14 +13,18 @@ import { fetchCoordenadores, createCurso, fetchCursosPorAnoLetivo } from '@/api/
 import type { anoLetivo } from '../interfaces'
 import { fetchGraus } from '@/api/graus'
 import { fetchInstituicoes } from '@/api/instituicoes'
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const props = defineProps<{
-  columns: ColumnDef<TData & { id: number }, TValue>[],
-  data: (TData & { id: number })[]
+  columns: ColumnDef<TData, TValue>[],
+  data: TData[]
 }>()
 
-const anosLetivos = ref<string[]>([])
 const anosLetivosRaw = ref<anoLetivo[]>([])
+const anoSelecionado = ref<number | null>(null)
 const graus = ref<{ id: number; grau: string }[]>([])
 const professores = ref<{ id: string; userName: string }[]>([])
 const instituicoes = ref<{ id: number; instituicao: string }[]>([])
@@ -32,16 +36,16 @@ interface NovoCurso {
   curso: string,
   grauFK: number | null,
   professorFK: string,
-  anoLetivoFK: number | null,
   instituicaoFK: number | null,
+  anoLetivoFK: number | null,
 }
 
 const novoCurso = ref<NovoCurso>({
   curso: '',
   grauFK: null,
   professorFK: '',
-  anoLetivoFK: null,
   instituicaoFK: null,
+  anoLetivoFK: anoSelecionado.value ?? null,
 });
 
 const resetNovoCurso = () => {
@@ -49,22 +53,31 @@ const resetNovoCurso = () => {
     curso: '',
     grauFK: null,
     professorFK: '',
-    anoLetivoFK: null,
     instituicaoFK: null,
+    anoLetivoFK: anoSelecionado.value ?? null,
   };
 };
+
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>();
 
 const handleSubmit = async () => {
   try {
     await createCurso(novoCurso.value);
     isCreateOpen.value = false;
     resetNovoCurso();
-
-    alert("Curso criado com sucesso!");
-
+    emit('refresh');
+    toast({
+      description: 'Curso criado com sucesso!',
+      variant: 'success',
+    });
   } catch (error) {
-    console.error("Erro ao criar curso:", error);
-    alert("Erro ao criar curso. Verifique os campos e tente novamente.");
+    isCreateOpen.value = false;
+    toast({
+      description: 'Erro ao criar curso. Verifique os campos e tente novamente.',
+      variant: 'destructive',
+    });
   }
 };
 
@@ -80,8 +93,13 @@ const columnVisibility = ref<VisibilityState>({
 
 const cursosFiltrados = ref<TData[]>([]) as unknown as Ref<(TData & { id: number })[]>
 
+const cursosFiltradosPorAno = computed(() => {
+  if (!anoSelecionado.value) return props.data
+  return props.data.filter(curso => curso.anoLetivoFK === anoSelecionado.value)
+})
+
 const table = useVueTable({
-  get data() { return cursosFiltrados.value },
+  get data() { return cursosFiltradosPorAno.value },
   get columns() { return props.columns },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
@@ -100,31 +118,6 @@ const table = useVueTable({
 const currentPage = computed(() => table.getState().pagination.pageIndex + 1)
 const pageCount = computed(() => table.getPageCount())
 
-const anoSelecionado = ref<number | null>(null)
-
-watch(anoSelecionado, async (novoAno) => {
-  if (novoAno !== null) {
-    try {
-      const cursos = await fetchCursosPorAnoLetivo(novoAno);
-      cursosFiltrados.value = cursos;
-    } catch (error) {
-      console.error(error);
-      cursosFiltrados.value = [];
-    }
-  } else {
-    cursosFiltrados.value = [];
-  }
-});
-
-watch(isCreateOpen, (open) => {
-  if (open && anosLetivosRaw.value.length) {
-    const ultimoAno = [...anosLetivosRaw.value].sort((a, b) => b.id - a.id)[0];
-    if (novoCurso.value.anoLetivoFK !== ultimoAno.id) {
-      novoCurso.value.anoLetivoFK = ultimoAno.id;
-    }
-  }
-});
-
 onMounted(async () => {
   try {
     const [anosResponse, grausResponse, profsResponse, instsResponse] = await Promise.all([
@@ -135,7 +128,6 @@ onMounted(async () => {
     ]);
 
     anosLetivosRaw.value = anosResponse;
-    anosLetivos.value = anosResponse.map((item: anoLetivo) => item.anoLetivo);
     graus.value = grausResponse;
     professores.value = profsResponse;
     instituicoes.value = instsResponse;
@@ -143,9 +135,8 @@ onMounted(async () => {
     if (anosLetivosRaw.value.length > 0) {
       const ultimoAno = [...anosLetivosRaw.value].sort((a, b) => b.id - a.id)[0];
       anoSelecionado.value = ultimoAno.id;
-      novoCurso.value.anoLetivoFK = ultimoAno.id; 
+      novoCurso.value.anoLetivoFK = ultimoAno.id;
     }
-
   } catch (error) {
     console.error("Erro ao carregar dados iniciais:", error);
   }
@@ -153,6 +144,8 @@ onMounted(async () => {
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">
@@ -245,7 +238,7 @@ onMounted(async () => {
         <div>
           <label class="block text-sm mb-1">Grau</label>
           <select v-model="novoCurso.grauFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
-            <option value="">Selecione o grau</option>
+            <option :value="null" disabled selected>Selecione o grau</option>
             <option v-for="grau in graus" :key="grau.id" :value="grau.id">{{ grau.grau }}</option>
           </select>
         </div>
@@ -253,7 +246,7 @@ onMounted(async () => {
         <div>
           <label class="block text-sm mb-1">Professor Responsável</label>
           <select v-model="novoCurso.professorFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
-            <option value="">Selecione o professor</option>
+            <option value="" disabled selected>Selecione o professor</option>
             <option v-for="prof in professores" :key="prof.id" :value="prof.id">{{ prof.userName }}</option>
           </select>
         </div>
@@ -261,7 +254,7 @@ onMounted(async () => {
         <div>
           <label class="block text-sm mb-1">Instituição</label>
           <select v-model="novoCurso.instituicaoFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
-            <option value="">Selecione a instituição</option>
+            <option :value="null" disabled selected>Selecione a instituição</option>
             <option v-for="instituicao in instituicoes" :key="instituicao.id" :value="instituicao.id">
               {{ instituicao.instituicao }}
             </option>
@@ -281,7 +274,7 @@ onMounted(async () => {
           </Button>
           <Button type="button"
             class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
-            variant="ghost" @click="isCreateOpen = false">
+            variant="ghost" @click="() => { isCreateOpen = false; resetNovoCurso(); }">
             Cancelar
           </Button>
         </DialogFooter>
