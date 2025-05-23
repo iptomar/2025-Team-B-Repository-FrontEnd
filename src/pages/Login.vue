@@ -41,7 +41,7 @@ onBeforeMount(() => {
 
 async function login(values) { 
   loading.value = true;
-  const url = "https://localhost:7223/api/auth/login";
+  const url = "http://localhost:5039/api/auth/login";
 
   try {
     const response = await fetch(url, {

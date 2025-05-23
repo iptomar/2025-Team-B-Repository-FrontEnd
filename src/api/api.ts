@@ -522,75 +522,137 @@ export async function getData(): Promise<Curso[]> {
   ];
 }
 
+/**
+ *  Estas funções estão responsaveis pela obtenção dos dados relativos a pagina de administrador.
+ */
+
+/***
+ * Esta função faz uma chamada à API para obter as localidades disponíveis.
+ * @returns Uma lista de localidades disponíveis.
+ * @throws Um erro se a chamada à API falhar.
+ */
 export async function getLocalidades(): Promise<Localidade[]> {
-  // Simulação de chamada à API
-  return [
-    {
-      id: 1,
-      Localidade: "Tomar",
-    },
-    {
-      id: 2,
-      Localidade: "Torres Novas",
-    },
-    {
-      id: 3,
-      Localidade: "Abrantes",
-    },
-  ];
+  const response = await fetch('http://localhost:5039/api/localidades');
+  if (!response.ok) {
+    throw new Error('Falha ao buscar localidades');
+  }
+  return await response.json();
 }
 
-
+/***
+ * Esta função faz uma chamada à API para obter as instituições disponíveis.
+ * @returns Uma lista de instituições disponíveis.
+ * @throws Um erro se a chamada à API falhar.
+ */
 export async function getInstituicoes(): Promise<Instituicao[]> {
-  // Simulação de chamada à API
-  return [
-    {
-      id: 1,
-      instituicao: "IPT",
-      localidade: "Tomar",
-    },
-    {
-      id: 2,
-      instituicao: "ESTT",
-      localidade: "Torres Novas",
-    },
-    {
-      id: 3,
-      instituicao: "ESTA",
-      localidade: "Abrantes",
-    },
-  ];
+  const response = await fetch('http://localhost:5039/api/instituicoes');
+  if (!response.ok) {
+    throw new Error('Falha ao buscar instituições');
+  }
+  return await response.json();
 }
 
+
+/***
+ * Esta função faz uma chamada à API para obter os graus disponíveis.
+ * @returns Uma lista de graus disponíveis.
+ * @throws Um erro se a chamada à API falhar.
+ */
 export async function getGrau(): Promise<Grau[]> {
-  // Simulação de chamada à API
-  return [
-    {
-      id: 1,
-      grau: "Licenciatura",
+  const response = await fetch('http://localhost:5039/api/graus');
+  if (!response.ok) {
+    throw new Error('Falha ao buscar graus');
+  }
+  return await response.json();
+}
+
+/***
+ * Esta função faz uma chamada à API para criar um novo grau.
+ * @param grauData Os dados do grau a serem criados.
+ * @returns O grau criado.
+ * @throws Um erro se a chamada à API falhar.
+ */
+export async function createGrau(grauData: { grau: string }): Promise<Grau> {
+  const response = await fetch('http://localhost:5039/api/graus', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
-    {
-      id: 2,
-      grau: "Mestrado"
+    body: JSON.stringify(grauData)
+  });
+  
+  if (!response.ok) {
+    throw new Error('Falha ao criar grau');
+  }
+  return await response.json();
+}
+
+/***
+ * Esta função faz uma chamada à API para atualizar um grau existente.
+ * @param grau Os dados do grau a serem atualizados.
+ * @returns O grau atualizado.
+ * @throws Um erro se a chamada à API falhar.
+ */
+export async function updateGrau(grau: Grau): Promise<void> {
+  const response = await fetch(`http://localhost:5039/api/graus/${grau.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
     },
-    {
-      id: 3,
-      grau: "Doutoramento"
-    },
-  ];
+    body: JSON.stringify(grau)
+  });
+  
+  if (!response.ok) {
+    throw new Error('Falha ao atualizar grau');
+  }
+}
+
+/***
+ * Esta função faz uma chamada à API para excluir um grau existente.
+ * @param id O ID do grau a ser excluído.
+ * @throws Um erro se a chamada à API falhar.
+ */
+export async function deleteGrau(id: string): Promise<void> {
+  const response = await fetch(`http://localhost:5039/api/graus/${id}`, {
+    method: 'DELETE'
+  });
+  
+  if (!response.ok) {
+    throw new Error('Falha ao excluir grau');
+  }
 }
 
 
+/***
+ * Esta função faz uma chamada à API para obter as tipologias disponíveis.
+ * @returns Uma lista de tipologias disponíveis.
+ * @throws Um erro se a chamada à API falhar.
+ */
 export async function getTipologia(): Promise<Tipologia[]> {
-  // Simulação de chamada à API
-  return [
-    {
-      id: 1,
-      tipologia: "Teórica-Prática",
+  const response = await fetch('http://localhost:5039/api/tipologias');
+  if (!response.ok) {
+    throw new Error('Falha ao buscar tipologias');
+  }
+  return await response.json();
+}
+
+/***
+ * Esta função faz uma chamada à API para criar uma nova tipologia.
+ * @param tipologia Os dados da tipologia a serem criados.
+ * @returns A tipologia criada.
+ * @throws Um erro se a chamada à API falhar.
+ */
+export async function createTipologia(tipologia: { tipologia: string }): Promise<Tipologia> {
+  const response = await fetch('http://localhost:5039/api/tipologias', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
-    {
-      id: 2,
-      tipologia: "Pratica-laboratorial"
-    },
-  ];
+    body: JSON.stringify(tipologia),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Falha ao criar tipologia');
+  }
+  return await response.json();
 }
