@@ -1,4 +1,4 @@
-export const API_BASE_URL = "https://localhost:7223/api";
+import { API_BASE_URL } from "./api";
 
 export async function fetchCursos() {
   const response = await fetch(`${API_BASE_URL}/Cursos`);

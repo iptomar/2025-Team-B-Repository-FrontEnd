@@ -10,13 +10,17 @@ import { valueUpdater } from '@/lib/utils'
 import { fetchAnosLetivos } from '@/api/anosLetivos.ts'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchCoordenadores, createCurso, fetchCursosPorAnoLetivo } from '@/api/cursos'
-import type { anoLetivo } from '../interfaces'
+import type { Curso, anoLetivo } from '../interfaces'
 import { fetchGraus } from '@/api/graus'
 import { fetchInstituicoes } from '@/api/instituicoes'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
 
 const { toast } = useToast()
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const props = defineProps<{
   columns: ColumnDef<TData, TValue>[],
@@ -32,15 +36,7 @@ const instituicoes = ref<{ id: number; instituicao: string }[]>([])
 const router = useRouter()
 const isCreateOpen = ref(false);
 
-interface NovoCurso {
-  curso: string,
-  grauFK: number | null,
-  professorFK: string,
-  instituicaoFK: number | null,
-  anoLetivoFK: number | null,
-}
-
-const novoCurso = ref<NovoCurso>({
+const novoCurso = ref<Curso>({
   curso: '',
   grauFK: null,
   professorFK: '',
@@ -58,10 +54,6 @@ const resetNovoCurso = () => {
   };
 };
 
-const emit = defineEmits<{
-  (e: 'refresh'): void;
-}>();
-
 const handleSubmit = async () => {
   try {
     await createCurso(novoCurso.value);
@@ -69,13 +61,13 @@ const handleSubmit = async () => {
     resetNovoCurso();
     emit('refresh');
     toast({
-      description: 'Curso criado com sucesso!',
+      title: 'Curso criado com sucesso!',
       variant: 'success',
     });
   } catch (error) {
     isCreateOpen.value = false;
     toast({
-      description: 'Erro ao criar curso. Verifique os campos e tente novamente.',
+      title: 'Erro ao criar curso. Verifique os campos e tente novamente.',
       variant: 'destructive',
     });
   }

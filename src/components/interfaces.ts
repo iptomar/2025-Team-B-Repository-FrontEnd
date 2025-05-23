@@ -43,7 +43,7 @@ export interface Cadeira {
 export interface Turma {
   id: number;
   ano: number;
-  turma: string;
+  letra: string;
   semestre: number;
 }
 

@@ -1,3 +1,5 @@
+export const API_BASE_URL = "https://localhost:7223/api";
+
 import type { Curso, Grau, Instituicao, Localidade, Tipologia } from "@/components/interfaces";
 
 export async function getData(): Promise<Curso[]> {

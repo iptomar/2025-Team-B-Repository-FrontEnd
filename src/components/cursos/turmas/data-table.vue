@@ -21,20 +21,49 @@ import {
 } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { createTurma } from '@/api/turmas'
+
+const { toast } = useToast()
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const props = defineProps<{
-  columns: ColumnDef<TData & { id: number }, TValue>[]
-  data: (TData & { id: number })[]
-}>()
+  columns: ColumnDef<Turma, any>[],
+  data: Turma[],
+  cursoSelecionado: Curso | null
+}>();
 
 const router = useRouter()
 const isCreateOpen = ref(false);
-const novaTurma = ref({ nome: '', ano: 1, semestre: 1, turma: '' })
 
-const handleSubmit = () => {
-  // Enviar para backend
-  console.log(novaTurma.value);
-  isCreateOpen.value = false;
+const novaTurma = ref({
+  turma: '',
+  ano: 1,
+  semestre: 1,
+  letra: '',
+  cursoFK: props.cursoSelecionado ? props.cursoSelecionado.id : 0,
+});
+
+const resetNovaTurma = () => {
+  novaTurma.value = { nome: '', ano: 1, semestre: 1, turma: '' }
+}
+
+const handleSubmit = async () => {
+  try {
+    novaTurma.value.cursoFK = props.cursoSelecionado.id;
+    await createTurma(novaTurma.value);
+    emit('refresh');
+    resetNovaTurma()
+    toast({ title: 'Turma criada com sucesso!', variant: 'success' });
+    isCreateOpen.value = false;
+  } catch (error) {
+    isCreateOpen.value = false;
+    toast({ title: 'Erro ao criar turma. Verifique os campos e tente novamente.', variant: 'destructive' });
+  }
 };
 
 const goToTurma = (id: number) => {
@@ -73,6 +102,8 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex justify-end items-center pb-4 w-full space-x-20">
       <button @click="isCreateOpen = true"
@@ -145,7 +176,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label class="block text-sm mb-1">Turma</label>
-          <input v-model="novaTurma.turma" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="novaTurma.letra" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
             required />
         </div>
 
@@ -168,7 +199,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
           </Button>
           <Button type="button"
             class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
-            variant="ghost" @click="isCreateOpen = false">
+            variant="ghost" @click="() => { isCreateOpen = false; resetNovaTurma(); }">
             Cancelar
           </Button>
         </DialogFooter>
