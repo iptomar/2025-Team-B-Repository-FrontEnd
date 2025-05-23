@@ -1,12 +1,7 @@
 import { h } from 'vue'
 import type { ColumnDef } from '@tanstack/vue-table'
 import DropdownAction from './data-table-dropdown.vue'
-
-export interface Instituicao {
-  id: string
-  instituicao: string
-  localidade: string
-}
+import type { Instituicao } from '@/components/interfaces'
 
 export const columns: ColumnDef<Instituicao>[] = [
   {
@@ -26,10 +21,10 @@ export const columns: ColumnDef<Instituicao>[] = [
         ]
       )
     },
-    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('instituicao')),
+    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.original.instituicao),
   },
   {
-    accessorKey: 'localidade',
+    id: 'localidade',
     header: ({ column }) => {
       return h(
         'button',
@@ -45,13 +40,13 @@ export const columns: ColumnDef<Instituicao>[] = [
         ]
       )
     },
-    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('localidade')),
+    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.original.localidade.localidade),
   },
   {
     id: 'actions',
     enableHiding: false,
     cell: ({ row }) => {
-      const instituicao = row.original as Instituicao
+      const instituicao = row.original
       return h(
         'div',
         {

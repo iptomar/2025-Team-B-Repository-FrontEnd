@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="TData, TValue">
+<script setup lang="ts" generic="TData extends { id: string }, TValue">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
 import DropdownAction from './data-table-dropdown.vue'
+import { createGrau, fetchGraus } from '@/api/graus'
 
 const props = defineProps<{
-  columns: ColumnDef<TData & { id: string }, TValue>[]
-  data: (TData & { id: string })[]
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
 }>()
 
 const router = useRouter()
@@ -19,10 +20,45 @@ const showAddModal = ref(false)
 const novoGrau = ref({
   grau: ''
 })
+const isLoading = ref(false)
+const errorMessage = ref('')
+const tableData = ref<TData[]>(props.data)
 
-const handleSubmit = () => {
-  console.log(novoGrau.value)
-  showAddModal.value = false
+const handleSubmit = async () => {
+  if (!novoGrau.value.grau.trim()) {
+    errorMessage.value = 'Por favor, insira um grau válido'
+    return
+  }
+
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    await createGrau({
+      grau: novoGrau.value.grau
+    })
+    
+    novoGrau.value.grau = ''
+    showAddModal.value = false
+    refreshData()
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Ocorreu um erro ao criar o grau'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const refreshData = async () => {
+  try {
+    const data = await fetchGraus()
+    tableData.value = data as TData[]
+  } catch (error) {
+    console.error('Erro ao atualizar dados:', error)
+  }
+}
+
+const handleGrauAtualizado = () => {
+  refreshData()
 }
 
 const sorting = ref<SortingState>([])
@@ -33,7 +69,7 @@ const currentPage = computed(() => table.getState().pagination.pageIndex + 1)
 const pageCount = computed(() => table.getPageCount())
 
 const table = useVueTable({
-  get data() { return props.data },
+  get data() { return tableData.value },
   get columns() { return props.columns },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
@@ -87,7 +123,12 @@ const table = useVueTable({
               :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="p-2">
                 <FlexRender v-if="cell.column.id !== 'actions'" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-                <DropdownAction v-else :grau="row.original" @click.stop />
+                <DropdownAction 
+                  v-else 
+                  :grau="row.original" 
+                  @grau-atualizado="handleGrauAtualizado"
+                  @click.stop 
+                />
               </TableCell>
             </TableRow>
           </template>
@@ -103,7 +144,8 @@ const table = useVueTable({
     </div>
 
     <div class="flex items-center justify-center gap-2 mt-4">
-      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
+      <Button class="hover:border-iptGreen" variant="outline" size="sm" 
+        :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
         Anterior
       </Button>
      
@@ -119,7 +161,8 @@ const table = useVueTable({
         {{ page }}
       </button>
 
-      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+      <Button class="hover:border-iptGreen" variant="outline" size="sm" 
+        :disabled="!table.getCanNextPage()" @click="table.nextPage()">
         Próxima
       </Button>
     </div>
@@ -130,14 +173,34 @@ const table = useVueTable({
         <form @submit.prevent="handleSubmit">
           <div class="mb-4">
             <label class="block mb-1">Nome do Grau</label>
-            <input v-model="novoGrau.grau" type="text" class="w-full border border-gray-300 rounded px-2 py-1" required />
+            <input 
+              v-model="novoGrau.grau" 
+              type="text" 
+              class="w-full border border-gray-300 rounded px-2 py-1" 
+              required 
+              :disabled="isLoading"
+            />
+          </div>
+
+          <div v-if="errorMessage" class="mb-4 text-red-500 text-sm">
+            {{ errorMessage }}
           </div>
 
           <div class="flex justify-center space-x-2">
-            <button type="submit" class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded">
-              Adicionar
+            <button 
+              type="submit" 
+              class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded"
+              :disabled="isLoading"
+            >
+              <span v-if="!isLoading">Adicionar</span>
+              <span v-else>Processando...</span>
             </button>
-            <button type="button" @click="showAddModal = false" class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded">
+            <button 
+              type="button" 
+              @click="showAddModal = false" 
+              class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded"
+              :disabled="isLoading"
+            >
               Cancelar
             </button>
           </div>

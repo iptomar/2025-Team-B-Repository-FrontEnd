@@ -8,23 +8,66 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
 import DropdownAction from './data-table-dropdown.vue'
+import { getLocalidades, createLocalidade, deleteLocalidade, updateLocalidade } from '@/api/localidades'
+import type { Localidade } from '@/components/interfaces'
 
 const props = defineProps<{
   columns: ColumnDef<TData & { id: string }, TValue>[]
-  data: (TData & { id: string })[]
 }>()
+
+const data = ref<Localidade[]>([])
+
+const fetchData = async () => {
+  try {
+    data.value = await getLocalidades()
+  } catch (error) {
+    console.error('Erro ao buscar localidades:', error)
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
 
 const router = useRouter()
 const showAddModal = ref(false)
-const novaLocalidade = ref({
-  nome: ''
-})
+const novaLocalidade = ref('')
 
-const localidadesPadrao = ['Tomar', 'Abrantes', 'Torres Novas']
+const handleAddLocalidade = async () => {
+  try {
+    await createLocalidade(novaLocalidade.value)
+    await fetchData()
+    showAddModal.value = false
+    novaLocalidade.value = ''
+  } catch (error) {
+    console.error('Erro ao adicionar localidade:', error)
+  }
+}
 
-const handleSubmit = () => {
-  console.log(novaLocalidade.value)
-  showAddModal.value = false
+const handleDeleteLocalidade = async (id: number) => {
+  try {
+    await deleteLocalidade(id)
+    await fetchData()
+  } catch (error) {
+    console.error('Erro ao deletar localidade:', error)
+  }
+}
+
+const showEditModal = ref(false)
+const editItem = ref<Localidade | null>(null)
+
+const handleEditLocalidade = async () => {
+  if (!editItem.value) return
+  
+  try {
+    await updateLocalidade(editItem.value.id, editItem.value.localidade)
+    console.log('Localidade editada:', editItem.value)
+    await fetchData()
+    showEditModal.value = false  // Esta linha deve fechar o modal
+    editItem.value = null
+  } catch (error) {
+    console.error('Erro ao editar localidade:', error)
+  }
 }
 
 const sorting = ref<SortingState>([])
@@ -35,7 +78,7 @@ const currentPage = computed(() => table.getState().pagination.pageIndex + 1)
 const pageCount = computed(() => table.getPageCount())
 
 const table = useVueTable({
-  get data() { return props.data },
+  get data() { return data.value },
   get columns() { return props.columns },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
@@ -59,8 +102,8 @@ const table = useVueTable({
         <Input 
           class="w-full h-[2.7rem]" 
           placeholder="Procurar por localidade..."
-          :model-value="table.getColumn('Localidade')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('Localidade')?.setFilterValue($event)" 
+          :model-value="table.getColumn('localidade')?.getFilterValue() as string"
+          @update:model-value="table.getColumn('localidade')?.setFilterValue($event)" 
         />
       </div>
 
@@ -89,7 +132,12 @@ const table = useVueTable({
               :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="p-2">
                 <FlexRender v-if="cell.column.id !== 'actions'" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-                <DropdownAction v-else :localidade="row.original" @click.stop />
+                <DropdownAction 
+                  v-else 
+                  :localidade="row.original" 
+                  @edit="(item) => { editItem = item; showEditModal = true }" 
+                  @delete="handleDeleteLocalidade"
+                />
               </TableCell>
             </TableRow>
           </template>
@@ -126,16 +174,19 @@ const table = useVueTable({
       </Button>
     </div>
 
+    <!-- Add Modal -->
     <div v-if="showAddModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div class="bg-white rounded-lg p-6 w-96">
         <h2 class="text-xl mb-4">Adicionar Localidade</h2>
-        <form @submit.prevent="handleSubmit">
+        <form @submit.prevent="handleAddLocalidade">
           <div class="mb-4">
             <label class="block mb-1">Nome da Localidade</label>
-            <select v-model="novaLocalidade.nome" class="w-full border border-gray-300 rounded px-2 py-1" required>
-              <option value="">Selecione a localidade</option>
-              <option v-for="localidade in localidadesPadrao" :key="localidade" :value="localidade">{{ localidade }}</option>
-            </select>
+            <input
+              v-model="novaLocalidade"
+              type="text"
+              class="w-full border border-gray-300 rounded px-2 py-1"
+              required
+            />
           </div>
 
           <div class="flex justify-center space-x-2">
@@ -143,6 +194,33 @@ const table = useVueTable({
               Adicionar
             </button>
             <button type="button" @click="showAddModal = false" class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div v-if="showEditModal && editItem" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div class="bg-white rounded-lg p-6 w-96">
+        <h2 class="text-xl mb-4">Editar Localidade</h2>
+        <form @submit.prevent="handleEditLocalidade">
+          <div class="mb-4">
+            <label class="block mb-1">Nome da Localidade</label>
+            <input
+              v-model="editItem.localidade"
+              type="text"
+              class="w-full border border-gray-300 rounded px-2 py-1"
+              required
+            />
+          </div>
+
+          <div class="flex justify-center space-x-2">
+            <button type="submit" class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded">
+              Guardar
+            </button>
+            <button type="button" @click="showEditModal = false" class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded">
               Cancelar
             </button>
           </div>
