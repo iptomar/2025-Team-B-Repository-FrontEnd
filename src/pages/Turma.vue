@@ -59,6 +59,9 @@ events.push(
     });
 
 let EVENTS = ref(events);
+function print(){
+  window.print();
+}
 </script>
 
 <template>
@@ -68,6 +71,7 @@ let EVENTS = ref(events);
             <div class="mt-2 text-gray-600 space-y-1">
                 <p class="font-medium text-gray-700">{{ turmaSelecionada?.semestre }}ºSemestre</p>
             </div>
+            <button class="text-white" @click="print()">Imprimir</button>
         </div>
     </div>
 
