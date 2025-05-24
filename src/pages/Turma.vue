@@ -6,10 +6,44 @@ import Calendar from "@/components/ui/calendar/Calendar.vue";
 import CalendarProvider from "@/components/ui/calendar/CalendarProvider.vue";
 import type { Curso, Turma } from '@/components/interfaces';
 
+/**
+ * SignalR-Related-Data
+ */
+const ON_CONNECTION_START = "Send"
+const CONNECTION_HUB = "/hubdobloco"
+const API_BASE_URL = "https://localhost:7223"
+
+let connectionState = ref("LOADING");
+
+import {HubConnectionBuilder} from "@microsoft/signalr"
+
+let connection = new HubConnectionBuilder()
+    .withUrl(API_BASE_URL + CONNECTION_HUB)
+    .build();
+
+connection.start()
+    .then(
+        () => {
+          connected.value = true;
+          connection.invoke(ON_CONNECTION_START, turmaId)
+        }
+    ).catch(
+    (err) =>
+    {
+      connectionState.value = err.message;
+    }
+);
+
+connection.onclose((err) => {
+  connected.value = false;
+  connectionState.value = err.message;
+})
+
 const data = ref<Curso[]>([]);
 const turmaSelecionada = ref<Turma | null>(null);
 const route = useRoute();
 const turmaId = ref(Number(route.params.id));
+const connected = ref(false)
 
 onMounted(async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -17,48 +51,13 @@ onMounted(async () => {
     try {
         const cursos = await getData();
         data.value = cursos;
-
+        console.log(turmaId.value)
         turmaSelecionada.value = cursos.flatMap(curso => curso.turmas).find(turma => turma.id === turmaId.value) || null;
     } catch (error) {
         console.error('Erro ao buscar os dados:', error);
     }
 });
 
-let events = [];
-events.push(
-    {
-        id: events.length.toString(),
-        table: 1,
-        x: 0,
-        y: 0,
-        tempX: 0,
-        tempY: 0,
-        offsetX: 0,
-        offsetY: 0,
-        time: 2,
-        name: "LOL",
-        type: "PL",
-        classroom: "B122",
-        teacher: "Ramos"
-    });
-events.push(
-    {
-        id: events.length.toString(),
-        table: 1,
-        x: 0,
-        y: 4,
-        tempX: 0,
-        tempY: 0,
-        offsetX: 0,
-        offsetY: 0,
-        time: 1,
-        name: "LOL",
-        type: "PL",
-        classroom: "B123",
-        teacher: "Ramos"
-    });
-
-let EVENTS = ref(events);
 </script>
 
 <template>
@@ -71,9 +70,12 @@ let EVENTS = ref(events);
         </div>
     </div>
 
-    <CalendarProvider :events="EVENTS" cell_width="148" cell_height="30" style={}>
+    <CalendarProvider v-if="connected" cell_width="148" cell_height="30" style={}>
         <div class="flex">
             <Calendar table="0" />
         </div>
     </CalendarProvider>
+    <div v-else>
+      {{connectionState}}
+    </div>
 </template>
