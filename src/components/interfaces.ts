@@ -45,6 +45,11 @@ export interface Turma {
   ano: number;
   letra: string;
   semestre: number;
+  cursoFK: number;
+  curso: {
+    id: number;
+    curso: string;
+  }
 }
 
 export interface Localidade {
@@ -70,7 +75,8 @@ export interface Tipologia {
 
 export interface Professor {
   id: number;
-  nome: string;
+  userName: string;
+  email: string;
 }
 
 export interface Aula {

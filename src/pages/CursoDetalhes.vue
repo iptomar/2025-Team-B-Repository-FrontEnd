@@ -4,14 +4,14 @@ import { useRoute } from 'vue-router';
 import DataTableCadeiras from '@/components/cursos/cadeiras/data-table.vue';
 import DataTableTurmas from '@/components/cursos/turmas/data-table.vue';
 import DataTableProfessores from '@/components/cursos/professores/data-table.vue';
-import { getData } from '@/api/api';
 import { columns as columnsCadeiras } from '@/components/cursos/cadeiras/columns';
 import { getTurmas } from '@/components/cursos/turmas/columns';
-import { columns as columnsProfessores } from '@/components/cursos/professores/columns';
+import { getProfessores } from '@/components/cursos/professores/columns';
 import { BookCopy, Presentation, University } from 'lucide-vue-next';
 import type { Cadeira, Curso, Professor, Turma } from '@/components/interfaces';
 import { fetchCursos } from '@/api/cursos';
 import { fetchTurmas } from '@/api/turmas';
+import { fetchProfessoresDoCurso } from '@/api/professores';
 
 const data = ref<Curso[]>([]);
 const cursoSelecionado = ref<Curso | null>(null);
@@ -26,7 +26,17 @@ const abaAtiva = ref<'turmas' | 'cadeiras' | 'professores'>('turmas');
 
 const carregarTurmas = async () => {
   const todasTurmas = await fetchTurmas();
-  turmasCurso.value = todasTurmas.filter(turma => turma.cursoFK === cursoId.value);
+  turmasCurso.value = todasTurmas.filter((turma: Turma) => turma.cursoFK === cursoId.value);
+};
+
+const carregarProfessores = async () => {
+  if (!cursoId.value) return;
+  try {
+    const professores = await fetchProfessoresDoCurso(cursoId.value);
+    professoresCurso.value = professores;
+  } catch (error) {
+    console.error('Erro ao carregar professores:', error);
+  }
 };
 
 onMounted(async () => {
@@ -35,13 +45,12 @@ onMounted(async () => {
   try {
     const cursos = await fetchCursos();
     data.value = cursos;
-    cursoSelecionado.value = cursos.find(curso => curso.id === cursoId.value) || null;
+    cursoSelecionado.value = cursos.find((curso: Curso) => curso.id === cursoId.value) || null;
 
     if (cursoSelecionado.value) {
       await carregarTurmas();
-
+      await carregarProfessores();
       cadeirasCurso.value = cursoSelecionado.value.cadeiras || [];
-      professoresCurso.value = cursoSelecionado.value.professores || [];
     }
   } catch (error) {
     console.error('Erro ao buscar os dados:', error);
@@ -96,7 +105,7 @@ onMounted(async () => {
       <DataTableTurmas v-if="abaAtiva === 'turmas'" :columns="getTurmas(carregarTurmas)" :data="turmasCurso"
         @refresh="carregarTurmas" :curso-selecionado="cursoSelecionado" />
       <DataTableCadeiras v-if="abaAtiva === 'cadeiras'" :columns="columnsCadeiras" :data="cadeirasCurso" />
-      <DataTableProfessores v-if="abaAtiva === 'professores'" :columns="columnsProfessores" :data="professoresCurso" />
+      <DataTableProfessores v-if="abaAtiva === 'professores'" :columns="getProfessores(carregarProfessores, cursoId)" :data="professoresCurso" @refresh="carregarProfessores"  :curso-id="cursoId" :professores-no-curso="professoresCurso.map(p => ({ ...p, id: String(p.id) }))" />
     </div>
   </div>
 </template>

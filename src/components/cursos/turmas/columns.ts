@@ -78,8 +78,7 @@ export const getTurmas = (onRefresh: () => void): ColumnDef<Turma>[] => [
           class: "relative text-right",
           onClick: (event: Event) => event.stopPropagation(),
         },
-        h(DropdownAction, { turma,
-          onRefresh, })
+        h(DropdownAction, { turma, onRefresh })
       );
     },
   },

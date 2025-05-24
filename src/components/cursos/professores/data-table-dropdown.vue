@@ -9,26 +9,49 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-vue-next";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { removeProfessorDoCurso } from "@/api/professores";
 
-const Turma = ref<any>(null);
+const { toast } = useToast();
+
+const Professor = ref<any>(null);
 const isDeleteOpen = ref(false);
 
-defineProps({
-  turma: Object,
-});
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
-const handleDelete = (turma: any) => {
-  Turma.value = turma;
+const props = defineProps<{
+  professor: any,
+  cursoId: number
+}>();
+
+const handleDelete = (professor: any) => {
+  Professor.value = {
+    CursoFK: props.cursoId,
+    ProfessorFK: professor.id,
+    ...professor,
+  };
   isDeleteOpen.value = true;
 };
 
-const handleDeleteConfirm = () => {
-  console.log("Excluindo item:", Turma.value);
-  isDeleteOpen.value = false;
+const handleDeleteConfirm = async () => {
+  try {
+    const { CursoFK, ProfessorFK } = Professor.value;
+    await removeProfessorDoCurso(CursoFK, ProfessorFK);
+    isDeleteOpen.value = false;
+    toast({ title: "Professor removido com sucesso.", variant: "success" });
+    emit("refresh");
+  } catch (error) {
+    isDeleteOpen.value = false;
+    toast({ title: "Não foi possível remover o professor.", variant: "destructive" });
+  }
 };
 </script>
 
 <template>
+  <Toaster />
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" class="w-8 h-8 p-0 bg-white border hover:border-iptGreen">
@@ -37,7 +60,7 @@ const handleDeleteConfirm = () => {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem @click="handleDelete(turma)">Excluir</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(professor)">Excluir</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 

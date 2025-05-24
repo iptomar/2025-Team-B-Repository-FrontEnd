@@ -24,12 +24,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
 import { createTurma } from '@/api/turmas'
+import type { Curso, Turma } from '@/components/interfaces'
 
 const { toast } = useToast()
-
-const emit = defineEmits<{
-  (e: 'refresh'): void
-}>();
 
 const props = defineProps<{
   columns: ColumnDef<Turma, any>[],
@@ -37,11 +34,14 @@ const props = defineProps<{
   cursoSelecionado: Curso | null
 }>();
 
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
+
 const router = useRouter()
 const isCreateOpen = ref(false);
 
 const novaTurma = ref({
-  turma: '',
   ano: 1,
   semestre: 1,
   letra: '',
@@ -49,12 +49,19 @@ const novaTurma = ref({
 });
 
 const resetNovaTurma = () => {
-  novaTurma.value = { nome: '', ano: 1, semestre: 1, turma: '' }
+  novaTurma.value = { 
+    ano: 1, 
+    semestre: 1, 
+    letra: '', 
+    cursoFK: props.cursoSelecionado ? props.cursoSelecionado.id : 0 
+  }
 }
 
 const handleSubmit = async () => {
   try {
-    novaTurma.value.cursoFK = props.cursoSelecionado.id;
+    if (props.cursoSelecionado) {
+      novaTurma.value.cursoFK = props.cursoSelecionado.id;
+    }
     await createTurma(novaTurma.value);
     emit('refresh');
     resetNovaTurma()
@@ -190,6 +197,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
           <label class="block text-sm mb-1">Semestre</label>
           <input v-model="novaTurma.semestre" type="number" min="1" max="3" @input="limitValue('semestre', 1, 3)"
             class="w-full border border-gray-300 rounded px-2 py-1" required />
+          <p class="text-xs text-gray-500">* 3 - Para turmas anuais</p>
         </div>
 
         <DialogFooter class="mt-4">
