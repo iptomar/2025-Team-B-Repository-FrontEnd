@@ -1,32 +1,31 @@
 <script setup lang="ts">
 import { University, MapPin, Award, ClipboardType } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
-import { columns as columnsGraus } from '@/components/espaco_admin/graus/columns.ts';
+import { createColumns as columnsGraus } from '@/components/espaco_admin/graus/columns.ts';
 import DataTableGraus from '@/components/espaco_admin/graus/data-table.vue';
-import { columns as columnsLocalidade } from '@/components/espaco_admin/localidades/columns.ts';
+import { getColumns as columnsLocalidade } from '@/components/espaco_admin/localidades/columns.ts';
 import DataTableLocalidade from '@/components/espaco_admin/localidades/data-table.vue';
-import { columns as columnsInstituicao } from '@/components/espaco_admin/instituicao/columns.ts';
+import { getColumns as columnsInstituicao } from '@/components/espaco_admin/instituicao/columns.ts';
 import DataTableInstituicao from '@/components/espaco_admin/instituicao/data-table.vue';
 import DataTableTipologia from '@/components/espaco_admin/tipologia/data-table.vue';
-import { columns as columnsTipologia } from '@/components/espaco_admin/tipologia/columns.ts'
-import { getLocalidades, getInstituicoes, getGrau, getTipologia } from '@/api/api';
-import type { Cadeira, Curso, Instituicao, Localidade, Grau, Tipologia } from '@/components/interfaces';
+import { createColumns as columnsTipologia } from '@/components/espaco_admin/tipologia/columns.ts'
+import type { Instituicao, Localidade, Grau, Tipologia } from '@/components/interfaces';
+import csv_picker from '@/components/espaco_admin/csv_picker/csv_picker.vue';
+import { getLocalidades } from '@/api/localidades';
+import { getInstituicoes } from '@/api/instituicoes';
+import { getGrau } from '@/api/graus';
+import { getTipologia } from '@/api/tipologias';
 
-const abaAtiva = ref<'Localidades' | 'Instituicao' | 'Grau' | 'Tipologia'>('Localidades');
+const abaAtiva = ref<'Localidades' | 'Instituicao' | 'Grau' | 'Tipologia' | 'ImportacaoDeDados'>('Localidades');
 
-// Data refs
-const cursoSelecionado = ref<Curso | null>(null);
-const cadeirasCurso = ref<Cadeira[]>([]);
 const instituicoesData = ref<Instituicao[]>([]);
 const localidadesData = ref<Localidade[]>([]);
 const grausData = ref<Grau[]>([]);
 const tipologiasData = ref<Tipologia[]>([]);
 
-// Fetch functions
 const fetchGraus = async () => {
   try {
     grausData.value = await getGrau();
-    console.log('Graus carregados:', grausData.value); // Debug log
   } catch (error) {
     console.error('Erro ao buscar graus:', error);
   }
@@ -34,128 +33,96 @@ const fetchGraus = async () => {
 
 const fetchAllData = async () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  
+
   try {
     [localidadesData.value, instituicoesData.value, tipologiasData.value] = await Promise.all([
       getLocalidades(),
       getInstituicoes(),
       getTipologia()
     ]);
-    
+
     await fetchGraus();
 
-    if (cursoSelecionado.value) {
-      cadeirasCurso.value = cursoSelecionado.value.cadeiras || [];
-    }
   } catch (error) {
     console.error('Erro ao buscar os dados:', error);
   }
 };
 
-// Event handler for when a new degree is created
-const handleGrauCriado = () => {
-  fetchGraus(); // Refresh the degrees list
-};
-
-// Initialize
 onMounted(() => {
-  console.log('Component mounted, fetching data...'); // Debug log
   fetchAllData();
 });
 </script>
 
 <template>
   <div class="mx-auto space-y-8">
-    <!-- Header Section -->
     <div class="border-b pb-6">
       <h1 class="text-3xl font-bold text-black">Espaço Administrador</h1>
     </div>
 
-    <!-- Navigation Buttons -->
     <div class="flex gap-4 justify-center">
-      <button 
-        @click="abaAtiva = 'Localidades'" 
-        :class="[
-          'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
-          abaAtiva === 'Localidades'
-            ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
-            : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
-        ]"
-      >
+      <button @click="abaAtiva = 'Localidades'" :class="[
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
+        abaAtiva === 'Localidades'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
+      ]">
         <MapPin class="w-5 h-5 mr-2 stroke-[2.5]" />
         Localidades
       </button>
-      
-      <button 
-        @click="abaAtiva = 'Instituicao'" 
-        :class="[
-          'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
-          abaAtiva === 'Instituicao'
-            ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
-            : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
-        ]"
-      >
+
+      <button @click="abaAtiva = 'Instituicao'" :class="[
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
+        abaAtiva === 'Instituicao'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
+      ]">
         <University class="w-5 h-5 mr-2 stroke-[2.5]" />
         Instituição
       </button>
-      
-      <button 
-        @click="abaAtiva = 'Grau'" 
-        :class="[
-          'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
-          abaAtiva === 'Grau'
-            ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
-            : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
-        ]"
-      >
+
+      <button @click="abaAtiva = 'Grau'" :class="[
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
+        abaAtiva === 'Grau'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
+      ]">
         <Award class="w-5 h-5 mr-2 stroke-[2.5]" />
         Grau
       </button>
-      
-      <button 
-        @click="abaAtiva = 'Tipologia'" 
-        :class="[
-          'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
-          abaAtiva === 'Tipologia'
-            ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
-            : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
-        ]"
-      >
+
+      <button @click="abaAtiva = 'Tipologia'" :class="[
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
+        abaAtiva === 'Tipologia'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
+      ]">
         <ClipboardType class="w-5 h-5 mr-2 stroke-[2.5]" />
         Tipologia
       </button>
+
+      <button @click="abaAtiva = 'ImportacaoDeDados'" :class="[
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
+        abaAtiva === 'ImportacaoDeDados'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
+      ]">
+        <ClipboardType class="w-5 h-5 mr-2 stroke-[2.5]" />
+        Importação de dados
+      </button>
     </div>
 
-    <!-- Tables Section -->
     <div class="mt-6">
-      <template v-if="abaAtiva === 'Grau'">
-        <DataTableGraus 
-          :columns="columnsGraus" 
-          :data="grausData"
-          @grau-criado="handleGrauCriado"
-        />
-        <div v-if="grausData.length === 0" class="text-center py-8 text-gray-500">
-          Nenhum grau académico encontrado
-        </div>
-      </template>
-      
-      <DataTableLocalidade 
-        v-if="abaAtiva === 'Localidades'" 
-        :columns="columnsLocalidade" 
-        :data="localidadesData" 
-      />
-      
-      <DataTableInstituicao 
-        v-if="abaAtiva === 'Instituicao'" 
-        :columns="columnsInstituicao" 
-        :data="instituicoesData" 
-      />
-      
-      <DataTableTipologia 
-        v-if="abaAtiva === 'Tipologia'" 
-        :columns="columnsTipologia" 
-        :data="tipologiasData" 
-      />
+      <DataTableGraus v-if="abaAtiva === 'Grau'" :columns="columnsGraus" :data="grausData" />
+
+      <DataTableLocalidade v-if="abaAtiva === 'Localidades'" :columns="columnsLocalidade" :data="localidadesData" />
+
+      <DataTableInstituicao v-if="abaAtiva === 'Instituicao'" :columns="columnsInstituicao" :data="instituicoesData" />
+
+      <DataTableTipologia v-if="abaAtiva === 'Tipologia'" :columns="columnsTipologia" :data="tipologiasData" />
+
+      <div v-if="abaAtiva === 'ImportacaoDeDados'">
+        <csv_picker />
+      </div>
     </div>
   </div>
 </template>

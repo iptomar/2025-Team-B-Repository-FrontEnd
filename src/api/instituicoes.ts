@@ -1,6 +1,5 @@
 import type { Instituicao } from "@/components/interfaces";
-
-const API_BASE_URL = 'http://localhost:5039/api';
+import { API_BASE_URL } from "./api";
 
 export async function fetchInstituicoes() {
   const response = await fetch(`${API_BASE_URL}/Instituicoes`);

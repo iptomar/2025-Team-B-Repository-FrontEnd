@@ -1,7 +1,5 @@
 import type { Localidade } from "@/components/interfaces";
-
-
-const API_BASE_URL = 'http://localhost:5039/api';
+import { API_BASE_URL } from "./api";
 
 /***
  * Esta função faz uma chamada à API para obter as localidades disponíveis.

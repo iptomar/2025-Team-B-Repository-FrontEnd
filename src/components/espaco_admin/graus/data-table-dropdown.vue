@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, defineProps } from "vue";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,23 +8,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-vue-next";
-import type { Grau } from "./columns";
 import { deleteGrau, updateGrau } from "@/api/graus";
+import type { Grau } from "@/components/interfaces";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MoreHorizontal } from "lucide-vue-next";
+
+const props = defineProps<{
+  grau: Grau
+}>();
 
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editItem = ref<Grau | null>(null);
-const isLoading = ref(false);
 
-const props = defineProps({
-  grau: {
-    type: Object as () => Grau,
-    required: true
-  }
-});
-
-const emit = defineEmits(['grau-atualizado']);
+const emit = defineEmits(['grau-atualizado'])
 
 const handleEdit = (grau: Grau) => {
   editItem.value = { ...grau };
@@ -44,31 +41,25 @@ const closeModals = () => {
 const handleSave = async () => {
   if (!editItem.value) return;
   
-  isLoading.value = true;
   try {
     await updateGrau(editItem.value);
     emit('grau-atualizado');
     closeModals();
   } catch (error) {
     console.error('Erro ao atualizar grau:', error);
-  } finally {
-    isLoading.value = false;
   }
 };
 
 const handleDeleteConfirm = async () => {
   if (!editItem.value?.id) return;
   
-  isLoading.value = true;
   try {
     await deleteGrau(editItem.value.id.toString());
     emit('grau-atualizado');
     closeModals();
   } catch (error) {
     console.error('Erro ao excluir grau:', error);
-  } finally {
-    isLoading.value = false;
-  }
+  } 
 };
 </script>
 
@@ -84,79 +75,64 @@ const handleDeleteConfirm = async () => {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem @click="handleEdit(grau)">Editar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleEdit(props.grau)">Editar</DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem @click="handleDelete(grau)">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(props.grau)" class="text-red-500">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
-  <!-- Edit Modal -->
-  <div
-    v-if="showEditModal && editItem"
-    class="fixed inset-0 flex items-center z-10 justify-center bg-black bg-opacity-50"
-  >
-    <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-xl mb-4 text-center">Editar Grau Académico</h2>
-      <form @submit.prevent="handleSave">
-        <div class="mb-4">
-          <label class="block mb-1 text-center">Nome do Grau</label>
-          <input
-            v-model="editItem.grau"
-            type="text"
-            class="w-full border border-gray-300 rounded px-2 py-1"
-            required
-            :disabled="isLoading"
-          />
-        </div>
-        <div class="flex justify-center space-x-2">
-          <button
-            type="submit"
-            class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded"
-            :disabled="isLoading"
-          >
-            <span v-if="!isLoading">Guardar</span>
-            <span v-else>Guardando...</span>
-          </button>
-          <button
-            type="button"
-            @click="closeModals"
-            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded"
-            :disabled="isLoading"
-          >
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </div>
+<Dialog v-model:open="showEditModal">
+  <DialogContent class="w-full max-w-md">
+    <DialogHeader>
+      <DialogTitle>Editar Grau Académico</DialogTitle>
+      <DialogDescription>
+            Altere o grau académico e clique em "Guardar".
+          </DialogDescription>
+    </DialogHeader>
+    <form @submit.prevent="handleSave" v-if="editItem" class="space-y-4">
+  <div>
+    <label class="block mb-1">Nome do Grau</label>
+    <input
+      v-model="editItem.grau"
+      type="text"
+      class="w-full border border-gray-300 rounded px-2 py-1"
+      required
+    />
   </div>
+  <DialogFooter class="flex justify-end gap-2">
+    <Button type="submit"
+            class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
+      Guardar
+    </Button>
+    <Button type="button"
+            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+            variant="ghost" @click="showEditModal = false, editItem = null">
+      Cancelar
+    </Button>
+  </DialogFooter>
+</form>
+  </DialogContent>
+</Dialog>
 
-  <!-- Delete Confirmation Modal -->
-  <div
-    v-if="showDeleteModal && editItem"
-    class="fixed inset-0 flex items-center z-10 justify-center bg-black bg-opacity-50"
-  >
-    <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-xl mb-4 text-center">Confirmar Eliminação</h2>
-      <p class="mb-4 text-center">Tem certeza de que deseja apagar o grau {{ editItem.grau }}?</p>
-      <div class="flex justify-center space-x-2">
-        <button
-          type="button"
-          @click="handleDeleteConfirm"
-          :disabled="isLoading"
-          class="px-4 py-2 bg-red-100 hover:bg-red-500 hover:border-red-100 border-red-500 hover:text-white text-red-500 rounded disabled:opacity-50"
-        >
-          <span v-if="isLoading">Excluindo...</span>
-          <span v-else>Excluir</span>
-        </button>
-        <button
-          type="button"
-          @click="closeModals"
-          :disabled="isLoading"
-          class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded disabled:opacity-50"
-        >
-          Cancelar
-        </button>        
-      </div>
-    </div>
-  </div>
+  <Dialog v-model:open="showDeleteModal">
+  <DialogContent class="w-full max-w-md">
+    <DialogHeader>
+      <DialogTitle>Confirmar Eliminação</DialogTitle>
+      <DialogDescription>
+            Tem a certeza que deseja eliminar este grau académico?
+          </DialogDescription>
+    </DialogHeader>
+    <DialogFooter class="flex justify-center gap-2">
+      <Button type="button" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white"
+            @click="handleDeleteConfirm">
+            Excluir
+          </Button>
+          <Button type="button"
+            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+            variant="ghost" @click="showDeleteModal = false">
+            Cancelar
+          </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
 </template>

@@ -1,23 +1,19 @@
 <script setup lang="ts" generic="TData, TValue">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
+import type { SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import { FlexRender, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
-import DropdownAction from './data-table-dropdown.vue'
 import { getInstituicoes, createInstituicao, deleteInstituicao, updateInstituicao } from '@/api/instituicoes'
 import { getLocalidades } from '@/api/localidades'
 import type { Instituicao } from '@/components/interfaces'
-
-const props = defineProps<{
-  columns: ColumnDef<TData & { id: string }, TValue>[]
-}>()
+import { getColumns } from './columns'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const data = ref<Instituicao[]>([])
-const localidades = ref<{id: number, localidade: string}[]>([])
+const localidades = ref<{ id: number, localidade: string }[]>([])
 
 const fetchData = async () => {
   try {
@@ -32,15 +28,17 @@ onMounted(() => {
   fetchData()
 })
 
-const router = useRouter()
 const showAddModal = ref(false)
 const novaInstituicao = ref({
   instituicao: '',
-  localidadeFK: 0
+  localidadeFK: null as number | null
 })
 
 const handleAddInstituicao = async () => {
   try {
+    if (novaInstituicao.value.localidadeFK === null) {
+      throw new Error('Localidade deve ser selecionada');
+    }
     await createInstituicao({
       instituicao: novaInstituicao.value.instituicao,
       localidadeFK: novaInstituicao.value.localidadeFK
@@ -53,10 +51,27 @@ const handleAddInstituicao = async () => {
   }
 }
 
+const openEditModal = (instituicao: Instituicao) => {
+  editItem.value = { ...instituicao }
+  showEditModal.value = true
+}
+
+const openDeleteModal = (id: number) => {
+  deleteItem.value = id
+  showDeleteModal.value = true
+}
+
+const columns = getColumns(openEditModal, openDeleteModal, localidades.value)
+
+const showDeleteModal = ref(false);
+const deleteItem = ref<number | null>(null);
+
 const handleDeleteInstituicao = async (id: number) => {
   try {
     await deleteInstituicao(id)
     await fetchData()
+    showDeleteModal.value = false
+    deleteItem.value = null
   } catch (error) {
     console.error('Erro ao deletar instituição:', error)
   }
@@ -67,7 +82,7 @@ const editItem = ref<Instituicao | null>(null)
 
 const handleEditInstituicao = async () => {
   if (!editItem.value) return
-  
+
   try {
     await updateInstituicao(editItem.value.id, {
       instituicao: editItem.value.instituicao,
@@ -83,14 +98,16 @@ const handleEditInstituicao = async () => {
 
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({})
+const columnVisibility = ref<VisibilityState>({
+  InstituicaoOuLocalidade: false,
+})
 
 const currentPage = computed(() => table.getState().pagination.pageIndex + 1)
 const pageCount = computed(() => table.getPageCount())
 
 const table = useVueTable({
   get data() { return data.value },
-  get columns() { return props.columns },
+  get columns() { return columns },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
@@ -110,33 +127,19 @@ const table = useVueTable({
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">
-        <Input 
-          class="w-full h-[2.7rem]" 
-          placeholder="Procurar por instituição..."
-          :model-value="table.getColumn('instituicao')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('instituicao')?.setFilterValue($event)" 
-        />
-      </div>
-      
-      <div class="flex-1">
-        <Input 
-          class="w-full h-[2.7rem]" 
-          placeholder="Procurar por localidade..."
-          :model-value="table.getColumn('localidade')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('localidade')?.setFilterValue($event)" 
-        />
+        <Input class="w-full h-[2.7rem]" placeholder="Procurar por instituição ou localidade..."
+          :model-value="table.getColumn('InstituicaoOuLocalidade')?.getFilterValue() as string"
+          @update:model-value="table.getColumn('InstituicaoOuLocalidade')?.setFilterValue($event)" />
       </div>
 
-      <button 
-        @click="showAddModal = true" 
-        class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2"
-      >
+      <button @click="showAddModal = true"
+        class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Adicionar Instituição
       </button>
     </div>
 
     <div class="flex justify-center items-center overflow-auto border rounded-md">
-      <Table class="w-[70vw]">
+      <Table class="w-full">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead v-for="header in headerGroup.headers" :key="header.id"
@@ -151,20 +154,13 @@ const table = useVueTable({
             <TableRow v-for="row in table.getRowModel().rows" :key="row.id"
               :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="p-2">
-                <FlexRender v-if="cell.column.id !== 'actions'" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-                <DropdownAction 
-                  v-else 
-                  :instituicao="row.original" 
-                  :localidades="localidades"
-                  @edit="(item) => { editItem = item; showEditModal = true }" 
-                  @delete="handleDeleteInstituicao"
-                />
+                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>
             </TableRow>
           </template>
           <template v-else>
             <TableRow>
-              <TableCell :colspan="props.columns.length" class="h-24 text-center">
+              <TableCell :colspan="columns.length" class="h-24 text-center">
                 Sem Instituições.
               </TableCell>
             </TableRow>
@@ -174,115 +170,125 @@ const table = useVueTable({
     </div>
 
     <div class="flex items-center justify-center gap-2 mt-4">
-      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
+      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanPreviousPage()"
+        @click="table.previousPage()">
         Anterior
       </Button>
-     
-      <button
-        v-for="page in pageCount"
-        :key="page"
-        @click="table.setPageIndex(page - 1)"
-        :class="[
-          'px-3 py-1 hover:border-iptGreen rounded',
-          page === currentPage ? 'bg-iptGreen text-white' : 'bg-white'
-        ]"
-      >
+
+      <button v-for="page in pageCount" :key="page" @click="table.setPageIndex(page - 1)" :class="[
+        'px-3 py-1 hover:border-iptGreen rounded',
+        page === currentPage ? 'bg-iptGreen text-white' : 'bg-white'
+      ]">
         {{ page }}
       </button>
 
-      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanNextPage()"
+        @click="table.nextPage()">
         Próxima
       </Button>
     </div>
 
-    <!-- Add Modal -->
-    <div v-if="showAddModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div class="bg-white rounded-lg p-6 w-96">
-        <h2 class="text-xl mb-4">Adicionar Instituição</h2>
-        <form @submit.prevent="handleAddInstituicao">
-          <div class="mb-4">
+    <Dialog v-model:open="showAddModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adicionar Instituição</DialogTitle>
+          <DialogDescription>
+            Insira o nome da nova instituição e clique em "Adicionar".
+          </DialogDescription>
+        </DialogHeader>
+        <form @submit.prevent="handleAddInstituicao" class="space-y-4">
+          <div>
             <label class="block mb-1">Nome da Instituição</label>
-            <input
-              v-model="novaInstituicao.instituicao"
-              type="text"
-              class="w-full border border-gray-300 rounded px-2 py-1"
-              required
-            />
+            <input v-model="novaInstituicao.instituicao" type="text"
+              class="w-full border border-gray-300 rounded px-2 py-1" required />
           </div>
-          
-          <div class="mb-4">
+
+          <div>
             <label class="block mb-1">Localidade</label>
-            <select
-              v-model="novaInstituicao.localidadeFK"
-              class="w-full border border-gray-300 rounded px-2 py-1"
-              required
-            >
-              <option value="">Selecione a localidade</option>
-              <option 
-                v-for="localidade in localidades" 
-                :key="localidade.id" 
-                :value="localidade.id"
-              >
+            <select v-model="novaInstituicao.localidadeFK" class="w-full border border-gray-300 rounded px-2 py-1"
+              required>
+              <option value=null disabled>Selecione a localidade</option>
+              <option v-for="localidade in localidades" :key="localidade.id" :value="localidade.id">
                 {{ localidade.localidade }}
               </option>
             </select>
           </div>
-
-          <div class="flex justify-center space-x-2">
-            <button type="submit" class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded">
+          <DialogFooter class="flex justify-end gap-2">
+            <Button type="submit"
+              class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
               Adicionar
-            </button>
-            <button type="button" @click="showAddModal = false" class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded">
+            </Button>
+            <Button type="button"
+              class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+              variant="ghost" @click="showAddModal = false; novaInstituicao = { instituicao: '', localidadeFK: null }">
               Cancelar
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
 
-    <!-- Edit Modal -->
-    <div v-if="showEditModal && editItem" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div class="bg-white rounded-lg p-6 w-96">
-        <h2 class="text-xl mb-4">Editar Instituição</h2>
-        <form @submit.prevent="handleEditInstituicao">
-          <div class="mb-4">
+    <Dialog v-model:open="showEditModal">
+      <DialogContent v-if="editItem">
+        <DialogHeader>
+          <DialogTitle>Editar Instituição</DialogTitle>
+          <DialogDescription>
+            Altere o nome da instituição e clique em "Guardar".
+          </DialogDescription>
+        </DialogHeader>
+        <form @submit.prevent="handleEditInstituicao" class="space-y-4">
+          <div>
             <label class="block mb-1">Nome da Instituição</label>
-            <input
-              v-model="editItem.instituicao"
-              type="text"
-              class="w-full border border-gray-300 rounded px-2 py-1"
-              required
-            />
+            <input v-model="editItem.instituicao" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+              required />
           </div>
-          
-          <div class="mb-4">
+
+          <div>
             <label class="block mb-1">Localidade</label>
-            <select
-              v-model="editItem.localidade.id"
-              class="w-full border border-gray-300 rounded px-2 py-1"
-              required
-            >
-              <option value="">Selecione a localidade</option>
-              <option 
-                v-for="localidade in localidades" 
-                :key="localidade.id" 
-                :value="localidade.id"
-              >
+            <select v-model="editItem.localidade.id" class="w-full border border-gray-300 rounded px-2 py-1" required>
+              <option vvalue="" disabled>Selecione a localidade</option>
+              <option v-for="localidade in localidades" :key="localidade.id" :value="localidade.id">
                 {{ localidade.localidade }}
               </option>
             </select>
           </div>
 
-          <div class="flex justify-center space-x-2">
-            <button type="submit" class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded">
+          <DialogFooter class="flex justify-end gap-2">
+            <Button type="submit"
+              class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
               Guardar
-            </button>
-            <button type="button" @click="showEditModal = false" class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded">
+            </Button>
+            <Button type="button"
+              class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+              variant="ghost" @click="showEditModal = false">
               Cancelar
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog v-model:open="showDeleteModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Eliminar Instituição</DialogTitle>
+          <DialogDescription>
+            Tem a certeza que deseja eliminar esta instituição?
+            Esta ação não pode ser desfeita.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="flex justify-end gap-2">
+          <Button type="button" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white"
+            @click="deleteItem !== null && handleDeleteInstituicao(deleteItem)">
+            Excluir
+          </Button>
+          <Button type="button"
+            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+            variant="ghost" @click="showDeleteModal = false">
+            Cancelar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
