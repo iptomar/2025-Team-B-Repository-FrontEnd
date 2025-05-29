@@ -3,9 +3,15 @@ import type { ColumnDef } from "@tanstack/vue-table";
 import DropdownAction from "./data-table-dropdown.vue";
 import type { Aula } from "../../interfaces";
 
-export const columns: ColumnDef<Aula>[] = [
+export const getAulas = (
+  onRefresh: () => void,
+  cursoId: number,
+  professoresNoCurso: { id: string; userName: string }[],
+  semestreCadeira: number,
+  anoCadeira: number
+): ColumnDef<Aula>[] => [
   {
-    accessorKey: "tipologia",
+    accessorKey: "tipologia.tipologia",
     header: ({ column }) => {
       return h(
         "button",
@@ -25,29 +31,30 @@ export const columns: ColumnDef<Aula>[] = [
       h(
         "div",
         { class: "ml-2 text-left font-semibold" },
-        row.getValue("tipologia")
+        row.original.tipologia.tipologia
       ),
   },
   {
-    accessorKey: "professor.nome",
+    accessorKey: "professor.userName",
     header: () => h("div", "Professor"),
     cell: ({ row }) =>
-      h("div", { class: "text-left" }, row.original.professor.nome),
+      h("div", { class: "text-left" }, row.original.professor.userName),
   },
   {
-    id: "turmas",
-    header: () => h("div", "Turmas"),
+    accessorKey: "turma.letra",
+    header: () => h("div", "Turma"),
     cell: ({ row }) => {
-      const turmas = (row.original as Aula).turmas;
-      const nomes = turmas.map((t) => t.turma).join(", ");
-      return h("div", { class: "text-left" }, nomes);
+      return h("div", { class: "text-left" }, row.original.turma.letra);
     },
   },
   {
-    accessorKey: "duração",
+    accessorKey: "duracao",
     header: () => h("div", "Duração"),
-    cell: ({ row }) =>
-      h("div", { class: "text-left" }, row.getValue("duração")),
+    cell: ({ row }) => {
+      const raw = row.getValue("duracao") as string;
+      const [hh, mm] = raw.split(":");
+      return h("div", { class: "text-left" }, `${hh}:${mm}`);
+    },
   },
   {
     id: "actions",
@@ -60,7 +67,7 @@ export const columns: ColumnDef<Aula>[] = [
           class: "relative text-right",
           onClick: (event: Event) => event.stopPropagation(),
         },
-        h(DropdownAction, { aula })
+        h(DropdownAction, { aula, cursoId, professoresNoCurso, onRefresh, semestreCadeira, anoCadeira })
       );
     },
   },

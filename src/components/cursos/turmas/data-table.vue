@@ -21,20 +21,56 @@ import {
 } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { createTurma } from '@/api/turmas'
+import type { Curso, Turma } from '@/components/interfaces'
+
+const { toast } = useToast()
 
 const props = defineProps<{
-  columns: ColumnDef<TData & { id: number }, TValue>[]
-  data: (TData & { id: number })[]
-}>()
+  columns: ColumnDef<Turma, any>[],
+  data: Turma[],
+  cursoSelecionado: Curso | null
+}>();
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const router = useRouter()
 const isCreateOpen = ref(false);
-const novaTurma = ref({ nome: '', ano: 1, semestre: 1, turma: '' })
 
-const handleSubmit = () => {
-  // Enviar para backend
-  console.log(novaTurma.value);
-  isCreateOpen.value = false;
+const novaTurma = ref({
+  ano: 1,
+  semestre: 1,
+  letra: '',
+  cursoFK: props.cursoSelecionado ? props.cursoSelecionado.id : 0,
+});
+
+const resetNovaTurma = () => {
+  novaTurma.value = { 
+    ano: 1, 
+    semestre: 1, 
+    letra: '', 
+    cursoFK: props.cursoSelecionado ? props.cursoSelecionado.id : 0 
+  }
+}
+
+const handleSubmit = async () => {
+  try {
+    if (props.cursoSelecionado) {
+      novaTurma.value.cursoFK = props.cursoSelecionado.id;
+    }
+    await createTurma(novaTurma.value);
+    emit('refresh');
+    resetNovaTurma()
+    toast({ title: 'Turma criada com sucesso!', variant: 'success' });
+    isCreateOpen.value = false;
+  } catch (error) {
+    isCreateOpen.value = false;
+    toast({ title: 'Erro ao criar turma. Verifique os campos e tente novamente.', variant: 'destructive' });
+  }
 };
 
 const goToTurma = (id: number) => {
@@ -73,6 +109,8 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex justify-end items-center pb-4 w-full space-x-20">
       <button @click="isCreateOpen = true"
@@ -82,7 +120,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
     </div>
 
     <div class="flex justify-center items-center overflow-auto border rounded-md">
-      <Table class="w-[77vw]">
+      <Table class="w-full">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead v-for="header in headerGroup.headers" :key="header.id"
@@ -145,7 +183,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label class="block text-sm mb-1">Turma</label>
-          <input v-model="novaTurma.turma" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="novaTurma.letra" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
             required />
         </div>
 
@@ -159,6 +197,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
           <label class="block text-sm mb-1">Semestre</label>
           <input v-model="novaTurma.semestre" type="number" min="1" max="3" @input="limitValue('semestre', 1, 3)"
             class="w-full border border-gray-300 rounded px-2 py-1" required />
+          <p class="text-xs text-gray-500">* 3 - Para turmas anuais</p>
         </div>
 
         <DialogFooter class="mt-4">
@@ -168,7 +207,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
           </Button>
           <Button type="button"
             class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
-            variant="ghost" @click="isCreateOpen = false">
+            variant="ghost" @click="() => { isCreateOpen = false; resetNovaTurma(); }">
             Cancelar
           </Button>
         </DialogFooter>

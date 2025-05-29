@@ -1,6 +1,5 @@
-import type { Grau } from "@/components/interfaces";
 import { API_BASE_URL } from "./api";
-
+import type { Grau } from "@/components/interfaces";
 
 export async function fetchGraus() {
   const response = await fetch(`${API_BASE_URL}/Graus`);

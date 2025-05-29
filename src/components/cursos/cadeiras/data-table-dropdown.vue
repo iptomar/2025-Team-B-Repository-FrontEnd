@@ -10,15 +10,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-vue-next";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { removerCadeiraDoCurso } from "@/api/cursos";
+import { deleteCadeira, updateCadeira } from "@/api/cadeiras";
+
+const { toast } = useToast()
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const props = defineProps<{
   cadeira: {
     id: number;
-    nome: string;
+    cadeira: string;
     ano: number;
     semestre: number;
     ects: number;
   };
+  cursoId: number;
 }>();
 
 const editarCadeira = ref({ ...props.cadeira });
@@ -35,14 +46,39 @@ const handleDelete = () => {
   isDeleteOpen.value = true;
 };
 
-const handleSave = () => {
-  console.log("Salvando alterações no item:", editarCadeira.value);
-  isEditOpen.value = false;
+const handleSave = async () => {
+  try {
+    await updateCadeira(editarCadeira.value.id, editarCadeira.value);
+    isEditOpen.value = false;
+    emit('refresh');
+    toast({
+      title: "Cadeira atualizada com sucesso.",
+      variant: "success",
+    });
+  } catch (error) {
+    toast({
+      title: "Erro ao atualizar cadeira.",
+      variant: "destructive",
+    });
+  }
 };
 
-const handleDeleteConfirm = () => {
-  console.log("Excluindo item:", editarCadeira.value);
-  isDeleteOpen.value = false;
+const handleDeleteConfirm = async () => {
+  try {
+    await removerCadeiraDoCurso(props.cursoId, props.cadeira.id);
+    await deleteCadeira(editarCadeira.value.id);
+    isDeleteOpen.value = false;
+    toast({
+      title: "Cadeira removida com sucesso.",
+      variant: "success",
+    });
+    emit("refresh");
+  } catch (error) {
+toast({
+      title: "Erro ao remover cadeira do curso.",
+      variant: "destructive",
+    });
+  }
 };
 
 const limitValue = (field: 'ano' | 'semestre' | 'ects', min: number, max: number) => {
@@ -53,6 +89,8 @@ const limitValue = (field: 'ano' | 'semestre' | 'ects', min: number, max: number
 </script>
 
 <template>
+  <Toaster />
+
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" class="w-8 h-8 p-0 bg-white border hover:border-iptGreen">
@@ -63,7 +101,7 @@ const limitValue = (field: 'ano' | 'semestre' | 'ects', min: number, max: number
     <DropdownMenuContent align="end">
       <DropdownMenuItem @click="handleEdit">Editar</DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem @click="handleDelete">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete" class="text-red-500">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
@@ -77,7 +115,7 @@ const limitValue = (field: 'ano' | 'semestre' | 'ects', min: number, max: number
       <form @submit.prevent="handleSave" class="space-y-4">
         <div>
           <label class="block text-sm mb-1">Nome da Cadeira</label>
-          <input v-model="editarCadeira.nome" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="editarCadeira.cadeira" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
             required />
         </div>
 
