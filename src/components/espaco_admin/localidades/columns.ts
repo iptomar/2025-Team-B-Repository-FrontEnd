@@ -1,15 +1,12 @@
 import { h } from 'vue'
 import type { ColumnDef } from '@tanstack/vue-table'
 import DropdownAction from './data-table-dropdown.vue'
+import type { Localidade } from '@/components/interfaces'
 
-export interface Localidade {
-  id: string
-  nome: string
-}
 
 export const columns: ColumnDef<Localidade>[] = [
   {
-    accessorKey: 'Localidade',
+    accessorKey: 'localidade',
     header: ({ column }) => {
       return h(
         'button',
@@ -25,13 +22,13 @@ export const columns: ColumnDef<Localidade>[] = [
         ]
       )
     },
-    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('Localidade')),
+    cell: ({ row }) => h('div', { class: 'ml-2 text-left font-semibold' }, row.getValue('localidade')),
   },
   {
     id: 'actions',
     enableHiding: false,
     cell: ({ row }) => {
-      const localidade = row.original as Localidade
+      const localidade = row.original
       return h(
         'div',
         {

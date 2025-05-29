@@ -1,11 +1,7 @@
 import { h } from 'vue'
 import type { ColumnDef } from '@tanstack/vue-table'
 import DropdownAction from './data-table-dropdown.vue'
-
-export interface Grau {
-  id: string
-  grau: string
-}
+import type { Grau } from '@/components/interfaces'
 
 export const columns: ColumnDef<Grau>[] = [
   {
@@ -31,7 +27,7 @@ export const columns: ColumnDef<Grau>[] = [
     id: 'actions',
     enableHiding: false,
     cell: ({ row }) => {
-      const grau = row.original as Grau
+      const grau = row.original
       return h(
         'div',
         {

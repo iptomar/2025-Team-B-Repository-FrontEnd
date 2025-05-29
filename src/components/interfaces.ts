@@ -53,13 +53,14 @@ export interface Turma {
 
 export interface Localidade {
   id: number;
-  Localidade: string;
+  localidade: string;
 }
 
 export interface Instituicao {
   id: number;
   instituicao: string;
-  localidade: string;
+  localidadeFK: number;
+  localidade: Localidade;
 }
 
 export interface Grau {
