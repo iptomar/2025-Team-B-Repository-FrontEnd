@@ -1,9 +1,7 @@
-// @/services/tipologiaService.ts
 import type { Tipologia } from "@/components/interfaces";
+import { API_BASE_URL } from "./api";
 
-const API_BASE_URL = 'http://localhost:5039/api';
-
-export async function getTipologias(): Promise<Tipologia[]> {
+export async function getTipologia(): Promise<Tipologia[]> {
     const response = await fetch(`${API_BASE_URL}/tipologias`);
     if (!response.ok) {
         throw new Error('Falha ao buscar tipologias');

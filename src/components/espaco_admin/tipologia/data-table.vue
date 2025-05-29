@@ -1,31 +1,22 @@
 <!-- @/components/espaco_admin/tipologia/data-table.vue -->
-<script setup lang="ts" generic="TData, TValue">
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
+import type { SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import { FlexRender, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
-import DropdownAction from './data-table-dropdown.vue'
-import { getTipologias, createTipologia } from '@/api/tipologias'
+import { getTipologia, createTipologia } from '@/api/tipologias'
 import type { Tipologia } from '@/components/interfaces'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { createColumns } from './columns'
 
-const props = defineProps<{
-  columns: ColumnDef<TData & { id: number }, TValue>[]
-}>()
-
-const router = useRouter()
-const showAddModal = ref(false)
-const novaTipologia = ref({
-  tipologia: ''
-})
 const data = ref<Tipologia[]>([])
 
 const fetchData = async () => {
   try {
-    data.value = await getTipologias()
+    data.value = await getTipologia()
   } catch (error) {
     console.error('Erro ao buscar tipologias:', error)
   }
@@ -33,6 +24,11 @@ const fetchData = async () => {
 
 onMounted(() => {
   fetchData()
+})
+
+const showAddModal = ref(false)
+const novaTipologia = ref({
+  tipologia: ''
 })
 
 const handleSubmit = async () => {
@@ -46,9 +42,7 @@ const handleSubmit = async () => {
   }
 }
 
-const handleRefresh = () => {
-  fetchData()
-}
+const columns = createColumns(fetchData)
 
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
@@ -59,7 +53,7 @@ const pageCount = computed(() => table.getPageCount())
 
 const table = useVueTable({
   get data() { return data.value },
-  get columns() { return props.columns },
+  get columns() { return columns },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
@@ -76,79 +70,43 @@ const table = useVueTable({
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full space-y-4">
+  <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">
-        <Input 
-          class="w-full h-[2.7rem] border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-iptGreen focus:border-transparent transition-colors duration-200 px-3 py-2 text-gray-700 placeholder-gray-400" 
-          placeholder="Procurar por tipologia..."
+        <Input class="w-full h-[2.7rem]" placeholder="Procurar por tipologia..."
           :model-value="table.getColumn('tipologia')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('tipologia')?.setFilterValue($event)" 
-        />
+          @update:model-value="table.getColumn('tipologia')?.setFilterValue($event)" />
       </div>
 
-      <button 
-        @click="showAddModal = true" 
-        class="h-full text-white bg-iptGreen hover:bg-green-600 px-4 py-2 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-iptGreen focus:ring-offset-2 font-medium"
-      >
+      <button @click="showAddModal = true"
+        class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Adicionar Tipologia
       </button>
     </div>
 
-    <div class="flex justify-center items-center overflow-auto border border-gray-200 rounded-md shadow-sm bg-white">
-      <Table class="w-[70vw]">
+    <div class="flex justify-center items-center overflow-auto border rounded-md">
+      <Table class="w-full">
         <TableHeader>
-          <TableRow 
-            v-for="headerGroup in table.getHeaderGroups()" 
-            :key="headerGroup.id"
-            class="border-b border-gray-200"
-          >
-            <TableHead 
-              v-for="header in headerGroup.headers" 
-              :key="header.id"
-              class="bg-gray-50 p-3 text-left font-semibold text-gray-700 uppercase tracking-wider"
-            >
-              <FlexRender 
-                v-if="!header.isPlaceholder" 
-                :render="header.column.columnDef.header"
-                :props="header.getContext()" 
-              />
+          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+            <TableHead v-for="header in headerGroup.headers" :key="header.id"
+              class="bg-gray-100 p-2 text-left font-semibold">
+              <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header"
+                :props="header.getContext()" />
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
-            <TableRow 
-              v-for="row in table.getRowModel().rows" 
-              :key="row.id"
-              :data-state="row.getIsSelected() ? 'selected' : undefined" 
-              class="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
-            >
-              <TableCell 
-                v-for="cell in row.getVisibleCells()" 
-                :key="cell.id" 
-                class="p-3 text-gray-700"
-              >
-                <FlexRender 
-                  v-if="cell.column.id !== 'actions'" 
-                  :render="cell.column.columnDef.cell" 
-                  :props="cell.getContext()" 
-                />
-                <DropdownAction 
-                  v-else 
-                  :tipologia="row.original" 
-                  @refresh="handleRefresh"
-                  @click.stop 
-                />
+            <TableRow v-for="row in table.getRowModel().rows" :key="row.id"
+              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50">
+              <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="p-2">
+                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>
             </TableRow>
           </template>
           <template v-else>
             <TableRow>
-              <TableCell 
-                :colspan="props.columns.length" 
-                class="h-24 text-center text-gray-500 py-6"
-              >
+              <TableCell :colspan="columns.length" class="h-24 text-center">
                 Sem Tipologias.
               </TableCell>
             </TableRow>
@@ -158,76 +116,53 @@ const table = useVueTable({
     </div>
 
     <div class="flex items-center justify-center gap-2 mt-4">
-      <Button 
-        class="hover:border-iptGreen border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 px-3 py-1 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-iptGreen focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" 
-        variant="outline" 
-        size="sm" 
-        :disabled="!table.getCanPreviousPage()" 
-        @click="table.previousPage()"
-      >
+      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanPreviousPage()"
+        @click="table.previousPage()">
         Anterior
       </Button>
-     
-      <button
-        v-for="page in pageCount"
-        :key="page"
-        @click="table.setPageIndex(page - 1)"
-        :class="[
-          'px-3 py-1 border rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2',
-          page === currentPage 
-            ? 'bg-iptGreen text-white border-iptGreen focus:ring-iptGreen' 
-            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 focus:ring-gray-500'
-        ]"
-      >
+
+      <button v-for="page in pageCount" :key="page" @click="table.setPageIndex(page - 1)" :class="[
+        'px-3 py-1 hover:border-iptGreen rounded',
+        page === currentPage ? 'bg-iptGreen text-white' : 'bg-white'
+      ]">
         {{ page }}
       </button>
 
-      <Button 
-        class="hover:border-iptGreen border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 px-3 py-1 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-iptGreen focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" 
-        variant="outline" 
-        size="sm" 
-        :disabled="!table.getCanNextPage()" 
-        @click="table.nextPage()"
-      >
+      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanNextPage()"
+        @click="table.nextPage()">
         Próxima
       </Button>
     </div>
 
-    <!-- Add Modal -->
-    <div 
-      v-if="showAddModal" 
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 transition-opacity duration-200"
-    >
-      <div class="bg-white rounded-lg p-6 w-96 shadow-xl transform transition-all duration-200">
-        <h2 class="text-xl font-semibold mb-4 text-gray-800">Adicionar Tipologia</h2>
-        <form @submit.prevent="handleSubmit">
+    <Dialog v-model:open="showAddModal">
+      <DialogContent class="w-full max-w-md">
+        <DialogHeader>
+          <DialogTitle>Adicionar Tipologia</DialogTitle>
+          <DialogDescription>
+            Insira uma nova tipologia e clique em "Adicionar".
+          </DialogDescription>
+        </DialogHeader>
+
+        <form @submit.prevent="handleSubmit" class="space-y-4">
           <div class="mb-4">
-            <label class="block mb-2 text-sm font-medium text-gray-700">Nome da Tipologia</label>
-            <input 
-              v-model="novaTipologia.tipologia" 
-              type="text" 
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-iptGreen focus:border-transparent transition-colors duration-200" 
-              required 
-            />
+            <label class="block mb-1">Nome da Tipologia</label>
+            <input v-model="novaTipologia.tipologia" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+              required />
           </div>
 
-          <div class="flex justify-center space-x-3">
-            <button 
-              type="submit" 
-              class="px-4 py-2 text-white bg-iptGreen hover:bg-green-600 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-iptGreen focus:ring-offset-2 font-medium"
-            >
+          <DialogFooter class="flex justify-end space-x-2 mt-4">
+            <Button type="submit"
+              class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
               Adicionar
-            </button>
-            <button 
-              type="button" 
-              @click="showAddModal = false" 
-              class="px-4 py-2 text-white bg-gray-500 hover:bg-gray-600 rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 font-medium"
-            >
+            </Button>
+            <Button type="button"
+              class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+              variant="ghost" @click="showAddModal = false; novaTipologia.tipologia = ''">
               Cancelar
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
