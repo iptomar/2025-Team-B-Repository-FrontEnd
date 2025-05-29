@@ -60,7 +60,7 @@ const handleDeleteConfirm = async () => {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem @click="handleDelete(professor)">Excluir</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(professor)" class="text-red-500">Excluir</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 

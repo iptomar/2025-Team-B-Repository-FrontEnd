@@ -38,6 +38,12 @@ export async function deleteCurso(id: number) {
   if (!response.ok) throw new Error("Erro ao apagar curso");
 }
 
+export async function fetchCadeirasdoCurso(id: number) {
+  const response = await fetch(`${API_BASE_URL}/Cursos/${id}/cadeiras`);
+  if (!response.ok) throw new Error("Cadeiras do Curso não encontradas");
+  return await response.json();
+}
+
 export async function addCadeiraAoCurso(cursoId: number, cadeiraId: number) {
   const response = await fetch(
     `${API_BASE_URL}/Cursos/${cursoId}/cadeiras/${cadeiraId}`,
@@ -48,7 +54,7 @@ export async function addCadeiraAoCurso(cursoId: number, cadeiraId: number) {
   if (!response.ok) throw new Error("Erro ao adicionar cadeira ao curso");
 }
 
-export async function removeCadeiraDoCurso(cursoId: number, cadeiraId: number) {
+export async function removerCadeiraDoCurso(cursoId: number, cadeiraId: number) {
   const response = await fetch(
     `${API_BASE_URL}/Cursos/${cursoId}/cadeiras/${cadeiraId}`,
     {

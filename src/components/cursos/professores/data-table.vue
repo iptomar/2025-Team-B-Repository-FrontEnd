@@ -120,7 +120,7 @@ onMounted(async () => {
     </div>
 
     <div class="flex justify-center items-center overflow-auto border rounded-md">
-      <Table class="w-[77vw]">
+      <Table class="w-full">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead v-for="header in headerGroup.headers" :key="header.id"

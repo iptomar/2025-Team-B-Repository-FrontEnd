@@ -1,5 +1,7 @@
-<script setup lang="ts" generic="TData, TValue">
-import { ref, onMounted, computed, watch, type Ref } from 'vue'
+<script setup lang="ts" generic="TData extends {
+  id: number; anoLetivoFK: number | null;
+}, TValue">
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import { FlexRender, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table'
@@ -9,8 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { valueUpdater } from '@/lib/utils'
 import { fetchAnosLetivos } from '@/api/anosLetivos.ts'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { fetchCoordenadores, createCurso, fetchCursosPorAnoLetivo } from '@/api/cursos'
-import type { Curso, anoLetivo } from '../interfaces'
+import { fetchCoordenadores, createCurso } from '@/api/cursos'
+import type { anoLetivo } from '../interfaces'
 import { fetchGraus } from '@/api/graus'
 import { fetchInstituicoes } from '@/api/instituicoes'
 import { useToast } from '@/components/ui/toast/use-toast'
@@ -36,7 +38,7 @@ const instituicoes = ref<{ id: number; instituicao: string }[]>([])
 const router = useRouter()
 const isCreateOpen = ref(false);
 
-const novoCurso = ref<Curso>({
+const novoCurso = ref({
   curso: '',
   grauFK: null,
   professorFK: '',
@@ -82,8 +84,6 @@ const columnFilters = ref<ColumnFiltersState>([])
 const columnVisibility = ref<VisibilityState>({
   anoLetivoFK: false,
 })
-
-const cursosFiltrados = ref<TData[]>([]) as unknown as Ref<(TData & { id: number })[]>
 
 const cursosFiltradosPorAno = computed(() => {
   if (!anoSelecionado.value) return props.data

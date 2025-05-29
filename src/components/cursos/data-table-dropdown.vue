@@ -108,7 +108,7 @@ onMounted(async () => {
     <DropdownMenuContent align="end">
       <DropdownMenuItem @click="handleEdit(curso)">Editar</DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem @click="handleDelete(curso)">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(curso)" class="text-red-500">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 

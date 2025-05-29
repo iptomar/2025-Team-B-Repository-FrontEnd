@@ -54,7 +54,7 @@ const handleDeleteConfirm = async () => {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem @click="handleDelete(turma)">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(turma)" class="text-red-500">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
