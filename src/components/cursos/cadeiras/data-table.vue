@@ -22,24 +22,60 @@ import {
 } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import type { Cadeira, Curso } from '@/components/interfaces'
+import { createCadeira } from '@/api/cadeiras'
+import { addCadeiraAoCurso } from '@/api/cursos'
+
+const { toast } = useToast()
 
 const props = defineProps<{
-  columns: ColumnDef<TData & { id: number }, TValue>[]
-  data: (TData & { id: number })[]
-}>()
+  columns: ColumnDef<Cadeira, any>[],
+  data: Cadeira[],
+  cursoSelecionado: Curso | null
+}>();
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const router = useRouter()
 const isCreateOpen = ref(false);
-const novaCadeira = ref({ nome: '', ano: 1, semestre: 1, ects: 1 })
 
-const handleSubmit = () => {
-  // Enviar para backend
-  console.log(novaCadeira.value);
-  isCreateOpen.value = false;
+const novaCadeira = ref({ cadeira: '', ano: 1, semestre: 1, ects: 1 })
+
+const resetNovaCadeira = () => {
+  novaCadeira.value = { cadeira: '', ano: 1, semestre: 1, ects: 1 }
+}
+
+const handleSubmit = async () => {
+  try {
+    if (!props.cursoSelecionado) {
+      toast({ title: 'Nenhum curso selecionado.', variant: 'destructive' });
+      return;
+    }
+    
+    const nova = await createCadeira(novaCadeira.value);
+
+    await addCadeiraAoCurso(props.cursoSelecionado.id, nova.id);
+
+    emit('refresh');
+    resetNovaCadeira()
+    toast({ title: 'Cadeira criada com sucesso!', variant: 'success' });
+    isCreateOpen.value = false;
+  } catch (error) {
+    isCreateOpen.value = false;
+    toast({ title: 'Erro ao criar cadeira. Verifique os campos e tente novamente.', variant: 'destructive' });
+  }
 };
 
 const goToCadeira = (id: number) => {
-  router.push(`/cadeira/${id}`)
+  if (!props.cursoSelecionado) return;
+  router.push({
+    path: `/cadeira/${id}`,
+    state: { cursoId: props.cursoSelecionado.id }
+  });
 }
 
 const sorting = ref<SortingState>([])
@@ -74,12 +110,14 @@ const limitValue = (field: 'ano' | 'semestre' | 'ects', min: number, max: number
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-20">
       <div class="flex-1">
         <Input class="w-full h-[2.6rem]" placeholder="Procurar por cadeira..."
-          :model-value="table.getColumn('nome')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('nome')?.setFilterValue($event)" />
+          :model-value="table.getColumn('cadeira')?.getFilterValue() as string"
+          @update:model-value="table.getColumn('cadeira')?.setFilterValue($event)" />
       </div>
 
       <button @click="isCreateOpen = true"
@@ -89,7 +127,7 @@ const limitValue = (field: 'ano' | 'semestre' | 'ects', min: number, max: number
     </div>
 
     <div class="flex justify-center items-center overflow-auto border rounded-md">
-      <Table class="w-[77vw]">
+      <Table class="w-full">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead v-for="header in headerGroup.headers" :key="header.id"
@@ -152,7 +190,7 @@ const limitValue = (field: 'ano' | 'semestre' | 'ects', min: number, max: number
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label class="block text-sm mb-1">Nome da Cadeira</label>
-          <input v-model="novaCadeira.nome" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="novaCadeira.cadeira" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
             required />
         </div>
 

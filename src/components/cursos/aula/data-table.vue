@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TData, TValue">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import {
   FlexRender,
@@ -20,28 +20,72 @@ import {
 } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { Turma } from '../../interfaces'
+import type { Tipologia } from '../../interfaces'
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { fetchTurmas, getTipologia } from '@/api/turmas'
+import { createAula } from '@/api/aulas'
+
+const { toast } = useToast()
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const props = defineProps<{
   columns: ColumnDef<TData & { id: number }, TValue>[]
-  data: (TData & { id: number })[]
+  data: (TData & { id: number })[],
+  cadeiraId: number,
+  cursoId: number,
+  professoresNoCurso: { id: string, userName: string }[],
+  semestreCadeira: number,
+  anoCadeira: number
 }>()
 
+const tipologias = ref<Tipologia[]>([]);
+const professores = ref<{ id: string; userName: string }[]>([]);
+const turmas = ref<{ id: number; ano: number; letra: string; cursoFK: number; semestre: number }[]>([]);
+
 const isCreateOpen = ref(false);
+
+const hora = ref('00');
+const minuto = ref('00');
+
 const novaAula = ref({
-  duração: '',
-  tipologia: '',
-  professor: { id: 0, nome: '' },
-  turma: { id: 0, ano: 1, turma: '', semestre: 1 }
+  duracao: '',
+  CadeiraFK: props.cadeiraId,
+  TipologiaFK: 0,
+  TurmaFK: 0,
+  ProfessorFK: 0
 })
 
-const professores = ['Dr. Silva', 'Dra. Costa', 'Dr. Rodrigues'];
-const turmas = ref<Turma[]>([]) 
+const handleSubmit = async () => {
+  try {
+    novaAula.value.duracao = `${hora.value}:${minuto.value}:00`;
 
-const handleSubmit = () => {
-  // Enviar para backend
-  console.log(novaAula.value);
-  isCreateOpen.value = false;
+    await createAula(novaAula.value);
+    toast({ title: "Aula criada com sucesso!", variant: "success" });
+    emit('refresh');
+    isCreateOpen.value = false;
+
+    novaAula.value = {
+      duracao: '',
+      CadeiraFK: props.cadeiraId,
+      TipologiaFK: 0,
+      TurmaFK: 0,
+      ProfessorFK: 0,
+    };
+
+    hora.value = '00';
+    minuto.value = '00';
+  } catch (error) {
+    isCreateOpen.value = false;
+    toast({
+      title: "Erro ao criar aula",
+      description: String(error),
+      variant: "destructive",
+    });
+  }
 };
 
 const sorting = ref<SortingState>([])
@@ -68,9 +112,27 @@ const table = useVueTable({
   },
 })
 
+watch(isCreateOpen, async (value) => {
+  if (value) {
+    try {
+      tipologias.value = await getTipologia();
+      professores.value = props.professoresNoCurso;
+      const todasTurmas = await fetchTurmas();
+      turmas.value = todasTurmas.filter((t: { cursoFK: number, semestre: number, ano: number }) =>
+        t.cursoFK === props.cursoId &&
+        t.semestre === props.semestreCadeira &&
+        t.ano === props.anoCadeira
+      );
+    } catch (error) {
+      toast({ title: "Erro ao carregar dados", description: String(error), variant: "destructive" });
+    }
+  }
+});
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex justify-end items-center pb-4 w-full space-x-20">
       <button @click="isCreateOpen = true"
@@ -80,7 +142,7 @@ const table = useVueTable({
     </div>
 
     <div class="flex justify-center items-center overflow-auto border rounded-md">
-      <Table class="w-[77vw]">
+      <Table class="w-full">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead v-for="header in headerGroup.headers" :key="header.id"
@@ -140,30 +202,43 @@ const table = useVueTable({
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label class="block text-sm mb-1">Duração</label>
-          <input v-model="novaAula.duração" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
-            required />
+          <div class="flex space-x-2">
+            <select v-model="hora" class="border border-gray-300 rounded px-2 py-1">
+              <option v-for="h in [0, 1, 2, 3, 4, 5, 6]" :key="h" :value="String(h).padStart(2, '0')">
+                {{ String(h).padStart(2, '0') }}
+              </option>
+            </select>
+            <p class="flex items-center">:</p>
+            <select v-model="minuto" class="border border-gray-300 rounded px-2 py-1">
+              <option v-for="m in [0, 30]" :key="m" :value="String(m).padStart(2, '0')">
+                {{ String(m).padStart(2, '0') }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Tipologia</label>
-          <input v-model="novaAula.tipologia" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
-            required />
+          <select v-model="novaAula.TipologiaFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
+            <option disabled value="0">Selecione uma tipologia</option>
+            <option v-for="tip in tipologias" :value="tip.id">{{ tip.tipologia }}</option>
+          </select>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Professor</label>
-          <select v-model="novaAula.professor.id" class="w-full border border-gray-300 rounded px-2 py-1" required>
+          <select v-model="novaAula.ProfessorFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
             <option disabled value="0">Selecione um professor</option>
-            <option v-for="prof in professores" :value="prof">{{ prof }}</option>
+            <option v-for="prof in professores" :value="prof.id">{{ prof.userName }}</option>
           </select>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Turma</label>
-          <select v-model="novaAula.turma.id" class="w-full border border-gray-300 rounded px-2 py-1" required>
+          <select v-model="novaAula.TurmaFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
             <option disabled value="0">Selecione uma turma</option>
             <option v-for="turma in turmas" :key="turma.id" :value="turma.id">
-              {{ turma.ano }}º - {{ turma.turma }} ({{ turma.semestre }}º Sem.)
+              {{ turma.letra }}
             </option>
           </select>
         </div>
@@ -175,7 +250,13 @@ const table = useVueTable({
           </Button>
           <Button type="button"
             class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
-            variant="ghost" @click="isCreateOpen = false">
+            variant="ghost" @click="isCreateOpen = false; novaAula = {
+              duracao: '',
+              CadeiraFK: props.cadeiraId,
+              TipologiaFK: 0,
+              TurmaFK: 0,
+              ProfessorFK: 0
+            }">
             Cancelar
           </Button>
         </DialogFooter>

@@ -9,9 +9,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-vue-next";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { deleteTurma } from '@/api/turmas';
+
+const { toast } = useToast();
 
 const Turma = ref<any>(null);
 const isDeleteOpen = ref(false);
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 defineProps({
   turma: Object,
@@ -22,13 +31,21 @@ const handleDelete = (turma: any) => {
   isDeleteOpen.value = true;
 };
 
-const handleDeleteConfirm = () => {
-  console.log("Excluindo item:", Turma.value);
-  isDeleteOpen.value = false;
+const handleDeleteConfirm = async () => {
+  try {
+    await deleteTurma(Turma.value.id);
+    isDeleteOpen.value = false;
+    toast({ title: 'Turma eliminada com sucesso.', variant: 'success' });
+    emit('refresh');
+  } catch (error) {
+    isDeleteOpen.value = false;
+    toast({ title: 'Erro ao eliminar turma.', variant: 'destructive' });
+  }
 };
 </script>
 
 <template>
+  <Toaster />
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" class="w-8 h-8 p-0 bg-white border hover:border-iptGreen">
@@ -37,7 +54,7 @@ const handleDeleteConfirm = () => {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem @click="handleDelete(turma)">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(turma)" class="text-red-500">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 

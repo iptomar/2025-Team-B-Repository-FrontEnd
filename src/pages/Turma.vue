@@ -4,9 +4,9 @@ import { useRoute } from 'vue-router';
 import { getData } from '@/api/api';
 import Calendar from "@/components/ui/calendar/Calendar.vue";
 import CalendarProvider from "@/components/ui/calendar/CalendarProvider.vue";
-import type { Curso, Turma } from '@/components/interfaces';
+import type { Turma } from '@/components/interfaces';
+import { fetchTurmaById } from '@/api/turmas';
 
-const data = ref<Curso[]>([]);
 const turmaSelecionada = ref<Turma | null>(null);
 const route = useRoute();
 const turmaId = ref(Number(route.params.id));
@@ -15,12 +15,9 @@ onMounted(async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
-        const cursos = await getData();
-        data.value = cursos;
-
-        turmaSelecionada.value = cursos.flatMap(curso => curso.turmas).find(turma => turma.id === turmaId.value) || null;
+        turmaSelecionada.value = await fetchTurmaById(turmaId.value);
     } catch (error) {
-        console.error('Erro ao buscar os dados:', error);
+        console.error('Erro ao buscar a turma:', error);
     }
 });
 
@@ -64,9 +61,12 @@ let EVENTS = ref(events);
 <template>
     <div class="mx-auto space-y-8 mb-10">
         <div class="border-b pb-6">
-            <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.turma }}</h1>
+            <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.letra }}</h1>
             <div class="mt-2 text-gray-600 space-y-1">
-                <p class="font-medium text-gray-700">{{ turmaSelecionada?.semestre }}ºSemestre</p>
+                <p class="font-medium text-gray-700">
+                    {{ turmaSelecionada?.semestre === 3 ? 'Anual' : `${turmaSelecionada?.semestre}º Semestre` }}
+                </p>
+                <p> {{ turmaSelecionada?.curso.curso }}</p>
             </div>
         </div>
     </div>
