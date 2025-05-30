@@ -7,6 +7,10 @@ import DataTable from '@/components/cursos/aula/data-table.vue'
 import { fetchCadeira } from '@/api/cadeiras';
 import { fetchAulas } from '@/api/aulas';
 import { fetchProfessoresDoCurso } from '@/api/professores';
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast();
 
 const cadeiraSelecionada = ref<Cadeira | null>(null);
 const route = useRoute();
@@ -29,13 +33,18 @@ onMounted(async () => {
 
         carregarAulas();
     } catch (error) {
-        console.error('Erro ao buscar os dados:', error);
+        toast({
+            title: 'Erro ao carregar os dados da cadeira. Por favor, tente novamente mais tarde.',
+            variant: 'destructive'
+        });
     }
 });
 
 </script>
 
 <template>
+    <Toaster />
+
     <div class="mx-auto space-y-8 mb-10">
         <div class="border-b pb-6">
             <h1 class="text-3xl font-bold text-black"> {{ cadeiraSelecionada?.cadeira }} </h1>
@@ -48,8 +57,9 @@ onMounted(async () => {
             </div>
         </div>
         <div class="mt-6">
-            <DataTable :columns="getAulas(carregarAulas, cursoId, professoresNoCurso, cadeiraSelecionada?.semestre ?? 0, cadeiraSelecionada?.ano ?? 0)" :data="aulasDaCadeira"
-                @refresh="carregarAulas" :cadeiraId="cadeiraId" :cursoId="cursoId"
+            <DataTable
+                :columns="getAulas(carregarAulas, cursoId, professoresNoCurso, cadeiraSelecionada?.semestre ?? 0, cadeiraSelecionada?.ano ?? 0)"
+                :data="aulasDaCadeira" @refresh="carregarAulas" :cadeiraId="cadeiraId" :cursoId="cursoId"
                 :professoresNoCurso="professoresNoCurso" :semestreCadeira="cadeiraSelecionada?.semestre ?? 0"
                 :anoCadeira="cadeiraSelecionada?.ano ?? 0" />
         </div>

@@ -11,7 +11,8 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-vue-next";
 import type { Tipologia } from "@/components/interfaces";
-import { fetchTurmas, getTipologia } from "@/api/turmas";
+import { fetchTurmas } from "@/api/turmas";
+import { getTipologia } from "@/api/tipologias";
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
 import { deleteAula, updateAula } from "@/api/aulas";

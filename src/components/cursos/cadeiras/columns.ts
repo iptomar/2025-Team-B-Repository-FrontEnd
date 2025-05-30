@@ -62,7 +62,7 @@ export const getCadeiras = (
             onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
           },
           [
-            h("span", "Semestre"),
+            h("span", "Período"),
             h("svg", { class: "ml-2 h-4 w-4", viewBox: "0 0 24 24" }, [
               h("path", { d: "M7 10l5 5 5-5H7z", fill: "currentColor" }),
             ]),
@@ -71,13 +71,8 @@ export const getCadeiras = (
       },
       cell: ({ row }) => {
         const semestre = row.getValue("semestre");
-        return h(
-          "div",
-          { class: "ml-2 text-left" },
-          typeof semestre === "number" && semestre === 3
-            ? "Anual"
-            : (semestre as string | number)
-        );
+        const texto = semestre === 3 ? "Anual" : `${semestre}º Semestre`;
+        return h("div", { class: "ml-2 text-left" }, texto);
       },
     },
     {

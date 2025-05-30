@@ -5,6 +5,10 @@ import { fetchCursosPorGrau } from '@/api/cursos.ts'
 import { getColumns } from '@/components/cursos/columns.ts'
 import type { Curso } from '@/components/interfaces'
 import { fetchGraus } from '@/api/graus'
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const cursos = ref<Curso[]>([])
 const grauAtivo = ref<number | null>(null)
@@ -21,7 +25,10 @@ async function carregarGraus() {
       grauAtivo.value = graus[0].id
     }
   } catch (error) {
-    console.error('Erro ao carregar graus:', error)
+    toast({
+      title: 'Erro ao carregar graus. Por favor, tente novamente mais tarde.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -30,7 +37,10 @@ async function carregarCursos() {
   try {
     cursos.value = await fetchCursosPorGrau(grauAtivo.value)
   } catch (error) {
-    console.error('Erro ao carregar cursos:', error)
+    toast({
+      title: 'Erro ao carregar cursos. Por favor, tente novamente mais tarde.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -44,6 +54,8 @@ onMounted(async () => {
 })
 </script>
 <template>
+  <Toaster />
+
   <div class="flex flex-wrap gap-4 justify-center mb-6">
     <template v-for="grau in grausDisponiveis" :key="grau.id">
       <button @click="grauAtivo = grau.id" :class="[

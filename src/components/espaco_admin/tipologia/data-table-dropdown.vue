@@ -13,6 +13,10 @@ import { MoreHorizontal } from "lucide-vue-next";
 import type { Tipologia } from "@/components/interfaces";
 import { updateTipologia, deleteTipologia } from "@/api/tipologias";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast();
 
 const props = defineProps<{
   tipologia: Tipologia
@@ -34,20 +38,22 @@ const handleDelete = (tipologia: Tipologia) => {
   showDeleteModal.value = true;
 };
 
-const closeModals = () => {
-  showEditModal.value = false;
-  showDeleteModal.value = false;
-};
-
 const handleSave = async () => {
   try {
     if (editItem.value) {
       await updateTipologia(editItem.value);
       emit('tipologia-atualizada');
-      closeModals();
+      toast({
+        title: 'Tipologia atualizada com sucesso.',
+        variant: 'success'
+      });
+      showEditModal.value = false;
     }
   } catch (error) {
-    console.error("Erro ao atualizar tipologia:", error);
+    toast({
+      title: 'Erro ao atualizar tipologia. Por favor, tente novamente.',
+      variant: 'destructive'
+    });
   }
 };
 
@@ -56,15 +62,24 @@ const handleDeleteConfirm = async () => {
     if (editItem.value) {
       await deleteTipologia(editItem.value.id);
       emit('tipologia-atualizada');
-      closeModals();
+      toast({
+        title: 'Tipologia eliminada com sucesso.',
+        variant: 'success'
+      });
+      showDeleteModal.value = false;
     }
   } catch (error) {
-    console.error("Erro ao deletar tipologia:", error);
+    toast({
+      title: 'Erro ao eliminar tipologia. Por favor, tente novamente.',
+      variant: 'destructive'
+    });
   }
 };
 </script>
 
 <template>
+  <Toaster />
+  
     <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button

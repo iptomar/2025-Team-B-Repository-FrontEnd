@@ -23,7 +23,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import type { Tipologia } from '../../interfaces'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
-import { fetchTurmas, getTipologia } from '@/api/turmas'
+import { fetchTurmas } from '@/api/turmas'
+import { getTipologia } from "@/api/tipologias";
 import { createAula } from '@/api/aulas'
 
 const { toast } = useToast()
@@ -124,7 +125,7 @@ watch(isCreateOpen, async (value) => {
         t.ano === props.anoCadeira
       );
     } catch (error) {
-      toast({ title: "Erro ao carregar dados", description: String(error), variant: "destructive" });
+      toast({ title: "Erro ao carregar dados. Por favor, tente novamente.", variant: "destructive" });
     }
   }
 });
@@ -141,7 +142,7 @@ watch(isCreateOpen, async (value) => {
       </button>
     </div>
 
-    <div class="flex justify-center items-center overflow-auto border rounded-md">
+    <div class="flex min-w-[900px] justify-center items-center overflow-auto border rounded-md">
       <Table class="w-full">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">

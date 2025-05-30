@@ -1,13 +1,5 @@
 import { API_BASE_URL } from "./api";
 
-export async function getTipologia(): Promise<Tipologia[]> {
-    const response = await fetch(`${API_BASE_URL}/tipologias`);
-    if (!response.ok) {
-        throw new Error('Falha ao buscar tipologias');
-    }
-    return await response.json();
-}
-
 export async function fetchTurmas() {
   const response = await fetch(`${API_BASE_URL}/Turmas`);
   if (!response.ok) throw new Error("Erro ao buscar turmas");
