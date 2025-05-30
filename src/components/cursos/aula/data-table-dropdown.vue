@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,43 +10,116 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-vue-next";
+import type { Tipologia } from "@/components/interfaces";
+import { fetchTurmas } from "@/api/turmas";
+import { getTipologia } from "@/api/tipologias";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { deleteAula, updateAula } from "@/api/aulas";
+
+const { toast } = useToast()
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const props = defineProps<{
   aula: {
     id: number;
-    duração: string;
-    tipologia: string;
-    professor: { id: number; nome: string };
-    turma: { id: number; ano: number; turma: string; semestre: number };
+    duracao: string;
+    tipologia: { id: number; tipologia: string };
+    professor: { id: string; userName: string };
+    turma: { id: number; ano: number; letra: string; semestre: number };
   };
-}>()
+  professoresNoCurso: { id: string, userName: string }[];
+  cursoId: number;
+  semestreCadeira: number;
+  anoCadeira: number;
+}>();
 
-const editarAula = ref({ ...props.aula });
+const tipologias = ref<Tipologia[]>([]);
+const professores = ref<{ id: string; userName: string }[]>([]);
+const turmas = ref<{ id: number; ano: number; letra: string; cursoFK: number; semestre: number }[]>([]);
+
+
+const editarAula = ref({
+  ...props.aula,
+  TipologiaFK: props.aula.tipologia?.id,
+  ProfessorFK: props.aula.professor?.id,
+  TurmaFK: props.aula.turma?.id
+});
+
 const isEditOpen = ref(false);
 const isDeleteOpen = ref(false);
 
+const hora = ref('00');
+const minuto = ref('00');
+
 const handleEdit = () => {
-  editarAula.value = { ...props.aula };
+  editarAula.value = {
+    ...props.aula,
+    TipologiaFK: props.aula.tipologia?.id,
+    ProfessorFK: props.aula.professor?.id,
+    TurmaFK: props.aula.turma?.id
+  };
   isEditOpen.value = true;
 };
 
 const handleDelete = () => {
-  editarAula.value = { ...props.aula };
+  editarAula.value = {
+    ...props.aula,
+    TipologiaFK: props.aula.tipologia?.id,
+    ProfessorFK: props.aula.professor?.id,
+    TurmaFK: props.aula.turma?.id
+  };
   isDeleteOpen.value = true;
 };
 
-const handleSave = () => {
-  console.log("Salvando alterações no item:", editarAula.value);
-  isEditOpen.value = false;
+const handleSave = async () => {
+  try {
+    editarAula.value.duracao = `${hora.value}:${minuto.value}:00`;
+    await updateAula(editarAula.value.id, editarAula.value);
+    isEditOpen.value = false;
+    emit('refresh');
+    toast({ title: "Aula editada com sucesso!", variant: "success" });
+  } catch (error) {
+    toast({ title: "Erro ao editar aula.", description: String(error), variant: "destructive" });
+  }
 };
 
-const handleDeleteConfirm = () => {
-  console.log("Excluindo item:", editarAula.value);
-  isDeleteOpen.value = false;
+const handleDeleteConfirm = async () => {
+  try {
+    await deleteAula(editarAula.value.id);
+    isDeleteOpen.value = false;
+    emit('refresh');
+    toast({ title: "Aula eliminada com sucesso!", variant: "success" });
+  } catch (error) {
+    toast({ title: "Erro ao eliminar aula.", description: String(error), variant: "destructive" });
+  }
 };
+
+watch(isEditOpen, async (value) => {
+  if (value) {
+    tipologias.value = await getTipologia();
+    professores.value = props.professoresNoCurso;
+
+    const todasTurmas = await fetchTurmas();
+    turmas.value = todasTurmas.filter((t: { cursoFK: number; semestre: number; ano: number; }) =>
+      t.cursoFK === props.cursoId &&
+      t.semestre === props.semestreCadeira &&
+      t.ano === props.anoCadeira
+    );
+
+    const [hh, mm] = props.aula.duracao.split(':');
+    hora.value = hh;
+    minuto.value = mm;
+  }
+});
 </script>
 
 <template>
+  <Toaster />
+
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" class="w-8 h-8 p-0 bg-white border hover:border-iptGreen">
@@ -57,7 +130,7 @@ const handleDeleteConfirm = () => {
     <DropdownMenuContent align="end">
       <DropdownMenuItem @click="handleEdit">Editar</DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem @click="handleDelete">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete" class="text-red-500">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
@@ -71,26 +144,40 @@ const handleDeleteConfirm = () => {
       <form @submit.prevent="handleSave" class="space-y-4">
         <div>
           <label class="block text-sm mb-1">Duração</label>
-          <input v-model="editarAula.duração" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
-            required />
+          <div class="flex space-x-2">
+            <select v-model="hora" class="border border-gray-300 rounded px-2 py-1">
+              <option v-for="h in [0, 1, 2, 3, 4, 5, 6]" :key="h" :value="String(h).padStart(2, '0')">
+                {{ String(h).padStart(2, '0') }}
+              </option>
+            </select>
+            <p class="flex items-center">:</p>
+            <select v-model="minuto" class="border border-gray-300 rounded px-2 py-1">
+              <option v-for="m in [0, 30]" :key="m" :value="String(m).padStart(2, '0')">
+                {{ String(m).padStart(2, '0') }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Tipologia</label>
-          <input v-model.number="editarAula.tipologia" type="text"
-            class="w-full border border-gray-300 rounded px-2 py-1" required />
+          <select v-model="editarAula.TipologiaFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
+            <option v-for="tip in tipologias" :key="tip.id" :value="tip.id">{{ tip.tipologia }}</option>
+          </select>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Professor</label>
-          <input v-model.number="editarAula.professor" type="text"
-            class="w-full border border-gray-300 rounded px-2 py-1" required />
+          <select v-model="editarAula.ProfessorFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
+            <option v-for="prof in professores" :key="prof.id" :value="prof.id">{{ prof.userName }}</option>
+          </select>
         </div>
 
         <div>
           <label class="block text-sm mb-1">Turma</label>
-          <input v-model.number="editarAula.turma" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
-            required />
+          <select v-model="editarAula.TurmaFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
+            <option v-for="turma in turmas" :key="turma.id" :value="turma.id">{{ turma.letra }}</option>
+          </select>
         </div>
 
         <DialogFooter class="mt-4">

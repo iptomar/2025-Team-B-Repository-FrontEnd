@@ -2,16 +2,20 @@
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
 import {ref, onMounted, provide, inject} from 'vue';
 import { useRoute } from 'vue-router';
-import { getData } from '@/api/api';
 import Calendar from "@/components/ui/calendar/Calendar.vue";
 import CalendarProvider from "@/components/ui/calendar/CalendarProvider.vue";
-import type { Curso, Turma } from '@/components/interfaces';
+import type { Turma } from '@/components/interfaces';
+import { fetchTurmaById } from '@/api/turmas';
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast();
 
 import { cn } from '@/lib/utils'
 
 /**
  * SignalR-Related-Data
- */;
+ */
 const route = useRoute();
 const turmaId = ref(Number(route.params.id));
 const events = ref([])
@@ -26,7 +30,6 @@ let connectionState = ref("LOADING");
 let horarioId = 0
 import {HubConnectionBuilder} from "@microsoft/signalr"
 import CalendarHolder from "@/components/ui/calendar/CalendarHolder.vue";
-import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command";
 import {Popover, PopoverTrigger, PopoverContent} from "@/components/ui/popover";
@@ -176,23 +179,28 @@ onMounted(async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
-        const cursos = await getData();
-        data.value = cursos;
-        console.log(turmaId.value)
-        turmaSelecionada.value = cursos.flatMap(curso => curso.turmas).find(turma => turma.id === turmaId.value) || null;
+      turmaSelecionada.value = await fetchTurmaById(turmaId.value);
     } catch (error) {
-        console.error('Erro ao buscar os dados:', error);
+        toast({
+            title: 'Erro ao buscar a turma. Por favor, tente novamente mais tarde.',
+            variant: 'destructive'
+        });
     }
 });
 
 </script>
 
 <template>
+    <Toaster />
+
     <div class="mx-auto space-y-8 mb-10">
         <div class="border-b pb-6">
-            <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.turma }}</h1>
+            <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.letra }}</h1>
             <div class="mt-2 text-gray-600 space-y-1">
-                <p class="font-medium text-gray-700">{{ turmaSelecionada?.semestre }}ºSemestre</p>
+                <p class="font-medium text-gray-700">
+                    {{ turmaSelecionada?.semestre === 3 ? 'Anual' : `${turmaSelecionada?.semestre}º Semestre` }}
+                </p>
+                <p> {{ turmaSelecionada?.curso.curso }}</p>
             </div>
         </div>
     </div>

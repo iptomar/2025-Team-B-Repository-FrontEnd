@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TData, TValue">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import {
   FlexRender,
@@ -21,21 +21,52 @@ import {
 } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { fetchProfessores } from '@/api/professores';
+import { adicionarProfessorAoCurso } from '@/api/professores';
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const props = defineProps<{
-  columns: ColumnDef<TData & { id: number }, TValue>[]
-  data: (TData & { id: number })[]
+  columns: ColumnDef<TData & { id: number }, TValue>[],
+  data: (TData & { id: number })[],
+  cursoId: number,
+  professoresNoCurso: { id: string, userName: string }[]
 }>()
 
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
+
+const resetAddProf = () => {
+  addProf.value = { userName: '' };
+}
+
 const addProfDialog = ref(false);
-const professores = ['Dr. Silva', 'Dra. Costa', 'Dr. Rodrigues'];
+const professores = ref<{ id: string; userName: string }[]>([])
 
-const addProf = ref({ nome: '' })
+const addProf = ref<{ userName: string }>({ userName: '' })
 
-const handleSubmit = () => {
-  // Enviar para backend
-  console.log(addProf.value);
-  addProfDialog.value = false;
+const professoresDisponiveis = computed(() => {
+  const idsJaAdicionados = new Set(props.professoresNoCurso.map(p => p.id));
+  return professores.value.filter(p => !idsJaAdicionados.has(p.id));
+});
+
+const handleSubmit = async () => {
+  try {
+    await adicionarProfessorAoCurso({
+      CursoFK: props.cursoId,
+      ProfessorFK: addProf.value.userName,
+    });
+    emit('refresh');
+    toast({ title: 'Professor adicionado com sucesso!', variant: 'success' });
+    addProfDialog.value = false;
+    resetAddProf();
+  } catch (error) {
+    addProfDialog.value = false;
+    toast({ title: 'Erro ao adicinar professor. Verifique os campos e tente novamente.', variant: 'destructive' });
+  }
 };
 
 const sorting = ref<SortingState>([])
@@ -61,15 +92,28 @@ const table = useVueTable({
     get columnVisibility() { return columnVisibility.value },
   },
 })
+
+onMounted(async () => {
+  try {
+    professores.value = await fetchProfessores()
+  } catch (error) {
+    toast({
+      title: 'Erro ao carregar professores. Por favor, tente novamente mais tarde.',
+      variant: 'destructive'
+    });
+  }
+})
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex justify-end items-center pb-4 w-full space-x-20">
       <div class="flex-1">
         <Input class="w-full h-[2.6rem]" placeholder="Procurar por professor..."
-          :model-value="table.getColumn('nome')?.getFilterValue() as string"
-          @update:model-value="table.getColumn('nome')?.setFilterValue($event)" />
+          :model-value="table.getColumn('userName')?.getFilterValue() as string"
+          @update:model-value="table.getColumn('userName')?.setFilterValue($event)" />
       </div>
 
       <button @click="addProfDialog = true"
@@ -79,7 +123,7 @@ const table = useVueTable({
     </div>
 
     <div class="flex justify-center items-center overflow-auto border rounded-md">
-      <Table class="w-[77vw]">
+      <Table class="w-full">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead v-for="header in headerGroup.headers" :key="header.id"
@@ -141,9 +185,10 @@ const table = useVueTable({
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label class="block text-sm mb-1">Professor</label>
-          <select v-model="addProf.nome" class="w-full border border-gray-300 rounded px-2 py-1" required>
-            <option value="">Selecione o professor</option>
-            <option v-for="prof in professores" :key="prof" :value="prof">{{ prof }}
+          <select v-model="addProf.userName" class="w-full border border-gray-300 rounded px-2 py-1" required>
+            <option value="" disabled>Selecione o professor</option>
+            <option v-for="prof in professoresDisponiveis" :key="prof.id" :value="prof.id">
+              {{ prof.userName }}
             </option>
           </select>
         </div>
@@ -155,7 +200,7 @@ const table = useVueTable({
           </Button>
           <Button type="button"
             class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
-            variant="ghost" @click="addProfDialog = false">
+            variant="ghost" @click="() => { addProfDialog = false; resetAddProf(); }" >
             Cancelar
           </Button>
         </DialogFooter>

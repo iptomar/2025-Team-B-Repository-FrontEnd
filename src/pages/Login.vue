@@ -3,11 +3,9 @@ import { ref, onBeforeMount } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import * as z from 'zod'
-
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
 import { useRouter } from 'vue-router'
-
 import {
   FormControl,
   FormDescription,
@@ -16,6 +14,11 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form'
+import { loginAPI } from '@/api/api'
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const formSchema = toTypedSchema(z.object({
   email: z.string().email('Email inválido').min(5, 'O email deve ter pelo menos 5 caracteres').max(100, 'O email deve ter no máximo 100 caracteres'),
@@ -30,8 +33,6 @@ const loading = ref(false)
 const error = ref(null)
 const router = useRouter();
 
-
-
 onBeforeMount(() => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -39,28 +40,16 @@ onBeforeMount(() => {
   }
 })
 
-async function login(values) { 
+async function login(values) {
   loading.value = true;
-  const url = "https://localhost:7223/api/auth/login";
-
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(values)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
-
-    const json = await response.json();
-    localStorage.setItem("token", json.token);
-    router.push('/cursos')
+    await loginAPI(values); 
+    router.push('/cursos');
   } catch (error) {
-    console.error("Erro ao fazer login:", error.message);
+    toast({
+      title: "Erro ao fazer login. Por favor, verifique suas credenciais.",
+      variant: "destructive"
+    });
   } finally {
     loading.value = false;
   }

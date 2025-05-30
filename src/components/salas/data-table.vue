@@ -1,36 +1,53 @@
 <script setup lang="ts" generic="TData, TValue">
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 import type { ColumnDef, SortingState, ColumnFiltersState, VisibilityState } from '@tanstack/vue-table'
 import { FlexRender, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
-import DropdownAction from './data-table-dropdown.vue'
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { Localidade } from '../interfaces'
+import { getLocalidades } from '@/api/localidades'
+import { createSala } from '@/api/salas'
+
+const { toast } = useToast()
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const props = defineProps<{
-  columns: ColumnDef<TData & { id: string }, TValue>[]
-  data: (TData & { id: string })[]
+  columns: ColumnDef<TData & { id: number }, TValue>[]
+  data: (TData & { id: number })[]
 }>()
 
-const router = useRouter()
 const showAddModal = ref(false)
 const novaSala = ref({
-  Nome_sala: '',
-  Nome_localidade: ''
+  sala: '',
+  localidadeFK: null as number | null,
 })
 
+const localidades = ref<Localidade[]>([]);
 
-const localidades = ['Abrantes', 'Mafra', 'Rio Maior', 'Tomar', 'Torres Novas']
-
-const handleSubmit = () => {
-  console.log(novaSala.value)
-  showAddModal.value = false
-}
-
-const goToSala = (id: string) => {
-  router.push(`/sala/${id}`)
+const handleSubmit = async () => {
+  try {
+    await createSala(novaSala.value)
+    showAddModal.value = false
+    novaSala.value = { sala: '', localidadeFK: null }
+    emit('refresh')
+    toast({
+      title: 'A sala foi adicionada com sucesso.',
+      variant: 'success',
+    })
+  } catch (error) {
+    toast({
+      title: 'Não foi possível adicionar a sala, por favor tente novamente.',
+      variant: 'destructive',
+    })
+  }
 }
 
 const sorting = ref<SortingState>([])
@@ -58,36 +75,37 @@ const table = useVueTable({
   },
 })
 
-
-const search = ref('');
-
-watch(search, (value) => {
-  table.getColumn('SalaOuLocalidade')?.setFilterValue(value);
+onMounted(async () => {
+  try {
+    localidades.value = await getLocalidades();
+  } catch (error) {
+    toast({
+      title: 'Não foi possível carregar as localidades.',
+      variant: 'destructive',
+    })
+  }
 });
-
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">
-        <Input 
-          v-model="search"
-          class="w-full h-[2.7rem]" 
-          placeholder="Procurar por sala ou localidade..."
-        />
+        <Input class="w-full h-[2.7rem]" placeholder="Procurar por sala ou localidade..."
+          :model-value="table.getColumn('SalaOuLocalidade')?.getFilterValue() as string"
+          @update:model-value="table.getColumn('SalaOuLocalidade')?.setFilterValue($event)" />
       </div>
 
-      <button 
-        @click="showAddModal = true" 
-        class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2"
-      >
+      <button @click="showAddModal = true"
+        class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Adicionar Sala
       </button>
     </div>
 
-    <div class="flex justify-center items-center overflow-auto border rounded-md">
-      <Table class="w-[70vw]">
+    <div class="flex min-w-[900px] justify-center items-center overflow-auto border rounded-md">
+      <Table class="w-full">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead v-for="header in headerGroup.headers" :key="header.id"
@@ -100,17 +118,15 @@ watch(search, (value) => {
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <TableRow v-for="row in table.getRowModel().rows" :key="row.id"
-              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50 cursor-pointer"
-              @click="goToSala(row.original.id)">
+              :data-state="row.getIsSelected() ? 'selected' : undefined" class="hover:bg-gray-50">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="p-2">
-                <FlexRender v-if="cell.column.id !== 'actions'" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-                <DropdownAction v-else :sala="row.original" @click.stop />
+                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>
             </TableRow>
           </template>
           <template v-else>
             <TableRow>
-              <TableCell :colspan="props.columns.length" class="h-24 text-center">
+              <TableCell :colspan="columns.length" class="h-24 text-center">
                 Sem Salas.
               </TableCell>
             </TableRow>
@@ -120,54 +136,62 @@ watch(search, (value) => {
     </div>
 
     <div class="flex items-center justify-center gap-2 mt-4">
-      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
+      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanPreviousPage()"
+        @click="table.previousPage()">
         Anterior
       </Button>
-     
-      <button
-        v-for="page in pageCount"
-        :key="page"
-        @click="table.setPageIndex(page - 1)"
-        :class="[
-          'px-3 py-1 hover:border-iptGreen rounded',
-          page === currentPage ? 'bg-iptGreen text-white' : 'bg-white'
-        ]"
-      >
+
+      <button v-for="page in pageCount" :key="page" @click="table.setPageIndex(page - 1)" :class="[
+        'px-3 py-1 hover:border-iptGreen rounded',
+        page === currentPage ? 'bg-iptGreen text-white' : 'bg-white'
+      ]">
         {{ page }}
       </button>
 
-      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+      <Button class="hover:border-iptGreen" variant="outline" size="sm" :disabled="!table.getCanNextPage()"
+        @click="table.nextPage()">
         Próxima
       </Button>
     </div>
 
-    <div v-if="showAddModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div class="bg-white rounded-lg p-6 w-96">
-        <h2 class="text-xl mb-4">Adicionar Sala</h2>
-        <form @submit.prevent="handleSubmit">
-          <div class="mb-4">
+    <Dialog v-model:open="showAddModal">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adicionar Sala</DialogTitle>
+          <DialogDescription>
+            Insira a designação da sala e clique em "Adicionar".
+          </DialogDescription>
+        </DialogHeader>
+        <form @submit.prevent="handleSubmit" class="space-y-4">
+          <div>
             <label class="block mb-1">Nome da Sala</label>
-            <input v-model="novaSala.Nome_sala" type="text" class="w-full border border-gray-300 rounded px-2 py-1" required />
-          </div>
-          
-          <div class="mb-4">
-            <label class="block mb-1">Localidade</label>
-            <select v-model="novaSala.Nome_localidade" class="w-full border border-gray-300 rounded px-2 py-1" required>
-              <option value="">Selecione a localidade</option>
-              <option v-for="localidade in localidades" :key="localidade" :value="localidade">{{ localidade }}</option>
-            </select>
+            <input v-model="novaSala.sala" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
+              required />
           </div>
 
-          <div class="flex justify-center space-x-2">
-            <button type="submit" class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded">
-              Adicionar
-            </button>
-            <button type="button" @click="showAddModal = false" class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded">
-              Cancelar
-            </button>
+          <div>
+            <label class="block mb-1">Localidade</label>
+            <select v-model="novaSala.localidadeFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
+              <option value=null disabled>Selecione a localidade</option>
+              <option v-for="localidade in localidades" :key="localidade.id" :value="localidade.id">
+                {{ localidade.localidade }}
+              </option>
+            </select>
           </div>
+          <DialogFooter class="flex justify-end gap-2">
+            <Button type="submit"
+              class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
+              Adicionar
+            </Button>
+            <Button type="button"
+              class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+              variant="ghost"
+              @click="showAddModal = false; novaSala = { sala: '', localidadeFK: null }">
+              Cancelar
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

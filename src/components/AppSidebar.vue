@@ -54,10 +54,10 @@ const items = [
     <SidebarContent class="bg-iptGreen flex flex-col justify-between h-full">
       <div>
         <SidebarGroup>
-          <SidebarGroupLabel class="mt-10 text-bold text-white text-xl">IPT</SidebarGroupLabel>
+          <SidebarGroupLabel class="mt-12 text-bold text-white text-xl mb-4">IPT</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem v-for="item in items" :key="item.title" :class="{ 'active-menu-item': route.path === item.url }">
+              <SidebarMenuItem v-for="item in items" :key="item.title" :class="{ 'active-menu-item': route.path === item.url, 'my-1': true }">
                 <SidebarMenuButton asChild>
                   <a :href="item.url" class="text-white flex items-center gap-2">
                     <component :is="item.icon" />

@@ -33,29 +33,34 @@ export interface anoLetivo {
 
 export interface Cadeira {
   id: number;
-  nome: string;
+  cadeira: string;
   ano: number;
   semestre: number;
   ects: number;
-  aulas: Aula[];
 }
 
 export interface Turma {
   id: number;
   ano: number;
-  turma: string;
+  letra: string;
   semestre: number;
+  cursoFK: number;
+  curso: {
+    id: number;
+    curso: string;
+  }
 }
 
 export interface Localidade {
   id: number;
-  Localidade: string;
+  localidade: string;
 }
 
 export interface Instituicao {
   id: number;
   instituicao: string;
-  localidade: string;
+  localidadeFK: number;
+  localidade: Localidade;
 }
 
 export interface Grau {
@@ -70,19 +75,52 @@ export interface Tipologia {
 
 export interface Professor {
   id: number;
-  nome: string;
+  userName: string;
+  email: string;
 }
 
 export interface Aula {
   id: number;
-  duração: string;
-  tipologia: string;
-  professor: Professor;
-  turmas: Turma[];
+  duracao: string;
+  CadeiraFK: number;
+  cadeira: {
+    id: number;
+    cadeira: string;
+    ano: number;
+    semestre: number;
+    ects: number;
+  };
+  TipologiaFK: number;
+  tipologia: {
+    id: number;
+    tipologia: string;
+  };
+  TurmaFK: number;
+  turma: {
+    id: number;
+    ano: number;
+    letra: string;
+    semestre: number;
+    cursoFK: number;
+    curso: {
+      id: number;
+      curso: string;
+    };
+  };
+  ProfessorFK: string;
+  professor: {
+    id: string;
+    userName: string;
+    email: string;
+  };
 }
 
 export interface Sala {
-  id: string
-  Nome_sala: string
-  Nome_localidade: string
+  id: number
+  sala: string
+  localidadeFK: number
+  localidade: {
+    id: number
+    localidade: string
+  }
 }

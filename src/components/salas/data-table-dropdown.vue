@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,20 +9,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-vue-next";
-import type { Sala } from "./columns";
+import type { Localidade, Sala } from "../interfaces";
+import { deleteSala, updateSala } from "@/api/salas";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { getLocalidades } from "@/api/localidades";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+defineProps<{
+  sala: Sala
+}>()
+
+const { toast } = useToast()
+
+const emit = defineEmits<{
+  (e: 'refresh'): void
+}>();
 
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editItem = ref<Sala | null>(null);
 
-const props = defineProps({
-  sala: {
-    type: Object as () => Sala,
-    required: true
-  }
-});
-
-const localidades = ['Lisboa', 'Porto', 'Coimbra', 'Braga', 'Faro']; // Exemplo de localidades
+const localidades = ref<Localidade[]>([]);
 
 const handleEdit = (sala: Sala) => {
   editItem.value = { ...sala };
@@ -34,31 +42,62 @@ const handleDelete = (sala: Sala) => {
   showDeleteModal.value = true;
 };
 
-const closeModals = () => {
-  showEditModal.value = false;
-  showDeleteModal.value = false;
+const handleSave = async () => {
+  try {
+    if (editItem.value) {
+      await updateSala(Number(editItem.value.id), editItem.value);
+      showEditModal.value = false;
+      emit('refresh');
+      toast({
+        title: 'A sala foi atualizada com sucesso.',
+        variant: 'success',
+      });
+    }
+  } catch (error) {
+    toast({
+      title: 'Não foi possível atualizar a sala, por favor tente novamente.',
+      variant: 'destructive',
+    });
+  }
 };
 
-const handleSave = () => {
-  // Lógica para salvar as alterações na sala
-  console.log("Salvando alterações na sala:", editItem.value);
-  closeModals();
+const handleDeleteConfirm = async () => {
+  try {
+    showDeleteModal.value = false;
+    if (editItem.value) {
+      await deleteSala(editItem.value.id);
+      emit('refresh');
+      toast({
+        title: 'A sala foi eliminada com sucesso.',
+        variant: 'success',
+      })
+    }
+  } catch (error) {
+    toast({
+      title: 'Não foi possível eliminar a sala, por favor tente novamente.',
+      variant: 'destructive',
+    })
+  }
 };
 
-const handleDeleteConfirm = () => {
-  // Lógica para excluir a sala
-  console.log("Excluindo sala:", editItem.value);
-  closeModals();
-};
+onMounted(async () => {
+  try {
+    localidades.value = await getLocalidades();
+  } catch (error) {
+    toast({
+      title: 'Não foi possível carregar as localidades.',
+      variant: 'destructive',
+    })
+  }
+});
 </script>
 
 <template>
+  <Toaster />
+
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
-      <Button
-        variant="ghost"
-        class="w-8 h-8 p-0 bg-white border hover:border-iptGreen"
-      >
+      <Button variant="ghost" class="w-8 h-8 p-0 bg-white border hover:border-iptGreen">
         <span class="sr-only">Open menu</span>
         <MoreHorizontal class="w-4 h-4" />
       </Button>
@@ -66,82 +105,62 @@ const handleDeleteConfirm = () => {
     <DropdownMenuContent align="end">
       <DropdownMenuItem @click="handleEdit(sala)">Editar</DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem @click="handleDelete(sala)">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(sala)" class="text-red-500">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
-  <div
-    v-if="showEditModal"
-    class="fixed inset-0 flex items-center z-10 justify-center bg-black bg-opacity-50"
-  >
-    <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-xl mb-4 text-center">Editar Sala</h2>
-      <form @submit.prevent="handleSave">
-        <div class="mb-4">
-          <label class="block mb-1 text-center">Nome da Sala</label>
-          <input
-            v-model="editItem.Nome_sala"
-            type="text"
-            class="w-full border border-gray-300 rounded px-2 py-1"
-            required
-          />
+  <Dialog v-model:open="showEditModal">
+    <DialogContent class="w-full max-w-md">
+      <DialogHeader>
+        <DialogTitle>Editar Sala</DialogTitle>
+        <DialogDescription>Altere a sala e clique em "Guardar".</DialogDescription>
+      </DialogHeader>
+      <form @submit.prevent="handleSave" v-if="editItem" class="space-y-4">
+        <div>
+          <label class="block mb-1">Nome da Sala</label>
+          <input v-model="editItem.sala" type="text" class="w-full border border-gray-300 rounded px-2 py-1" required />
         </div>
-
-        <div class="mb-4">
-          <label class="block mb-1 text-center">Localidade</label>
-          <select
-            v-model="editItem.Nome_localidade"
-            class="w-full border border-gray-300 rounded px-2 py-1"
-            required
-          >
+        <div>
+          <label class="block mb-1">Localidade</label>
+          <select v-model="editItem.localidadeFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
             <option value="">Selecione a localidade</option>
-            <option v-for="localidade in localidades" :key="localidade" :value="localidade">
-              {{ localidade }}
+            <option v-for="localidade in localidades" :key="localidade.id" :value="localidade.id">
+              {{ localidade.localidade }}
             </option>
           </select>
         </div>
-        <div class="flex justify-center space-x-2">
-          <button
-            type="submit"
-            class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded"
-          >
+        <DialogFooter class="flex justify-end gap-2">
+          <Button type="submit"
+            class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
             Guardar
-          </button>
-          <button
-            type="button"
-            @click="closeModals"
-            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded"
-          >
+          </Button>
+          <Button type="button"
+            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+            variant="ghost" @click="showEditModal = false, editItem = null">
             Cancelar
-          </button>
-        </div>
+          </Button>
+        </DialogFooter>
       </form>
-    </div>
-  </div>
+    </DialogContent>
+  </Dialog>
 
-  <div
-    v-if="showDeleteModal"
-    class="fixed inset-0 flex items-center z-10 justify-center bg-black bg-opacity-50"
-  >
-    <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-xl mb-4 text-center">Confirmar Eliminação</h2>
-      <p class="mb-4 text-center">Tem certeza de que deseja apagar a sala {{ editItem?.Nome_sala }}?</p>
-      <div class="flex justify-center space-x-2">
-        <button
-          type="button"
-          @click="handleDeleteConfirm"
-          class="px-4 py-2 bg-red-100 hover:bg-red-500 hover:border-red-100 border-red-500 hover:text-white text-red-500 rounded"
-        >
-          Excluir
-        </button>
-          <button
-            type="button"
-            @click="closeModals"
-            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400 rounded"
-          >
+  <Dialog v-model:open="showDeleteModal">
+    <DialogContent class="w-full max-w-md">
+      <DialogHeader>
+        <DialogTitle>Confirmar Eliminação</DialogTitle>
+        <DialogDescription>Tem certeza de que deseja apagar a sala?</DialogDescription>
+      </DialogHeader>
+      <DialogFooter class="flex justify-center gap-2">
+        <Button type="button" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white"
+            @click="handleDeleteConfirm">
+            Excluir
+          </Button>
+          <Button type="button"
+            class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+            variant="ghost" @click="showDeleteModal = false">
             Cancelar
-          </button>        
-      </div>
-    </div>
-  </div>
+          </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

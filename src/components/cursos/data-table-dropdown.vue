@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,6 +10,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-vue-next";
+import { updateCurso, deleteCurso } from '@/api/cursos'
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+import { fetchCoordenadores } from '@/api/cursos'
+
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>()
+
+const { toast } = useToast()
 
 const editarCurso = ref<any>(null);
 const isEditOpen = ref(false);
@@ -19,10 +29,14 @@ defineProps({
   curso: Object,
 });
 
-const professores = ['Dr. Silva', 'Dra. Costa', 'Dr. Rodrigues'];
+const professores = ref<{ id: string; userName: string }[]>([]);
 
 const handleEdit = (curso: any) => {
-  editarCurso.value = { ...curso };
+  editarCurso.value = { 
+    ...curso,
+    curso: curso.curso, 
+    professorFK: curso.professorFK
+  };
   isEditOpen.value = true;
 };
 
@@ -31,18 +45,59 @@ const handleDelete = (curso: any) => {
   isDeleteOpen.value = true;
 };
 
-const handleSave = () => {
-  console.log("Salvando alterações no item:", editarCurso.value);
-  isEditOpen.value = false;
+const handleSave = async () => {
+  try {
+    const payload = {
+      Id: editarCurso.value.id,
+      Curso: editarCurso.value.curso,
+      AnoLetivoFK: editarCurso.value.anoLetivoFK,
+      InstituicaoFK: editarCurso.value.instituicaoFK,
+      GrauFK: editarCurso.value.grauFK,
+      ProfessorFK: editarCurso.value.professorFK
+    };
+
+    await updateCurso(payload.Id, payload);
+    isEditOpen.value = false;
+    toast({
+      description: "Curso atualizado com sucesso!",
+      variant: "success",
+    });
+    emit("refresh");
+  } catch (error) {
+    isEditOpen.value = false;
+    toast({
+      description: "Erro ao atualizar curso.",
+      variant: "destructive",
+    });
+  }
 };
 
-const handleDeleteConfirm = () => {
-  console.log("Excluindo item:", editarCurso.value);
-  isDeleteOpen.value = false;
+const handleDeleteConfirm = async () => {
+  try {
+    await deleteCurso(editarCurso.value.id);
+    isDeleteOpen.value = false;
+    toast({
+      description: 'Curso excluído com sucesso!',
+      variant: 'success',
+    });
+    emit('refresh');
+  } catch (error) {
+    isDeleteOpen.value = false;
+    toast({
+      description: 'Erro ao excluir curso.',
+      variant: 'destructive',
+    });
+  }
 };
+
+onMounted(async () => {
+  professores.value = await fetchCoordenadores(); 
+});
 </script>
 
 <template>
+  <Toaster />
+
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" class="w-8 h-8 p-0 bg-white border hover:border-iptGreen">
@@ -53,7 +108,7 @@ const handleDeleteConfirm = () => {
     <DropdownMenuContent align="end">
       <DropdownMenuItem @click="handleEdit(curso)">Editar</DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem @click="handleDelete(curso)">Eliminar</DropdownMenuItem>
+      <DropdownMenuItem @click="handleDelete(curso)" class="text-red-500">Eliminar</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
@@ -75,10 +130,9 @@ const handleDeleteConfirm = () => {
 
         <div>
           <label class="block text-sm mb-1">Professor Responsável</label>
-          <select v-model="editarCurso.respProf" class="w-full border border-gray-300 rounded px-2 py-1" required>
-            <option value="">Selecione o professor</option>
-            <option v-for="prof in professores" :key="prof" :value="prof">
-              {{ prof }}
+          <select v-model="editarCurso.professorFK" class="w-full border border-gray-300 rounded px-2 py-1" required>
+            <option v-for="prof in professores" :key="prof.id" :value="prof.id">
+              {{ prof.userName }}
             </option>
           </select>
         </div>
