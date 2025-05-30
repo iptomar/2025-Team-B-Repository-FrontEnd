@@ -116,7 +116,11 @@ export interface Aula {
 }
 
 export interface Sala {
-  id: string
-  Nome_sala: string
-  Nome_localidade: string
+  id: number
+  sala: string
+  localidadeFK: number
+  localidade: {
+    id: number
+    localidade: string
+  }
 }
