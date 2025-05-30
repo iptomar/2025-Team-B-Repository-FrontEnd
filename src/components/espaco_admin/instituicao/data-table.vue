@@ -11,6 +11,10 @@ import { getLocalidades } from '@/api/localidades'
 import type { Instituicao } from '@/components/interfaces'
 import { getColumns } from './columns'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const data = ref<Instituicao[]>([])
 const localidades = ref<{ id: number, localidade: string }[]>([])
@@ -20,7 +24,10 @@ const fetchData = async () => {
     data.value = await getInstituicoes()
     localidades.value = await getLocalidades()
   } catch (error) {
-    console.error('Erro ao buscar dados:', error)
+    toast({
+      title: 'Erro ao buscar dados. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -43,11 +50,18 @@ const handleAddInstituicao = async () => {
       instituicao: novaInstituicao.value.instituicao,
       localidadeFK: novaInstituicao.value.localidadeFK
     })
+    toast({
+      title: 'Instituição adicionada com sucesso.',
+      variant: 'success'
+    })
     await fetchData()
     showAddModal.value = false
     novaInstituicao.value = { instituicao: '', localidadeFK: 0 }
   } catch (error) {
-    console.error('Erro ao adicionar instituição:', error)
+    toast({
+      title: 'Erro ao adicionar instituição. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -70,10 +84,17 @@ const handleDeleteInstituicao = async (id: number) => {
   try {
     await deleteInstituicao(id)
     await fetchData()
+    toast({
+      title: 'Instituição excluída com sucesso.',
+      variant: 'success'
+    })
     showDeleteModal.value = false
     deleteItem.value = null
   } catch (error) {
-    console.error('Erro ao deletar instituição:', error)
+    toast({
+      title: 'Erro ao excluir instituição. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -88,11 +109,18 @@ const handleEditInstituicao = async () => {
       instituicao: editItem.value.instituicao,
       localidadeFK: editItem.value.localidade.id
     })
+    toast({
+      title: 'Instituição editada com sucesso.',
+      variant: 'success'
+    })
     await fetchData()
     showEditModal.value = false
     editItem.value = null
   } catch (error) {
-    console.error('Erro ao editar instituição:', error)
+    toast({
+      title: 'Erro ao editar instituição. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -124,6 +152,8 @@ const table = useVueTable({
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">

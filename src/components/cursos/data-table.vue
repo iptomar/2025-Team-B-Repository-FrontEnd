@@ -130,7 +130,10 @@ onMounted(async () => {
       novoCurso.value.anoLetivoFK = ultimoAno.id;
     }
   } catch (error) {
-    console.error("Erro ao carregar dados iniciais:", error);
+    toast({
+      title: 'Erro ao carregar dados iniciais. Por favor, tente novamente.',
+      variant: 'destructive'
+    });
   }
 });
 </script>

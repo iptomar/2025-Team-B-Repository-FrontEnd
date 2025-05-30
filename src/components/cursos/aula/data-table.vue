@@ -125,7 +125,7 @@ watch(isCreateOpen, async (value) => {
         t.ano === props.anoCadeira
       );
     } catch (error) {
-      toast({ title: "Erro ao carregar dados", description: String(error), variant: "destructive" });
+      toast({ title: "Erro ao carregar dados. Por favor, tente novamente.", variant: "destructive" });
     }
   }
 });

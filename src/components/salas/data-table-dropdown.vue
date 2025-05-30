@@ -54,7 +54,10 @@ const handleSave = async () => {
       });
     }
   } catch (error) {
-    console.error("Erro ao atualizar sala:", error);
+    toast({
+      title: 'Não foi possível atualizar a sala, por favor tente novamente.',
+      variant: 'destructive',
+    });
   }
 };
 
@@ -70,7 +73,6 @@ const handleDeleteConfirm = async () => {
       })
     }
   } catch (error) {
-    console.error("Erro ao excluir sala:", error);
     toast({
       title: 'Não foi possível eliminar a sala, por favor tente novamente.',
       variant: 'destructive',

@@ -10,6 +10,10 @@ import { getLocalidades, createLocalidade, deleteLocalidade, updateLocalidade } 
 import type { Localidade } from '@/components/interfaces'
 import { getColumns } from './columns'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const data = ref<Localidade[]>([])
 
@@ -17,7 +21,10 @@ const fetchData = async () => {
   try {
     data.value = await getLocalidades()
   } catch (error) {
-    console.error('Erro ao buscar localidades:', error)
+    toast({
+      title: 'Erro ao buscar localidades. Por favor, tente novamente mais tarde.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -33,9 +40,16 @@ const handleAddLocalidade = async () => {
     await createLocalidade(novaLocalidade.value)
     await fetchData()
     showAddModal.value = false
+    toast({
+      title: 'Localidade adicionada com sucesso!',
+      variant: 'success'
+    })
     novaLocalidade.value = ''
   } catch (error) {
-    console.error('Erro ao adicionar localidade:', error)
+    toast({
+      title: 'Erro ao adicionar localidade. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -58,10 +72,17 @@ const handleDeleteLocalidade = async (id: number) => {
   try {
     await deleteLocalidade(id)
     await fetchData()
+    toast({
+      title: 'Localidade excluída com sucesso!',
+      variant: 'success'
+    })
     showDeleteModal.value = false 
     deleteItem.value = null
   } catch (error) {
-    console.error('Erro ao deletar localidade:', error)
+    toast({
+      title: 'Erro ao excluir localidade. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -73,12 +94,18 @@ const handleEditLocalidade = async () => {
 
   try {
     await updateLocalidade(editItem.value.id, editItem.value.localidade)
-    console.log('Localidade editada:', editItem.value)
+    toast({
+      title: 'Localidade editada com sucesso!',
+      variant: 'success'
+    })
     await fetchData()
     showEditModal.value = false  
     editItem.value = null
   } catch (error) {
-    console.error('Erro ao editar localidade:', error)
+    toast({
+      title: 'Erro ao editar localidade. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -108,6 +135,8 @@ const table = useVueTable({
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">

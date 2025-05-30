@@ -10,6 +10,10 @@ import { createGrau, fetchGraus } from '@/api/graus'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Grau } from '@/components/interfaces'
 import { createColumns } from './columns'
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const data = ref<Grau[]>([])
 
@@ -17,7 +21,10 @@ const refreshData = async () => {
   try {
     data.value = await fetchGraus()
   } catch (error) {
-    console.error('Erro ao atualizar dados:', error)
+    toast({
+      title: 'Erro ao atualizar dados. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -35,12 +42,18 @@ const handleSubmit = async () => {
     await createGrau({
       grau: novoGrau.value.grau
     })
-
+    toast({
+      title: 'O grau foi adicionado com sucesso.',
+      variant: 'success'
+    })
     novoGrau.value.grau = ''
     showAddModal.value = false
     refreshData()
   } catch (error) {
-    console.error('Ocorreu um erro ao criar o grau')
+    toast({
+      title: 'Erro ao adicionar o grau. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -72,6 +85,8 @@ const table = useVueTable({
 </script>
 
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">

@@ -12,6 +12,10 @@ import type { Cadeira, Curso, Professor, Turma } from '@/components/interfaces';
 import { fetchCadeirasdoCurso, fetchCursos } from '@/api/cursos';
 import { fetchTurmas } from '@/api/turmas';
 import { fetchProfessoresDoCurso } from '@/api/professores';
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast();
 
 const data = ref<Curso[]>([]);
 const cursoSelecionado = ref<Curso | null>(null);
@@ -35,7 +39,10 @@ const carregarProfessores = async () => {
     const professores = await fetchProfessoresDoCurso(cursoId.value);
     professoresCurso.value = professores;
   } catch (error) {
-    console.error('Erro ao carregar professores:', error);
+    toast({
+      title: 'Erro ao carregar os professores. Por favor, tente novamente mais tarde.',
+      variant: 'destructive'
+    });
   }
 };
 
@@ -58,12 +65,17 @@ onMounted(async () => {
       await carregarCadeiras();
     }
   } catch (error) {
-    console.error('Erro ao buscar os dados:', error);
+    toast({
+      title: 'Erro ao carregar os dados do curso. Por favor, tente novamente mais tarde.',
+      variant: 'destructive'
+    });
   }
 });
 </script>
 
 <template>
+  <Toaster />
+
   <div class="w-full mx-auto space-y-8">
     <div class="border-b pb-6">
       <h1 class="text-3xl font-bold text-black">{{ cursoSelecionado?.curso }}</h1>

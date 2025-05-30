@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { getData } from '@/api/api';
 import Calendar from "@/components/ui/calendar/Calendar.vue";
 import CalendarProvider from "@/components/ui/calendar/CalendarProvider.vue";
 import type { Turma } from '@/components/interfaces';
 import { fetchTurmaById } from '@/api/turmas';
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast();
 
 const turmaSelecionada = ref<Turma | null>(null);
 const route = useRoute();
@@ -17,7 +20,10 @@ onMounted(async () => {
     try {
         turmaSelecionada.value = await fetchTurmaById(turmaId.value);
     } catch (error) {
-        console.error('Erro ao buscar a turma:', error);
+        toast({
+            title: 'Erro ao buscar a turma. Por favor, tente novamente mais tarde.',
+            variant: 'destructive'
+        });
     }
 });
 
@@ -59,6 +65,8 @@ let EVENTS = ref(events);
 </script>
 
 <template>
+    <Toaster />
+
     <div class="mx-auto space-y-8 mb-10">
         <div class="border-b pb-6">
             <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.letra }}</h1>

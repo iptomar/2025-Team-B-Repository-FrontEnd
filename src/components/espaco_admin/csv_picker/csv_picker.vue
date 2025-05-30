@@ -1,8 +1,63 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import { filesSubmit } from '@/api/csv';
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast();
+
+const files = ref<File[]>([]);
+
+function handleFileSelect(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const filesAsArray = Array.from(input?.files || []);
+    files.value = filesAsArray;
+}
+
+function handleFileDrop(e: DragEvent) {
+    e.preventDefault();
+    const filesAsArray = Array.from(e.dataTransfer?.files || []);
+    files.value = filesAsArray;
+}
+
+function formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+
+function handleFileImport() {
+    if (files.value.length === 0) return;
+
+    filesSubmit(files.value)
+        .then(() => {
+            files.value = [];
+            toast({
+              title: 'Ficheiros importados com sucesso!',
+              variant: 'success'
+            });
+        })
+        .catch(() => {
+            toast({
+              title: 'Erro ao importar os ficheiros. Por favor, tente novamente.',
+              variant: 'destructive'
+            });
+        })
+        .finally(() => {
+            files.value = [];
+        });
+}
+</script>
 <template>
+    <Toaster />
+    
     <div class="flex flex-col gap-2">
         <div class="flex items-center justify-center w-full">
             <label for="dropzone-file"
-                class="flex flex-col items-center justify-center w-full h-64 border-2 border-iptGreen border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                class="flex flex-col items-center justify-center w-full h-64 border-2 border-iptGreen border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500">
 
                 <div v-if="files.length === 0">
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -43,53 +98,3 @@
         </div>
     </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from 'vue';
-import { filesSubmit } from '@/api/csv';
-
-const files = ref<File[]>([]);
-
-function handleFileSelect(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const filesAsArray = Array.from(input?.files || []);
-    files.value = filesAsArray;
-}
-
-function handleFileDrop(e: DragEvent) {
-    e.preventDefault();
-    const filesAsArray = Array.from(e.dataTransfer?.files || []);
-    files.value = filesAsArray;
-}
-
-function formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-
-function handleFileImport() {
-    // prevenção 
-    if (files.value.length === 0) return;
-    // submeter a api os ficheiros
-    console.log('Ficheiros a importar:', files.value);
-
-    filesSubmit(files.value)
-        .then((response) => {
-            console.log(`Ficheiros importados com sucesso! ${response}`);
-            files.value = [];
-        })
-        .catch((error) => {
-            console.error('Erro ao importar os ficheiros:', error);
-        })
-        .finally(() => {
-            // Reset the file input after import
-            files.value = [];
-        });
-
-
-}
-</script>

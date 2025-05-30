@@ -12,6 +12,10 @@ import { deleteGrau, updateGrau } from "@/api/graus";
 import type { Grau } from "@/components/interfaces";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreHorizontal } from "lucide-vue-next";
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast();
 
 const props = defineProps<{
   grau: Grau
@@ -33,20 +37,22 @@ const handleDelete = (grau: Grau) => {
   showDeleteModal.value = true;
 };
 
-const closeModals = () => {
-  showEditModal.value = false;
-  showDeleteModal.value = false;
-};
-
 const handleSave = async () => {
   if (!editItem.value) return;
   
   try {
     await updateGrau(editItem.value);
     emit('grau-atualizado');
-    closeModals();
+toast({
+      title: 'Grau atualizado com sucesso.',
+      variant: 'success'
+    });
+  showEditModal.value = false;
   } catch (error) {
-    console.error('Erro ao atualizar grau:', error);
+    toast({
+      title: 'Erro ao atualizar grau. Por favor, tente novamente.',
+      variant: 'destructive'
+    });
   }
 };
 
@@ -55,15 +61,24 @@ const handleDeleteConfirm = async () => {
   
   try {
     await deleteGrau(editItem.value.id.toString());
+    toast({
+      title: 'Grau eliminado com sucesso.',
+      variant: 'success'
+    });
     emit('grau-atualizado');
-    closeModals();
+  showDeleteModal.value = false;
   } catch (error) {
-    console.error('Erro ao excluir grau:', error);
-  } 
+    toast({
+      title: 'Erro ao eliminar grau. Por favor, tente novamente.',
+      variant: 'destructive'
+    });
+  }
 };
 </script>
 
 <template>
+  <Toaster />
+
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button

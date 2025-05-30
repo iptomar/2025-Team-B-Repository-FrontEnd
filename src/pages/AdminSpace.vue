@@ -15,6 +15,10 @@ import { getLocalidades } from '@/api/localidades';
 import { getInstituicoes } from '@/api/instituicoes';
 import { getGrau } from '@/api/graus';
 import { getTipologia } from '@/api/tipologias';
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const abaAtiva = ref<'Localidades' | 'Instituicao' | 'Grau' | 'Tipologia' | 'ImportacaoDeDados'>('Localidades');
 
@@ -27,7 +31,10 @@ const fetchGraus = async () => {
   try {
     grausData.value = await getGrau();
   } catch (error) {
-    console.error('Erro ao buscar graus:', error);
+    toast({
+      title: 'Erro ao buscar graus. Por favor, tente novamente.',
+      variant: 'destructive',
+    });
   }
 };
 
@@ -44,7 +51,10 @@ const fetchAllData = async () => {
     await fetchGraus();
 
   } catch (error) {
-    console.error('Erro ao buscar os dados:', error);
+    toast({
+      title: 'Erro ao buscar os dados. Por favor, tente novamente.',
+      variant: 'destructive',
+    });
   }
 };
 
@@ -52,8 +62,9 @@ onMounted(() => {
   fetchAllData();
 });
 </script>
-
 <template>
+  <Toaster />
+
   <div class="mx-auto space-y-8">
     <div class="border-b pb-6">
       <h1 class="text-3xl font-bold text-black">Espaço Administrador</h1>

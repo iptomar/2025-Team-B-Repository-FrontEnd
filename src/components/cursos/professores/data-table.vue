@@ -97,7 +97,10 @@ onMounted(async () => {
   try {
     professores.value = await fetchProfessores()
   } catch (error) {
-    console.error('Erro ao carregar professores:', error)
+    toast({
+      title: 'Erro ao carregar professores. Por favor, tente novamente mais tarde.',
+      variant: 'destructive'
+    });
   }
 })
 </script>

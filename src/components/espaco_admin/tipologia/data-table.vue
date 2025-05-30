@@ -11,6 +11,10 @@ import { getTipologia, createTipologia } from '@/api/tipologias'
 import type { Tipologia } from '@/components/interfaces'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createColumns } from './columns'
+import { useToast } from '@/components/ui/toast/use-toast'
+import { Toaster } from '@/components/ui/toast'
+
+const { toast } = useToast()
 
 const data = ref<Tipologia[]>([])
 
@@ -18,7 +22,10 @@ const fetchData = async () => {
   try {
     data.value = await getTipologia()
   } catch (error) {
-    console.error('Erro ao buscar tipologias:', error)
+    toast({
+      title: 'Erro ao buscar tipologias. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -37,8 +44,15 @@ const handleSubmit = async () => {
     await fetchData()
     novaTipologia.value = { tipologia: '' }
     showAddModal.value = false
+    toast({
+      title: 'Tipologia criada com sucesso.',
+      variant: 'success'
+    })
   } catch (error) {
-    console.error('Erro ao criar tipologia:', error)
+    toast({
+      title: 'Erro ao criar tipologia. Por favor, tente novamente.',
+      variant: 'destructive'
+    })
   }
 }
 
@@ -68,8 +82,9 @@ const table = useVueTable({
   },
 })
 </script>
-
 <template>
+  <Toaster />
+
   <div class="flex flex-col h-full w-full">
     <div class="flex items-center pb-4 w-full space-x-4">
       <div class="flex-1">
