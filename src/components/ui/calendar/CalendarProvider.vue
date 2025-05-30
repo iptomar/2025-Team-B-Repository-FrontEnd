@@ -1,5 +1,5 @@
 <script setup>
-import {getCurrentInstance, provide, ref} from "vue";
+import {getCurrentInstance, inject, provide, ref} from "vue";
 import {useElementSize, useResizeObserver} from "@vueuse/core";
 
 const {
@@ -8,41 +8,19 @@ const {
   cell_width,
   cell_height
 } = defineProps(['width', 'height', 'cell_width', 'cell_height']);
-const events = [];
-
+const events = inject("events")
 const instance = getCurrentInstance()
 var max_width = 1024.0;
 const size = useElementSize()
 var calculated_width = max_width / 7;
 var CELL_WIDTH = Math.min(calculated_width, cell_width)
+const onDragEndEvent = inject('calendar_on_drag_end_event');
 provide("cell_width", CELL_WIDTH);
 provide("cell_height", cell_height);
-provide("events", events);
 
-function generateEvent(id, table, weekday, timeslot, time, name, type, classroom, teacher) {
-  table = parseInt(table);
-  weekday = parseInt(weekday);
-  time = parseInt(time);
-  timeslot = parseInt(timeslot);
-  events.push(
-      {
-        id: events.length.toString(),
-        table: table,
-        x: weekday,
-        y: timeslot,
-        tempX: 0,
-        tempY: 0,
-        offsetX: 0,
-        offsetY: 0,
-        time: time,
-        name: name,
-        type: type,
-        classroom: classroom,
-        teacher: teacher
-      });
-}
 
-function generateMockData() {
+
+/*function generateMockData() {
   generateEvent(0, 0, 0, 14, 4, "Internet das Coisas", "(TP)", "B255", "Luís M. Oliveira");
   generateEvent(1, 0, 0, 18, 4, "Internet das Coisas", "(PL)", "I153", "Luís M. Oliveira");
   generateEvent(2, 0, 1, 14, 4, "Sist. Inf. nas Org.", "(TP)", "I154", "Vasco Silva");
@@ -51,7 +29,7 @@ function generateMockData() {
   generateEvent(5, 0, 3, 14, 4, "Desenv. Operações", "(TP)", "B255", "Luís A. Almeida");
   generateEvent(6, 0, 3, 18, 4, "Gestão de Proj.", "(TP)", "B128", "Paulo A. Santos");
   generateEvent(7, 0, 4, 15, 4, "Gestão de Proj.", "(PL)", "B128", "Paulo A. Santos");
-}
+}*/
 
 //generateMockData();
 
@@ -68,10 +46,11 @@ let ghost = ref({
 })
 
 function onDragStart(e) {
+  console.log("DRAG OPERATION STARTED")
   e.dataTransfer.effectAllowed = "copyMove";
   e.target.classList.add("calendar-front");
   draggedElement = e.target.id;
-  events.forEach(event => {
+  events.value.forEach(event => {
     if (event.id === draggedElement) {
       pickedHeight.value = event.time;
       event.tempX = event.x;
@@ -82,13 +61,15 @@ function onDragStart(e) {
 }
 
 function onDragEnd(e) {
+  console.log("DRAG OPERATION ENDED")
   moveToPos(e)
   clampPos(e)
   validatePos(e)
-  for (var i = 0; i < events.length; i++) {
-    if (events[i].id == draggedElement) {
-      console.log(events[i].id, events[i].x, events[i].y)
-      connection.invoke("MoveSchedule", parseInt(events[i].id), events[i].x, events[i].y);
+  for (var i = 0; i < events.value.length; i++) {
+    if (events.value[i].id == draggedElement) {
+
+      onDragEndEvent(i);
+      console.log(events.value[i].id, events.value[i].table, events.value[i].x, events.value[i].y)
       break;
     }
   }
@@ -97,20 +78,23 @@ function onDragEnd(e) {
 
 function validatePos(e) {
   var ev = null;
-  for (var i = 0; i < events.length; i++) {
-    if (events[i].id == draggedElement) {
-      ev = events[i];
+  for (var i = 0; i < events.value.length; i++) {
+    if (events.value[i].id == draggedElement) {
+      ev = events.value[i];
       break;
     }
   }
-  events.forEach(event => {
+
+  events.value.forEach(event => {
     if (event.id != ev.id && event.table == ev.table) {
       if (event.x == ev.x && ev.y < event.y + event.time && ev.y + ev.time > event.y) {
         ev.y = ev.tempY;
         ev.x = ev.tempX;
+        ev.table = ev.oldTable;
       }
     }
   })
+
 }
 
 function moveToPos(e) {
@@ -122,7 +106,7 @@ function moveToPos(e) {
       drop_target = target;
     }
   })
-  events.forEach(event => {
+  events.value.forEach(event => {
     if (event.id === draggedElement && drop_target != null) {
       event.table = drop_target?.table;
       var rect = drop_target?.drop_area.value.getBoundingClientRect();
@@ -134,7 +118,6 @@ function moveToPos(e) {
       var cell_offset_y = drop_target.offsetY / cell_height
       y = Math.max(y, -cell_offset_y)
       y = Math.min(y, drop_target.slotsH - (event.time + cell_offset_y))
-
       //y = Math.min(y, height)
 
       event.y = y - 0.5;
@@ -144,7 +127,7 @@ function moveToPos(e) {
 }
 
 function clampPos(e) {
-  events.forEach(event => {
+  events.value.forEach(event => {
     if (event.id == draggedElement) {
       event.x = Math.trunc(event.x)
       event.y = Math.round(event.y)
