@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DoorClosed, GraduationCap, Home, ShieldUser, Users, LogOut } from "lucide-vue-next";
+import { DoorClosed, GraduationCap, Home, ShieldUser, Users } from "lucide-vue-next";
 import {
   Sidebar,
   SidebarContent,
@@ -9,16 +9,20 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
+import { ref } from 'vue'
 
 const route = useRoute();
-const router = useRouter();
 
-const logout = () => {
-  localStorage.removeItem("token");
-  router.push("/");
-};
+const isSidebarCollapsed = ref(false)
+
+const toggleSidebar = () => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value
+}
 
 const items = [
   {
@@ -45,14 +49,23 @@ const items = [
 </script>
 
 <template>
-  <Sidebar>
-    <SidebarContent class="bg-iptGreen flex flex-col justify-between h-full">
+  <Sidebar collapsible="icon">
+    <SidebarTrigger/>
+    <SidebarContent class="bg-iptGreen flex flex-col h-full">
+      <aside
+    data-sidebar
+    :class="[
+      'transition-[width] duration-200 ease-in-out bg-gray-800 text-white',
+      isSidebarCollapsed ? 'w-[70px]' : 'w-[240px]'
+    ]"
+  ></aside>
+      <SidebarHeader />
       <div>
         <SidebarGroup>
-          <SidebarGroupLabel class="mt-12 text-bold text-white text-xl mb-4">IPT</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem v-for="item in items" :key="item.title" :class="{ 'active-menu-item': route.path === item.url, 'my-1': true }">
+              <SidebarMenuItem v-for="item in items" :key="item.title"
+                :class="{ 'active-menu-item': route.path === item.url, 'my-1': true }">
                 <SidebarMenuButton asChild>
                   <a :href="item.url" class="text-white flex items-center gap-2">
                     <component :is="item.icon" />
@@ -64,16 +77,7 @@ const items = [
           </SidebarGroupContent>
         </SidebarGroup>
       </div>
-      
-      <div class="p-4">
-        <button 
-          class="flex items-center gap-2 w-full text-white bg-iptGreen hover:bg-white border-0 hover:text-black p-2 rounded-md"
-          @click="logout"
-        >
-          <LogOut />
-          Sair
-        </button>
-      </div>
     </SidebarContent>
+    <SidebarFooter />
   </Sidebar>
 </template>
