@@ -39,9 +39,35 @@ fetchSalas().then((val) =>{
   salas.value = val
 })
 
+async function postHorarioBlock(){
+
+  var block = {
+    HorarioId: 1,
+    HoraInicio: '00:09:00',
+    SalaFK: events.value[modifiedBlock].classroom_id,
+    AulaFK: events.value[modifiedBlock].class_id
+  }
+  console.log(block)
+  const response = await fetch(`${API_BASE_URL}/api/signalR` + "/Horariobloco", {headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify(block)} );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+function onClassPicked(){
+  postHorarioBlock().then((val) => {
+    console.log(val);
+  }).catch((err) => {
+    console.log(err);
+  })
+}
+
 function handleSubmit(){
   showClassModal.value = false;
-  
+  console.log(modifiedBlock)
+  console.log(events)
+  events.value[modifiedBlock].classroom_id = value;
+  events.value[modifiedBlock].classroom = value ;
+  onClassPicked();
 }
 
 const open = ref(false)
@@ -82,9 +108,13 @@ fetchAulas().then((value) => {
     })
   })
 });
+var modifiedBlock = null;
+function onDragEnd(i){
+  if(events.value[i].table == 0 && events.value[i].classroom_id == null ){
+    modifiedBlock = i;
+    showClassModal.value = true;
+  }
 
-function onDragEnd(e){
-  showClassModal.value = true;
 }
 provide('calendar_on_drag_end_event', onDragEnd);
 
@@ -97,7 +127,7 @@ function convertToEvent(val){
   })
   var time = timeToY(val.hora_Inicio)
   var duracao = 4
-  return generateEvent(val.id.toString(), 0, 0, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, null, aula.professor.userName )
+  return generateEvent(val.id.toString(), 0, 0, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, null, aula.professor.userName, val.aulaFK)
 }
 
 function timeToY(time : string){
@@ -112,12 +142,13 @@ function convertToEvents(val){
   var duracao = 4;
   var count = 0;
   val.forEach((e) => {
-    events.value.push(generateEvent(e.id.toString(), 1, 0, count, duracao, e.cadeira.cadeira, e.tipologia.tipologia, null, e.professor.userName ))
+    console.log(e)
+    events.value.push(generateEvent(e.id.toString(), 1, 0, count, duracao, e.cadeira.cadeira, e.tipologia.tipologia, null, e.professor.userName, e.id ))
     count+=duracao;
   })
 }
 
-function generateEvent(id, table, weekday, timeslot, time, name, type, classroom, teacher) {
+function generateEvent(id, table, weekday, timeslot, time, name, type, classroom, teacher, class_id) {
   table = parseInt(table);
   weekday = parseInt(weekday);
   time = parseInt(time);
@@ -137,7 +168,8 @@ function generateEvent(id, table, weekday, timeslot, time, name, type, classroom
     name: name,
     type: type,
     classroom: classroom,
-    teacher: teacher
+    teacher: teacher,
+    class_id: class_id
   };
   return result;
 }
@@ -171,7 +203,6 @@ connection.onclose((err) => {
   connectionState.value = err.message;
 })
 
-const data = ref<Curso[]>([]);
 const turmaSelecionada = ref<Turma | null>(null)
 const connected = ref(false)
 
