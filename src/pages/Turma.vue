@@ -17,6 +17,15 @@ import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandL
 import {Popover, PopoverTrigger, PopoverContent} from "@/components/ui/popover";
 import {HubConnectionBuilder} from "@microsoft/signalr"
 import CalendarHolder from "@/components/ui/calendar/CalendarHolder.vue";
+import {Input} from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 
 /**
  * SignalR-Related-Data
@@ -25,6 +34,7 @@ const route = useRoute();
 const turmaId = ref(Number(route.params.id));
 const events = ref([])
 const showClassModal = ref(false)
+const showScheduleModal = ref(false)
 const ON_CONNECTION_START = "JoinHorarioGroup"
 const CONNECTION_HUB = "/hubdobloco"
 const API_BASE_URL = "https://localhost:7223"
@@ -36,7 +46,8 @@ var aulas = []
 
 let connectionState = ref("LOADING");
 let connection = new HubConnectionBuilder().withUrl(API_BASE_URL + CONNECTION_HUB).build();
-let horarioId = 0
+let horarioId = 1
+let horarios = [{id: 1, inicio: '2025-12-14', fim: '2025-12-25'}, {id: 2, inicio: '1900-01-01', fim: '1900-01-01'}]
 const salas = ref([])
 
 connection.start().then(() => {
@@ -47,6 +58,7 @@ connection.start().then(() => {
 
 connection.on("NovoBlocoCriado", (bloco) => {
   var aula = aulas.filter((aula) => aula.id == bloco.aulaFK)[0]
+  var sala = getS
   var time = timeToY(bloco.horaInicio)
   var duracao = 4
   var event = generateEvent(bloco.id, 0, bloco.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, null, aula.professor.userName, bloco.aulaFK)
@@ -63,7 +75,7 @@ connection.onclose((err) => {
 async function fetchHorarios() {
   const response = await fetch(`${API_BASE_URL}/api/Horarios/horarios-turma` , {headers: {'content-type': 'application/json'}, method: 'POST', body: turmaId.value.toString()});
   if (!response.ok) throw new Error(response);
-  return await response.json();
+  return await response.json();acho
 }
 
 async function fetchHorarioId() {
@@ -97,8 +109,11 @@ fetchSalas().then((val) =>{
   salas.value = val
 })
 
+
+
 fetchHorarios().then((val) => {
-  console.log("TEST: " , val)
+  console.log("Logged schedules: ", val)
+  //horarios = val
 })
 
 /**
@@ -141,6 +156,13 @@ function onClassPicked(){
   }).catch((err) => {
     console.log(err);
   })
+}
+
+function handleSubmitSchedule(){
+  showScheduleModal.value = false;
+  /*events.value[modifiedBlock].classroom_id = value;
+  events.value[modifiedBlock].classroom = value ;
+  onClassPicked();*/
 }
 
 function handleSubmit(){
@@ -260,16 +282,36 @@ onMounted(async () => {
     <Toaster />
 
     <div class="mx-auto space-y-8 mb-10">
-        <div class="border-b pb-6">
-            <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.letra }}</h1>
-            <div class="mt-2 text-gray-600 space-y-1">
-                <p class="font-medium text-gray-700">
-                    {{ turmaSelecionada?.semestre === 3 ? 'Anual' : `${turmaSelecionada?.semestre}º Semestre` }}
-                </p>
-                <p> {{ turmaSelecionada?.curso.curso }}</p>
-            </div>
+      <div class="border-b pb-6">
+        <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.letra }}</h1>
+        <div class="mt-2 text-gray-600 space-y-1">
+          <p class="font-medium text-gray-700">
+            {{ turmaSelecionada?.semestre === 3 ? 'Anual' : `${turmaSelecionada?.semestre}º Semestre` }}
+          </p>
+          <p>
+            {{ turmaSelecionada?.curso.curso }}
+          </p>
         </div>
+      </div>
+
+      <div class="w-full">
+        <select v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
+          <option v-for="ano in horarios.slice().reverse()" :key="ano.id" :value="ano.id">
+            {{ ano.inicio }} - {{ ano.fim }}
+          </option>
+        </select>
+        <button @click="removeOpen = true"
+                class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 rounded-l-none mr-5">
+          ❌
+        </button>
+        <button @click="showScheduleModal = true"
+                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
+          Criar Horário
+        </button>
+      </div>
     </div>
+
+
 
     <CalendarProvider events="events" v-if="connected" cell_width="148" cell_height="30" style={}>
         <div class="flex">
@@ -280,9 +322,17 @@ onMounted(async () => {
     <div v-else>
       {{connectionState}}
     </div>
-  <div v-if="showClassModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-xl mb-4">Escolher Sala</h2>
+
+
+  <Dialog v-model:open="showClassModal">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Escolha a sala para o bloco</DialogTitle>
+        <DialogDescription>
+          Este bloco ainda não tem uma sala designada.<br/>
+          Preencha-o com a sala desejada para esta aula.
+        </DialogDescription>
+      </DialogHeader>
       <form @submit.prevent="handleSubmit">
         <div class="mb-4">
           <Popover v-model:open="open">
@@ -291,7 +341,7 @@ onMounted(async () => {
                   variant="outline"
                   role="combobox"
                   :aria-expanded="open"
-                  class="w-[200px] justify-between"
+                  class="w-full justify-between"
               >
                 {{ value ? salas.find((sala) => sala.id === value)?.sala : 'Escolha a sala...' }}
 
@@ -325,15 +375,48 @@ onMounted(async () => {
           </Popover>
         </div>
 
-        <div class="flex justify-center space-x-2">
-          <button
-              type="submit"
-              class="px-4 py-2 text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen rounded"
-          >
-            Guardar
-          </button>
-        </div>
+        <DialogFooter class="mt-4">
+          <div class="flex justify-center space-x-2">
+            <Button type="submit"
+                    class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
+              Guardar
+            </Button>
+          </div>
+
+        </DialogFooter>
       </form>
-    </div>
-  </div>
+    </DialogContent>
+  </Dialog>
+
+  <Dialog v-model:open="showScheduleModal">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Criar novo horário</DialogTitle>
+        <DialogDescription>
+          Crie um novo horário e clique em "Criar".
+        </DialogDescription>
+      </DialogHeader>
+      <form @submit.prevent="handleSubmitSchedule">
+        <div>
+          <label class="block text-sm mb-1">Inicio </label>
+          <input type="date" class="w-full border border-gray-300 rounded px-2 py-1"
+                 required />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Fim </label>
+          <input type="date" class="w-full border border-gray-300 rounded px-2 py-1"
+                 required />
+        </div>
+        <DialogFooter class="mt-4">
+        <div class="flex justify-center space-x-2">
+          <Button type="submit"
+                  class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
+            Criar
+          </Button>
+        </div>
+
+      </DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>
 </template>
