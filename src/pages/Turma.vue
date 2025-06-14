@@ -12,6 +12,11 @@ import { Toaster } from '@/components/ui/toast'
 const { toast } = useToast();
 
 import { cn } from '@/lib/utils'
+import {Button} from "@/components/ui/button";
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command";
+import {Popover, PopoverTrigger, PopoverContent} from "@/components/ui/popover";
+import {HubConnectionBuilder} from "@microsoft/signalr"
+import CalendarHolder from "@/components/ui/calendar/CalendarHolder.vue";
 
 /**
  * SignalR-Related-Data
@@ -24,29 +29,97 @@ const ON_CONNECTION_START = "JoinHorarioGroup"
 const CONNECTION_HUB = "/hubdobloco"
 const API_BASE_URL = "https://localhost:7223"
 
-provide("events", events)
+const open = ref(false)
+const value = ref('')
+var modifiedBlock : number = null;
+var aulas = []
 
 let connectionState = ref("LOADING");
+let connection = new HubConnectionBuilder().withUrl(API_BASE_URL + CONNECTION_HUB).build();
 let horarioId = 0
-import {HubConnectionBuilder} from "@microsoft/signalr"
-import CalendarHolder from "@/components/ui/calendar/CalendarHolder.vue";
-import {Button} from "@/components/ui/button";
-import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "@/components/ui/command";
-import {Popover, PopoverTrigger, PopoverContent} from "@/components/ui/popover";
 const salas = ref([])
+
+connection.start().then(() => {
+  connected.value = true;
+}).catch((err) => {
+  connectionState.value = err.message;
+});
+
+connection.on("NovoBlocoCriado", (bloco) => {
+  var aula = aulas.filter((aula) => aula.id == bloco.aulaFK)[0]
+  var time = timeToY(bloco.horaInicio)
+  var duracao = 4
+  var event = generateEvent(bloco.id, 0, bloco.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, null, aula.professor.userName, bloco.aulaFK)
+  events.value.push(event)
+})
+connection.onclose((err) => {
+  connected.value = false;
+  connectionState.value = err.message;
+})
+
+/**
+ * POST CALLS
+*/
+async function fetchHorarios() {
+  const response = await fetch(`${API_BASE_URL}/api/Horarios/horarios-turma` , {headers: {'content-type': 'application/json'}, method: 'POST', body: turmaId.value.toString()});
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+async function fetchHorarioId() {
+  const response = await fetch(`${API_BASE_URL}/api/signalR/bloco` , {headers: {'content-type': 'application/json'}, method: 'POST', body: turmaId.value.toString()});
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+async function fetchAulas() {
+  const response = await fetch(`${API_BASE_URL}/api/aulas/turma/${turmaId.value}` );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+async function fetchSalas() {
+  const response = await fetch(`${API_BASE_URL}/api/salas/` );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+async function fetchBlocos(){
+  const response = await fetch(`${API_BASE_URL}/api/blocos/turma/${turmaId.value}` );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+provide("events", events)
+
 
 fetchSalas().then((val) =>{
   salas.value = val
 })
 
-function YToTime(value){
-  var min = value%2 == 0 ? '00' : '30'
-  var hour = 9;
+fetchHorarios().then((val) => {
+  console.log("TEST: " , val)
+})
+
+/**
+ * Time conversions
+ */
+
+function YToTime(value : number){
+  const min = value % 2 == 0 ? '00' : '30';
+  let hour = 9;
   hour += Math.floor(value/2);
   hour = hour.toString().padStart(2, '0')
   return hour + ':' + min + ":" + '00';
-
 }
+function timeToY(time : string){
+  let t = time.split(':')
+  let h = (parseInt(t[0])-9)*2
+  let m = Math.trunc(parseInt(t[1])/30)
+  console.log(time, h, m, h+m)
+  return h+m
+}
+
 
 async function postHorarioBlock(){
   var block = {
@@ -72,52 +145,21 @@ function onClassPicked(){
 
 function handleSubmit(){
   showClassModal.value = false;
-  console.log(modifiedBlock)
-  console.log(events)
   events.value[modifiedBlock].classroom_id = value;
   events.value[modifiedBlock].classroom = value ;
   onClassPicked();
 }
 
-const open = ref(false)
-const value = ref('')
-async function fetchHorarioId() {
-  const response = await fetch(`${API_BASE_URL}/api/signalR/bloco` , {headers: {'content-type': 'application/json'}, method: 'POST', body: turmaId.value.toString()});
-  if (!response.ok) throw new Error(response);
-  return await response.json();
-}
 
-async function fetchAulas() {
-  const response = await fetch(`${API_BASE_URL}/api/aulas/turma/${turmaId.value}` );
-  if (!response.ok) throw new Error(response);
-  return await response.json();
-}
-
-async function fetchSalas() {
-  const response = await fetch(`${API_BASE_URL}/api/salas/` );
-  if (!response.ok) throw new Error(response);
-  return await response.json();
-}
-
-async function fetchBlocos(){
-  const response = await fetch(`${API_BASE_URL}/api/blocos/turma/${turmaId.value}` );
-  if (!response.ok) throw new Error(response);
-  return await response.json();
-}
-
-var aulas = []
 fetchAulas().then((value) => {
   aulas = value
   fetchBlocos().then((value) => {
     convertToEvents(aulas)
-    console.log(value)
     value.forEach((bloco) => {
       events.value.push(convertToEvent(bloco))
-      console.log(events.value)
     })
   })
 });
-var modifiedBlock = null;
 function onDragEnd(i){
   if(events.value[i].table == 0 && events.value[i].classroom_id == null ){
     modifiedBlock = i;
@@ -137,34 +179,31 @@ function convertToEvent(val){
   var time = timeToY(val.hora_Inicio)
   var duracao = 4
   console.log(val)
-  return generateEvent(val.id.toString(), 0, val.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, null, aula.professor.userName, val.aulaFK)
-}
-
-function timeToY(time : string){
-  var t = time.split(':')
-  var h = (parseInt(t[0])-9)*2
-  var m = Math.trunc(parseInt(t[1])/30)
-  console.log(time, h, m, h+m)
-  return h+m
+  return generateEvent(val.id.toString(), 0, val.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, val.sala.sala, aula.professor.userName, val.aulaFK, val.sala.id)
 }
 
 function convertToEvents(val){
+  var id = 99999
+  events.value.forEach(event => {
+    if(id.toString() == event.id){
+      id -= 1;
+    }
+  })
   events.value.length = 0;
   var duracao = 4;
   var count = 0;
   val.forEach((e) => {
-    console.log(e)
-    events.value.push(generateEvent(e.id.toString(), 1, 0, count, duracao, e.cadeira.cadeira, e.tipologia.tipologia, null, e.professor.userName, e.id ))
+    events.value.push(generateEvent(id.toString(), 1, 0, count, duracao, e.cadeira.cadeira, e.tipologia.tipologia, null, e.professor.userName, e.id, null ))
     count+=duracao;
   })
 }
 
-function generateEvent(id, table, weekday, timeslot, time, name, type, classroom, teacher, class_id) {
+function generateEvent(id, table, weekday, timeslot, time, name, type, classroom, teacher, class_id, classroom_id) {
   table = parseInt(table);
   weekday = parseInt(weekday);
   time = parseInt(time);
   timeslot = parseInt(timeslot);
-  let result = {
+  return {
     id: events.value.length.toString(),
     aulaId: id,
     table: table,
@@ -180,13 +219,12 @@ function generateEvent(id, table, weekday, timeslot, time, name, type, classroom
     type: type,
     classroom: classroom,
     teacher: teacher,
-    class_id: class_id
+    class_id: class_id,
+    classroom_id: classroom_id
   };
-  return result;
 }
 
 fetchHorarioId().then((val) => {
-  console.log(val)
   horarioId = val;
   connection.invoke(ON_CONNECTION_START, horarioId)
       .then(()=>{
@@ -199,40 +237,6 @@ fetchHorarioId().then((val) => {
 }).catch((result) => {
   console.log("AIAIIA:" + result)
 });
-
-let connection = new HubConnectionBuilder()
-    .withUrl(API_BASE_URL + CONNECTION_HUB)
-    .build();
-
-connection.start()
-    .then(
-        () => {
-          connected.value = true;
-        }
-    ).catch(
-    (err) =>
-    {
-      connectionState.value = err.message;
-    }
-);
-
-connection.on("NovoBlocoCriado", (bloco) => {
-  console.log("BLOCO", bloco);
-  var aula = aulas.filter((aula) => aula.id == bloco.aulaFK)[0]
-  console.log("AULA", aula);
-  var time = timeToY(bloco.horaInicio)
-  console.log("TIME", time);
-  var duracao = 4
-  console.log("EVENT: ", aula, time, duracao)
-  var event = generateEvent(bloco.id, 0, bloco.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, null, aula.professor.userName, bloco.aulaFK)
-  console.log("EVENT: ", event)
-  events.value.push(event)
-})
-
-connection.onclose((err) => {
-  connected.value = false;
-  connectionState.value = err.message;
-})
 
 const turmaSelecionada = ref<Turma | null>(null)
 const connected = ref(false)

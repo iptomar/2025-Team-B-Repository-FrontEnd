@@ -52,12 +52,46 @@ function onDragStart(e) {
   draggedElement = e.target.id;
   events.value.forEach(event => {
     if (event.id === draggedElement) {
+      console.log(event.table)
+      if(event.table == "1"){
+        events.value.push(cloneEvent(event))
+      }
       pickedHeight.value = event.time;
       event.tempX = event.x;
       event.tempY = event.y;
     }
   })
   e.dataTransfer.setDragImage(new Image(), 0, 0);
+}
+
+function cloneEvent(event){
+
+  var id = 99999
+  events.value.forEach(event => {
+    if(id.toString() == event.id){
+      id -= 1;
+    }
+  })
+
+  return {
+    id: id.toString(),
+    aulaId: event.aulaId,
+    table: event.table,
+    oldTable: event.oldTable,
+    x: event.x,
+    y: event.y,
+    tempX: event.tempX,
+    tempY: event.tempY,
+    offsetX: event.offsetX,
+    offsetY: event.offsetY,
+    time: event.time,
+    name: event.name,
+    type: event.type,
+    classroom: event.classroom,
+    teacher: event.teacher,
+    class_id: event.class_id,
+    classroom_id: event.classroom_id
+  }
 }
 
 function onDragEnd(e) {
@@ -78,11 +112,17 @@ function onDragEnd(e) {
 
 function validatePos(e) {
   var ev = null;
+  var pos = -1;
   for (var i = 0; i < events.value.length; i++) {
     if (events.value[i].id == draggedElement) {
       ev = events.value[i];
+      pos = i;
       break;
     }
+  }
+  console.log(ev)
+  if(ev.table == "1" && pos != -1){
+    events.value.splice(pos, 1);
   }
 
   events.value.forEach(event => {
