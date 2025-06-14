@@ -191,17 +191,42 @@ function onDragEnd(i){
 }
 provide('calendar_on_drag_end_event', onDragEnd);
 
-function convertToEvent(val){
+function getAula(fk : string){
   var aula = null;
   aulas.forEach((a) =>{
-    if(val.aulaFK == a.id){
+    if(fk == a.id){
       aula = a;
     }
   })
+  return aula
+}
+
+function getSala(fk : string){
+  var sala = null;
+  salas.value.forEach((s) => {
+    if(fk == s.id){
+      sala = s;
+    }
+  })
+  return sala
+}
+
+
+function convertToEvent(val){
+  var aula = getAula(val.aulaFK);
+  var sala = getSala(val.salaFK);
   var time = timeToY(val.hora_Inicio)
   var duracao = 4
   console.log(val)
-  return generateEvent(val.id.toString(), 0, val.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, val.sala.sala, aula.professor.userName, val.aulaFK, val.sala.id)
+  return generateEvent(val.id.toString(), 0, val.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, sala.sala, aula.professor.userName, val.aulaFK, sala.id)
+}
+
+function timeToY(time : string){
+  var t = time.split(':')
+  var h = (parseInt(t[0])-9)*2
+  var m = Math.trunc(parseInt(t[1])/30)
+  console.log(time, h, m, h+m)
+  return h+m
 }
 
 function convertToEvents(val){
@@ -259,6 +284,41 @@ fetchHorarioId().then((val) => {
 }).catch((result) => {
   console.log("AIAIIA:" + result)
 });
+
+let connection = new HubConnectionBuilder()
+    .withUrl(API_BASE_URL + CONNECTION_HUB)
+    .build();
+
+connection.start()
+    .then(
+        () => {
+          connected.value = true;
+        }
+    ).catch(
+    (err) =>
+    {
+      connectionState.value = err.message;
+    }
+);
+
+connection.on("NovoBlocoCriado", (bloco) => {
+  console.log("BLOCO", bloco);
+  var aula = getAula(bloco.aulaFK);
+  var sala = getSala(bloco.salaFK);
+  var time = timeToY(bloco.horaInicio)
+  var duracao = 4
+
+
+
+  var event = generateEvent(bloco.id, 0, bloco.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, sala.sala, aula.professor.userName, bloco.aulaFK, sala.salaFK)
+  console.log("EVENT: ", event)
+  events.value.push(event)
+})
+
+connection.onclose((err) => {
+  connected.value = false;
+  connectionState.value = err.message;
+})
 
 const turmaSelecionada = ref<Turma | null>(null)
 const connected = ref(false)

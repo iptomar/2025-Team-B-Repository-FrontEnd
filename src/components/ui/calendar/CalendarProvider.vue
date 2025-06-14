@@ -18,21 +18,6 @@ const onDragEndEvent = inject('calendar_on_drag_end_event');
 provide("cell_width", CELL_WIDTH);
 provide("cell_height", cell_height);
 
-
-
-/*function generateMockData() {
-  generateEvent(0, 0, 0, 14, 4, "Internet das Coisas", "(TP)", "B255", "Luís M. Oliveira");
-  generateEvent(1, 0, 0, 18, 4, "Internet das Coisas", "(PL)", "I153", "Luís M. Oliveira");
-  generateEvent(2, 0, 1, 14, 4, "Sist. Inf. nas Org.", "(TP)", "I154", "Vasco Silva");
-  generateEvent(3, 0, 1, 18, 4, "Desenv. Operações", "(PL)", "B255", "Renato E. Panda");
-  generateEvent(4, 0, 2, 16, 4, "Sist. Inf. nas Org.", "(PL)", "I154", "Vasco Silva");
-  generateEvent(5, 0, 3, 14, 4, "Desenv. Operações", "(TP)", "B255", "Luís A. Almeida");
-  generateEvent(6, 0, 3, 18, 4, "Gestão de Proj.", "(TP)", "B128", "Paulo A. Santos");
-  generateEvent(7, 0, 4, 15, 4, "Gestão de Proj.", "(PL)", "B128", "Paulo A. Santos");
-}*/
-
-//generateMockData();
-
 function onDrag(e) {
   e.dataTransfer.dropEffect = "copy";
   moveToPos(e);
@@ -46,7 +31,6 @@ let ghost = ref({
 })
 
 function onDragStart(e) {
-  console.log("DRAG OPERATION STARTED")
   e.dataTransfer.effectAllowed = "copyMove";
   e.target.classList.add("calendar-front");
   draggedElement = e.target.id;
@@ -95,15 +79,12 @@ function cloneEvent(event){
 }
 
 function onDragEnd(e) {
-  console.log("DRAG OPERATION ENDED")
   moveToPos(e)
   clampPos(e)
   validatePos(e)
   for (var i = 0; i < events.value.length; i++) {
     if (events.value[i].id == draggedElement) {
-
       onDragEndEvent(i);
-      console.log(events.value[i].id, events.value[i].table, events.value[i].x, events.value[i].y)
       break;
     }
   }
@@ -154,7 +135,6 @@ function moveToPos(e) {
       var x = (e.clientX - (rect.left + parseInt(drop_target.offsetX))) / CELL_WIDTH;
       //var offset_y_cells = target.offsetY/cell_height
       x = Math.max(x, 0)
-      console.log(drop_target)
       var cell_offset_y = drop_target.offsetY / cell_height
       y = Math.max(y, -cell_offset_y)
       y = Math.min(y, drop_target.slotsH - (event.time + cell_offset_y))
