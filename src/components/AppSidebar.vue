@@ -27,11 +27,6 @@ const items = [
     icon: GraduationCap,
   },
   {
-    title: "Utilizadores",
-    url: "/utilizadores",
-    icon: Users,
-  },
-  {
     title: "Salas",
     url: "/salas",
     icon: DoorClosed,

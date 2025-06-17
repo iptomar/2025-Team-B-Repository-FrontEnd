@@ -73,6 +73,11 @@ export interface Tipologia {
   tipologia: string;
 }
 
+export interface Utilizador{
+  id:number;
+  email: string
+}
+
 export interface Professor {
   id: number;
   userName: string;

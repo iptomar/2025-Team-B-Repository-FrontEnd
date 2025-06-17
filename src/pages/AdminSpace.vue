@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { University, MapPin, Award, ClipboardType } from 'lucide-vue-next';
+import { University, MapPin, Award, ClipboardType, User} from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import { createColumns as columnsGraus } from '@/components/espaco_admin/graus/columns.ts';
 import DataTableGraus from '@/components/espaco_admin/graus/data-table.vue';
@@ -8,8 +8,9 @@ import DataTableLocalidade from '@/components/espaco_admin/localidades/data-tabl
 import { getColumns as columnsInstituicao } from '@/components/espaco_admin/instituicao/columns.ts';
 import DataTableInstituicao from '@/components/espaco_admin/instituicao/data-table.vue';
 import DataTableTipologia from '@/components/espaco_admin/tipologia/data-table.vue';
+import DataTableUsers from '@/components/espaco_admin/utilizadores/data-table.vue';
 import { createColumns as columnsTipologia } from '@/components/espaco_admin/tipologia/columns.ts'
-import type { Instituicao, Localidade, Grau, Tipologia } from '@/components/interfaces';
+import type { Instituicao, Localidade, Grau, Tipologia, Utilizador } from '@/components/interfaces';
 import csv_picker from '@/components/espaco_admin/csv_picker/csv_picker.vue';
 import { getLocalidades } from '@/api/localidades';
 import { getInstituicoes } from '@/api/instituicoes';
@@ -20,12 +21,13 @@ import { Toaster } from '@/components/ui/toast'
 
 const { toast } = useToast()
 
-const abaAtiva = ref<'Localidades' | 'Instituicao' | 'Grau' | 'Tipologia' | 'ImportacaoDeDados'>('Localidades');
+const abaAtiva = ref<'Localidades' | 'Instituicao' | 'Grau' | 'Tipologia' | 'Utilizadores' | 'ImportacaoDeDados'>('Localidades');
 
 const instituicoesData = ref<Instituicao[]>([]);
 const localidadesData = ref<Localidade[]>([]);
 const grausData = ref<Grau[]>([]);
 const tipologiasData = ref<Tipologia[]>([]);
+const utilizadoresData = ref<Utilizador[]>([]);
 
 const fetchGraus = async () => {
   try {
@@ -41,6 +43,7 @@ const fetchGraus = async () => {
 const fetchAllData = async () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  // inserir o getUtilizadores
   try {
     [localidadesData.value, instituicoesData.value, tipologiasData.value] = await Promise.all([
       getLocalidades(),
@@ -111,6 +114,16 @@ onMounted(() => {
         Tipologia
       </button>
 
+      <button @click="abaAtiva = 'Utilizadores'" :class="[
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
+        abaAtiva === 'Utilizadores'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
+      ]">
+        <User class="w-5 h-5 mr-2 stroke-[2.5]" />
+        Utilizadores
+      </button>
+
       <button @click="abaAtiva = 'ImportacaoDeDados'" :class="[
         'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
         abaAtiva === 'ImportacaoDeDados'
@@ -130,6 +143,8 @@ onMounted(() => {
       <DataTableInstituicao v-if="abaAtiva === 'Instituicao'" :columns="columnsInstituicao" :data="instituicoesData" />
 
       <DataTableTipologia v-if="abaAtiva === 'Tipologia'" :columns="columnsTipologia" :data="tipologiasData" />
+
+      <DataTableUsers v-if="abaAtiva === 'Utilizadores'" :columns="columnsTipologia" :data="utilizadoresData" />
 
       <div v-if="abaAtiva === 'ImportacaoDeDados'">
         <csv_picker />

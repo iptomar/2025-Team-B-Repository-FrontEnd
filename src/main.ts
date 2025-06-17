@@ -7,9 +7,6 @@ import Login from './pages/Login.vue';
 import Salas from './pages/Salas.vue';
 import AdminSpace from './pages/AdminSpace.vue';
 import Cursos from './pages/Cursos.vue';
-import Utilizadores from './pages/Utilizadores.vue';
-import CreateUtilizador from './pages/CreateUtilizador.vue';
-import UpdateUtilizador from './pages/UpdateUtilizador.vue';
 
 
 const routes = [
@@ -43,21 +40,6 @@ const routes = [
     path: "/cadeira/:id",
     name: "Cadeira",
     component: () => import("./pages/Cadeira.vue"),
-  },
-  {
-    path: "/utilizadores",
-    component: Utilizadores,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/utilizadores/create-utilizador',
-    component: CreateUtilizador,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/utilizadores/update-utilizador/:id',
-    component: UpdateUtilizador,
-    meta: { requiresAuth: true }
   },
 ];
 
