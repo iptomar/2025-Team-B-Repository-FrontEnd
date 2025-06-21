@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DoorClosed, GraduationCap, Home, ShieldUser, Users, LogOut } from "lucide-vue-next";
+import { DoorClosed, GraduationCap, Radio, Home, ShieldUser, Users, LogOut } from "lucide-vue-next";
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +21,11 @@ const logout = () => {
 };
 
 const items = [
+  {
+    title: "SignalR",
+    url: "/signalR/3",
+    icon: Radio,
+  },
   {
     title: "Cursos",
     url: "/cursos",
