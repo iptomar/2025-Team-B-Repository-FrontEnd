@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
-import {ref, onMounted, provide, inject} from 'vue';
+import {ref, onMounted, provide, inject, useTemplateRef} from 'vue';
 import { useRoute } from 'vue-router';
 import Calendar from "@/components/ui/calendar/Calendar.vue";
 import CalendarProvider from "@/components/ui/calendar/CalendarProvider.vue";
@@ -50,6 +50,8 @@ let horarioId = 1
 let horarios = [{id: 1, inicio: '2025-12-14', fim: '2025-12-25'}, {id: 2, inicio: '1900-01-01', fim: '1900-01-01'}]
 const salas = ref([])
 
+var calendarItem = useTemplateRef('calendarItem');
+
 connection.start().then(() => {
   connected.value = true;
 }).catch((err) => {
@@ -57,16 +59,22 @@ connection.start().then(() => {
 });
 
 connection.on("NovoBlocoCriado", (bloco) => {
-  var aula = aulas.filter((aula) => aula.id == bloco.aulaFK)[0]
-  var sala = getS
+  var aula = getAula(bloco.aulaFK);
+  var sala = getSala(bloco.salaFK);
   var time = timeToY(bloco.horaInicio)
   var duracao = 4
-  var event = generateEvent(bloco.id, 0, bloco.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, null, aula.professor.userName, bloco.aulaFK)
+
+  var event = generateEvent(bloco.id, 0, bloco.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, sala.sala, aula.professor.userName, bloco.aulaFK, sala.id)
+
+  for (var i = 0; i < events.value.length; i++) {
+    if (events.value[i].table == 0 && events.value[i].x == event.x && events.value[i].y == event.y) {
+      events.value.splice(i, 1);
+      break;
+    }
+  }
+
+  console.log("EVENT: ", event)
   events.value.push(event)
-})
-connection.onclose((err) => {
-  connected.value = false;
-  connectionState.value = err.message;
 })
 
 /**
@@ -135,7 +143,6 @@ function timeToY(time : string){
   return h+m
 }
 
-
 async function postHorarioBlock(){
   var block = {
     HorarioId: horarioId,
@@ -186,6 +193,9 @@ function onDragEnd(i){
   if(events.value[i].table == 0 && events.value[i].classroom_id == null ){
     modifiedBlock = i;
     showClassModal.value = true;
+  }else if(events.value[i].table == 0){
+    modifiedBlock = i;
+    //removeCurrentBlock();
   }
 
 }
@@ -219,14 +229,6 @@ function convertToEvent(val){
   var duracao = 4
   console.log(val)
   return generateEvent(val.id.toString(), 0, val.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, sala.sala, aula.professor.userName, val.aulaFK, sala.id)
-}
-
-function timeToY(time : string){
-  var t = time.split(':')
-  var h = (parseInt(t[0])-9)*2
-  var m = Math.trunc(parseInt(t[1])/30)
-  console.log(time, h, m, h+m)
-  return h+m
 }
 
 function convertToEvents(val){
@@ -285,40 +287,16 @@ fetchHorarioId().then((val) => {
   console.log("AIAIIA:" + result)
 });
 
-let connection = new HubConnectionBuilder()
-    .withUrl(API_BASE_URL + CONNECTION_HUB)
-    .build();
-
-connection.start()
-    .then(
-        () => {
-          connected.value = true;
-        }
-    ).catch(
-    (err) =>
-    {
-      connectionState.value = err.message;
-    }
-);
-
-connection.on("NovoBlocoCriado", (bloco) => {
-  console.log("BLOCO", bloco);
-  var aula = getAula(bloco.aulaFK);
-  var sala = getSala(bloco.salaFK);
-  var time = timeToY(bloco.horaInicio)
-  var duracao = 4
-
-
-
-  var event = generateEvent(bloco.id, 0, bloco.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, sala.sala, aula.professor.userName, bloco.aulaFK, sala.salaFK)
-  console.log("EVENT: ", event)
-  events.value.push(event)
-})
 
 connection.onclose((err) => {
   connected.value = false;
   connectionState.value = err.message;
 })
+
+function printSchedule(){
+
+  window.print();
+}
 
 const turmaSelecionada = ref<Turma | null>(null)
 const connected = ref(false)
@@ -365,8 +343,12 @@ onMounted(async () => {
           ❌
         </button>
         <button @click="showScheduleModal = true"
-                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
+                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 mr-5">
           Criar Horário
+        </button>
+        <button @click="printSchedule()"
+                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
+          Imprimir
         </button>
       </div>
     </div>
@@ -375,7 +357,7 @@ onMounted(async () => {
 
     <CalendarProvider events="events" v-if="connected" cell_width="148" cell_height="30" style={}>
         <div class="flex">
-          <Calendar table="0" />
+          <Calendar id="calendarItem" table="0" />
           <CalendarHolder table="1" slotsW="1" slotsH="50"/>
         </div>
     </CalendarProvider>
