@@ -9,7 +9,7 @@ import { fetchTurmaById } from '@/api/turmas';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { Toaster } from '@/components/ui/toast';
 import { parseJwt } from '@/utils/user-utils.js';
-import { userIsAdmin } from '@/utils/user-utils.js';
+import { userIsAdmin, canSubmit} from '@/utils/user-utils.js';
 
 const { toast } = useToast();
 
@@ -54,9 +54,11 @@ var aulas = []
 
 let connectionState = ref("LOADING");
 let connection = new HubConnectionBuilder().withUrl(API_BASE_URL + CONNECTION_HUB).build();
-let horarioId = 1
-let horarios = [{id: 1, inicio: '2025-12-14', fim: '2025-12-25'}, {id: 2, inicio: '1900-01-01', fim: '1900-01-01'}]
+let horarioId = ref(1)
+let horarios = ref([{id: 1, inicio: '2025-12-14', fim: '2025-12-25'}, {id: 2, inicio: '1900-01-01', fim: '1900-01-01'}])
 const salas = ref([])
+const date1 = ref()
+const date2 = ref()
 
 var calendarItem = useTemplateRef('calendarItem');
 
@@ -91,7 +93,7 @@ connection.on("NovoBlocoCriado", (bloco) => {
 async function fetchHorarios() {
   const response = await fetch(`${API_BASE_URL}/api/Horarios/horarios-turma` , {headers: {'content-type': 'application/json'}, method: 'POST', body: turmaId.value.toString()});
   if (!response.ok) throw new Error(response);
-  return await response.json();acho
+  return await response.json();
 }
 
 async function fetchHorarioId() {
@@ -99,6 +101,8 @@ async function fetchHorarioId() {
   if (!response.ok) throw new Error(response);
   return await response.json();
 }
+
+
 
 async function fetchAulas() {
   const response = await fetch(`${API_BASE_URL}/api/aulas/turma/${turmaId.value}` );
@@ -129,6 +133,11 @@ fetchSalas().then((val) =>{
 
 fetchHorarios().then((val) => {
   console.log("Logged schedules: ", val)
+  horarios.value = val
+  horarioId.value = horarios.value[0].id
+  updateEstadoHorario();
+  if(val.length == 0)
+    connectionState.value = "Não existem horários criados para esta turma.";
   //horarios = val
 })
 
@@ -150,10 +159,29 @@ function timeToY(time : string){
   console.log(time, h, m, h+m)
   return h+m
 }
+async function postHorario(){
+  var block = {
+    Inicio: date1.value,
+    Fim: date2.value,
+    TurmaFK: turmaId.value,
+    Blocos: []
+  }
+
+  console.log(block)
+  const response = await fetch(`${API_BASE_URL}/api/Horarios`, {headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify(block)} );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+async function postSetStatus(horario : number) {
+  const response = await fetch(`${API_BASE_URL}/api/Horarios/SetStatus/${horario}/1`,{headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify({status: 1})} );
+  if (!response.ok) throw new Error(response);
+  return response;
+}
 
 async function postHorarioBlock(){
   var block = {
-    HorarioId: horarioId,
+    HorarioId: horarioId.value,
     HoraInicio: YToTime(events.value[modifiedBlock].y),
     DiaDaSemana: events.value[modifiedBlock].x,
     SalaFK: events.value[modifiedBlock].classroom_id,
@@ -175,6 +203,9 @@ function onClassPicked(){
 
 function handleSubmitSchedule(){
   showScheduleModal.value = false;
+  postHorario().then((val) => {
+    console.log(val)
+  });
   /*events.value[modifiedBlock].classroom_id = value;
   events.value[modifiedBlock].classroom = value ;
   onClassPicked();*/
@@ -282,15 +313,15 @@ function generateEvent(id, table, weekday, timeslot, time, name, type, classroom
 }
 
 fetchHorarioId().then((val) => {
-  horarioId = val;
-  connection.invoke(ON_CONNECTION_START, horarioId)
+  horarioId.value = val;
+  connection.invoke(ON_CONNECTION_START, horarioId.value)
       .then(()=>{
-        console.log("CONNECTED TO SCHEDULE " + horarioId);
+        console.log("CONNECTED TO SCHEDULE " + horarioId.value);
       })
       .catch((err) =>{
     console.log(err.toString())
   })
-  console.log("Sucessfully connected to schedule: " + horarioId);
+  console.log("Sucessfully connected to schedule: " + horarioId.value);
 }).catch((result) => {
   console.log("AIAIIA:" + result)
 });
@@ -319,6 +350,20 @@ const connected = ref(false)
 
 const userRoles = ref([]);
 
+function submeter(){
+  postSetStatus(horarioId.value).then((val) => {
+
+    for(let i = 0; i < horarios.value.length; i++) {
+      if(horarios.value[i].id == horarioId.value){
+        horarios.value[i].estado = 1;
+      }
+    }
+    updateEstadoHorario();
+  }).catch((err) =>{
+    console.log(err.toString())
+  });
+}
+
 onMounted(async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -326,6 +371,7 @@ onMounted(async () => {
     const decodedToken = parseJwt(token);
     userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
+    console.log("HELP", userRoles.value)
     try {
       turmaSelecionada.value = await fetchTurmaById(turmaId.value);
     } catch (error) {
@@ -335,6 +381,20 @@ onMounted(async () => {
         });
     }
 });
+
+const estadoHorario = ref(0)
+
+function updateEstadoHorario(){
+  horarios.value.map((val) => {
+    if(val.id == horarioId.value){
+      estadoHorario.value = val.estado
+    }
+  })
+}
+
+watch(horarioId, () => {
+  updateEstadoHorario();
+})
 
 </script>
 
@@ -355,12 +415,12 @@ onMounted(async () => {
       </div>
 
       <div class="w-full flex gap-4 justify-center items-center">
-        <select v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
+        <select v-if="horarios.length > 0"  v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
           <option v-for="ano in horarios.slice().reverse()" :key="ano.id" :value="ano.id">
             {{ ano.inicio }} - {{ ano.fim }}
           </option>
         </select>
-        <button v-if="userIsAdmin(userRoles)" @click="removeOpen = true"
+        <button v-if="horarios.length > 0 && userIsAdmin(userRoles)" @click="removeOpen = true"
                 class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 rounded-l-none">
           ❌
         </button>
@@ -372,12 +432,16 @@ onMounted(async () => {
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Imprimir
         </button>
+        <button v-if="canSubmit(userRoles) && estadoHorario == 0" @click="submeter()"
+                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
+          Submeter
+        </button>
       </div>
     </div>
 
 
 
-    <CalendarProvider events="events" v-if="connected" cell_width="148" cell_height="30" style={}>
+    <CalendarProvider events="events" v-if="connected && horarios.length > 0" cell_width="148" cell_height="30" style={}>
         <div class="flex">
           <Calendar id="calendarItem" table="0" />
           <CalendarHolder v-if="printScheduleBol === false" table="1" slotsW="1" slotsH="50"/>
@@ -463,12 +527,12 @@ onMounted(async () => {
       <form @submit.prevent="handleSubmitSchedule">
         <div>
           <label class="block text-sm mb-1">Inicio </label>
-          <input type="date" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="date1" type="date" class="w-full border border-gray-300 rounded px-2 py-1"
                  required />
         </div>
         <div>
           <label class="block text-sm mb-1">Fim </label>
-          <input type="date" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="date2" type="date" class="w-full border border-gray-300 rounded px-2 py-1"
                  required />
         </div>
         <DialogFooter class="mt-4">
