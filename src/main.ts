@@ -10,10 +10,12 @@ import Cursos from './pages/Cursos.vue';
 import Utilizadores from './pages/Utilizadores.vue';
 import CreateUtilizador from './pages/CreateUtilizador.vue';
 import UpdateUtilizador from './pages/UpdateUtilizador.vue';
+import Turma from "@/pages/Turma.vue"
 
 
 const routes = [
   { path: "/", component: Login },
+  { path: "/signalR/:id", component: Turma},
   {
     path: "/salas",
     component: Salas,
