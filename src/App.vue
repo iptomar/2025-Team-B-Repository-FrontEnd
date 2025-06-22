@@ -11,7 +11,6 @@ const route = useRoute();
   <SidebarProvider>
     <AppSidebar v-if="route.path !== '/'" />
     <main>
-      <SidebarTrigger v-if="route.path !== '/'" />
       <RouterView />
     </main>
   </SidebarProvider>

@@ -34,32 +34,20 @@ const routes = [
   {
     path: "/curso/:id",
     name: "CursoDetalhes",
+    meta: { requiresAuth: true },
     component: () => import("./pages/CursoDetalhes.vue"),
   },
   {
     path: "/turma/:id",
     name: "Turma",
+    meta: { requiresAuth: true },
     component: () => import("./pages/Turma.vue"),
   },
   {
     path: "/cadeira/:id",
     name: "Cadeira",
-    component: () => import("./pages/Cadeira.vue"),
-  },
-  {
-    path: "/utilizadores",
-    component: Utilizadores,
     meta: { requiresAuth: true },
-  },
-  {
-    path: '/utilizadores/create-utilizador',
-    component: CreateUtilizador,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/utilizadores/update-utilizador/:id',
-    component: UpdateUtilizador,
-    meta: { requiresAuth: true }
+    component: () => import("./pages/Cadeira.vue"),
   },
 ];
 

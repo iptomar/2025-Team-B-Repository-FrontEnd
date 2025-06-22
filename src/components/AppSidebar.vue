@@ -5,16 +5,21 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
+import { ref } from 'vue'
 
 const route = useRoute();
-const router = useRouter();
+
+
+const isSidebarCollapsed = ref(false)
 
 const { printScheduleBol } = useSidebar()
 
@@ -35,11 +40,6 @@ const items = [
     icon: GraduationCap,
   },
   {
-    title: "Utilizadores",
-    url: "/utilizadores",
-    icon: Users,
-  },
-  {
     title: "Salas",
     url: "/salas",
     icon: DoorClosed,
@@ -53,14 +53,23 @@ const items = [
 </script>
 
 <template>
-  <Sidebar v-if="printScheduleBol == false">
-    <SidebarContent class="bg-iptGreen flex flex-col justify-between h-full">
+  <Sidebar v-if="printScheduleBol == false" collapsible="icon">
+    <SidebarTrigger/>
+    <SidebarContent class="bg-iptGreen flex flex-col h-full">
+      <aside
+    data-sidebar
+    :class="[
+      'transition-[width] duration-200 ease-in-out bg-gray-800 text-white',
+      isSidebarCollapsed ? 'w-[70px]' : 'w-[240px]'
+    ]"
+  ></aside>
+      <SidebarHeader />
       <div>
         <SidebarGroup>
-          <SidebarGroupLabel class="mt-12 text-bold text-white text-xl mb-4">IPT</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem v-for="item in items" :key="item.title" :class="{ 'active-menu-item': route.path === item.url, 'my-1': true }">
+              <SidebarMenuItem v-for="item in items" :key="item.title"
+                :class="{ 'active-menu-item': route.path === item.url, 'my-1': true }">
                 <SidebarMenuButton asChild>
                   <a :href="item.url" class="text-white flex items-center gap-2">
                     <component :is="item.icon" />
@@ -72,16 +81,7 @@ const items = [
           </SidebarGroupContent>
         </SidebarGroup>
       </div>
-      
-      <div class="p-4">
-        <button 
-          class="flex items-center gap-2 w-full text-white bg-iptGreen hover:bg-white border-0 hover:text-black p-2 rounded-md"
-          @click="logout"
-        >
-          <LogOut />
-          Sair
-        </button>
-      </div>
     </SidebarContent>
+    <SidebarFooter />
   </Sidebar>
 </template>
