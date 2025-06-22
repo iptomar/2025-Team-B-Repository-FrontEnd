@@ -53,7 +53,7 @@ const items = [
     title: "Espaço Admin",
     url: "/admin",
     icon: ShieldUser,
-    role: 'Administrador'
+    role: 'Admistrador' //anteriormente Administrador
   },
 ].filter( (item) => {
   return !item.role || userRoles.value.includes(item.role)

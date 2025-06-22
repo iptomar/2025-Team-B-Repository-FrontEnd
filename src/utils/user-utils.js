@@ -22,9 +22,19 @@ export function parseJwt(token) {
 
 
 export function userIsAdmin(userRoles){
-    userRoles.map((userRole) => {
-        if (userRole === 'Admistrador') return true;
-    })
+
+    for (var i = 0; i < userRoles.length; i++) {
+      if (userRoles[i] === 'Admistrador') return true;
+    }
 
     return false;
+}
+
+export function canSubmit(userRoles){
+
+  for (var i = 0; i < userRoles.length; i++) {
+    if (userRoles[i] === 'Admistrador') return true;
+  }
+
+  return false;
 }
