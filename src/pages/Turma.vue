@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
-import {ref, onMounted, provide, inject, useTemplateRef} from 'vue';
+import {ref, onMounted, provide, inject, useTemplateRef, watch, nextTick} from 'vue';
 import { useRoute } from 'vue-router';
 import Calendar from "@/components/ui/calendar/Calendar.vue";
 import CalendarProvider from "@/components/ui/calendar/CalendarProvider.vue";
@@ -26,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { useSidebar } from '@/components/ui/sidebar';
 
 /**
  * SignalR-Related-Data
@@ -41,6 +42,11 @@ const API_BASE_URL = "https://localhost:7223"
 
 const open = ref(false)
 const value = ref('')
+// esta variavel vai estar responsavel pela renderização condicional dos elementos para a print do horario.
+const { printScheduleBol } = useSidebar()
+
+
+
 var modifiedBlock : number = null;
 var aulas = []
 
@@ -293,9 +299,16 @@ connection.onclose((err) => {
   connectionState.value = err.message;
 })
 
-function printSchedule(){
-
+/**
+ * 1º -> Esconde os elementos.
+ * 2º -> Faz o print do ecrã.
+ * 3º -> Mostra os elementos.
+ */
+async function printSchedule(){
+  printScheduleBol.value = true;
+  await nextTick(); // função assicrona que espera pelo proximo tick do VDOM. 
   window.print();
+  printScheduleBol.value = false;
 }
 
 const turmaSelecionada = ref<Turma | null>(null)
@@ -319,7 +332,7 @@ onMounted(async () => {
 <template>
     <Toaster />
 
-    <div class="mx-auto space-y-8 mb-10">
+    <div v-if="printScheduleBol === false" class="mx-auto space-y-8 mb-10">
       <div class="border-b pb-6">
         <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.letra }}</h1>
         <div class="mt-2 text-gray-600 space-y-1">
@@ -358,7 +371,7 @@ onMounted(async () => {
     <CalendarProvider events="events" v-if="connected" cell_width="148" cell_height="30" style={}>
         <div class="flex">
           <Calendar id="calendarItem" table="0" />
-          <CalendarHolder table="1" slotsW="1" slotsH="50"/>
+          <CalendarHolder v-if="printScheduleBol === false" table="1" slotsW="1" slotsH="50"/>
         </div>
     </CalendarProvider>
     <div v-else>

@@ -11,13 +11,22 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useRoute } from "vue-router";
 import { ref } from 'vue'
 
 const route = useRoute();
 
+
 const isSidebarCollapsed = ref(false)
+
+const { printScheduleBol } = useSidebar()
+
+const logout = () => {
+  localStorage.removeItem("token");
+  router.push("/");
+};
 
 const items = [
   {
@@ -44,7 +53,7 @@ const items = [
 </script>
 
 <template>
-  <Sidebar collapsible="icon">
+  <Sidebar v-if="printScheduleBol == false" collapsible="icon">
     <SidebarTrigger/>
     <SidebarContent class="bg-iptGreen flex flex-col h-full">
       <aside
