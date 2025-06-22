@@ -49,6 +49,8 @@ let connection = new HubConnectionBuilder().withUrl(API_BASE_URL + CONNECTION_HU
 let horarioId = 1
 let horarios = ref([{id: 1, inicio: '2025-12-14', fim: '2025-12-25'}, {id: 2, inicio: '1900-01-01', fim: '1900-01-01'}])
 const salas = ref([])
+const date1 = ref()
+const date2 = ref()
 
 var calendarItem = useTemplateRef('calendarItem');
 
@@ -122,6 +124,9 @@ fetchSalas().then((val) =>{
 fetchHorarios().then((val) => {
   console.log("Logged schedules: ", val)
   horarios.value = val
+  horarioId = horarios.value[0].id
+  if(val.length == 0)
+    connectionState.value = "Não existem horários criados para esta turma.";
   //horarios = val
 })
 
@@ -143,6 +148,20 @@ function timeToY(time : string){
   console.log(time, h, m, h+m)
   return h+m
 }
+async function postHorario(){
+  var block = {
+    Inicio: date1.value,
+    Fim: date2.value,
+    TurmaFK: turmaId.value,
+    Blocos: []
+  }
+
+  console.log(block)
+  const response = await fetch(`${API_BASE_URL}/api/Horarios`, {headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify(block)} );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
 
 async function postHorarioBlock(){
   var block = {
@@ -168,6 +187,9 @@ function onClassPicked(){
 
 function handleSubmitSchedule(){
   showScheduleModal.value = false;
+  postHorario().then((val) => {
+    console.log(val)
+  });
   /*events.value[modifiedBlock].classroom_id = value;
   events.value[modifiedBlock].classroom = value ;
   onClassPicked();*/
@@ -334,12 +356,12 @@ onMounted(async () => {
       </div>
 
       <div class="w-full">
-        <select v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
+        <select v-if="horarios.length > 0" v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
           <option v-for="ano in horarios.slice().reverse()" :key="ano.id" :value="ano.id">
             {{ ano.inicio }} - {{ ano.fim }}
           </option>
         </select>
-        <button @click="removeOpen = true"
+        <button v-if="horarios.length > 0" @click="removeOpen = true"
                 class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 rounded-l-none mr-5">
           ❌
         </button>
@@ -356,7 +378,7 @@ onMounted(async () => {
 
 
 
-    <CalendarProvider events="events" v-if="connected" cell_width="148" cell_height="30" style={}>
+    <CalendarProvider events="events" v-if="connected && horarios.length > 0" cell_width="148" cell_height="30" style={}>
         <div class="flex">
           <Calendar id="calendarItem" table="0" />
           <CalendarHolder table="1" slotsW="1" slotsH="50"/>
@@ -442,12 +464,12 @@ onMounted(async () => {
       <form @submit.prevent="handleSubmitSchedule">
         <div>
           <label class="block text-sm mb-1">Inicio </label>
-          <input type="date" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="date1" type="date" class="w-full border border-gray-300 rounded px-2 py-1"
                  required />
         </div>
         <div>
           <label class="block text-sm mb-1">Fim </label>
-          <input type="date" class="w-full border border-gray-300 rounded px-2 py-1"
+          <input v-model="date2" type="date" class="w-full border border-gray-300 rounded px-2 py-1"
                  required />
         </div>
         <DialogFooter class="mt-4">
