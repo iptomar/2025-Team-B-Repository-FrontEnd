@@ -25,6 +25,16 @@ import { fetchProfessores } from '@/api/professores';
 import { adicionarProfessorAoCurso } from '@/api/professores';
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
+import { parseJwt } from '@/utils/user-utils.js'
+import { userIsAdmin } from '@/utils/user-utils.js'
+
+
+const userRoles = ref<string[]>([]);
+
+let token = localStorage.getItem('token')
+const decodedToken = parseJwt(token);
+userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
 
 const { toast } = useToast()
 
@@ -116,7 +126,7 @@ onMounted(async () => {
           @update:model-value="table.getColumn('userName')?.setFilterValue($event)" />
       </div>
 
-      <button @click="addProfDialog = true"
+      <button v-if="userIsAdmin(userRoles)" @click="addProfDialog = true"
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Adicionar Professor
       </button>

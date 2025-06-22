@@ -14,7 +14,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useRoute } from "vue-router";
-import { ref } from 'vue'
+import { parseJwt } from '@/utils/user-utils.js';
+import { userIsAdmin } from '@/utils/user-utils.js';
+import { ref } from "vue";
 
 const route = useRoute();
 
@@ -23,6 +25,12 @@ const isSidebarCollapsed = ref(false)
 
 const { printScheduleBol } = useSidebar()
 
+const userRoles = ref<string[]>([]);
+
+let token = localStorage.getItem('token')
+    const decodedToken = parseJwt(token);
+    userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
 const logout = () => {
   localStorage.removeItem("token");
   router.push("/");
@@ -30,26 +38,27 @@ const logout = () => {
 
 const items = [
   {
-    title: "SignalR",
-    url: "/signalR/3",
-    icon: Radio,
-  },
-  {
     title: "Cursos",
     url: "/cursos",
     icon: GraduationCap,
+    role: null
   },
   {
     title: "Salas",
     url: "/salas",
     icon: DoorClosed,
+    role: null
   },
   {
     title: "Espaço Admin",
     url: "/admin",
     icon: ShieldUser,
+    role: 'Administrador'
   },
-];
+].filter( (item) => {
+  return !item.role || userRoles.value.includes(item.role)
+})
+
 </script>
 
 <template>
