@@ -128,7 +128,7 @@ async function fetchSalas() {
 }
 
 async function fetchBlocos(){
-  const response = await fetch(`${API_BASE_URL}/api/blocos/turma/${turmaId.value}` );
+  const response = await fetch(`${API_BASE_URL}/api/Blocos/Horario/${horarioId.value}` );
   if (!response.ok) throw new Error(response);
   return await response.json();
 }
@@ -142,17 +142,7 @@ fetchSalas().then((val) =>{
 
 
 
-fetchHorarios().then((val) => {
-  console.log("Logged schedules: ", val)
-  horarios.value = val
-  if(horarios.value.length > 0){
-    horarioId.value = horarios.value[0].id
-    updateEstadoHorario();
-  }
-  if(val.length == 0)
-    connectionState.value = "Não existem horários criados para esta turma.";
-  //horarios = val
-})
+
 
 /**
  * Time conversions
@@ -165,11 +155,11 @@ function YToTime(value : number){
   hour = hour.toString().padStart(2, '0')
   return hour + ':' + min + ":" + '00';
 }
+
 function timeToY(time : string){
   let t = time.split(':')
   let h = (parseInt(t[0])-9)*2
   let m = Math.trunc(parseInt(t[1])/30)
-  console.log(time, h, m, h+m)
   return h+m
 }
 
@@ -180,8 +170,6 @@ async function postHorario(){
     TurmaFK: turmaId.value,
     Blocos: []
   }
-
-  console.log(block)
   const response = await fetch(`${API_BASE_URL}/api/Horarios`, {headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify(block)} );
   if (!response.ok) throw new Error(response);
   return await response.json();
@@ -201,7 +189,6 @@ async function postHorarioBlock(){
     SalaFK: events.value[modifiedBlock].classroom_id,
     AulaFK: events.value[modifiedBlock].class_id
   }
-  console.log(block)
   const response = await fetch(`${API_BASE_URL}/api/signalR` + "/Horariobloco", {headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify(block)} );
   if (!response.ok) throw new Error(response);
   return await response.json();
@@ -209,16 +196,13 @@ async function postHorarioBlock(){
 
 function onClassPicked(){
   postHorarioBlock().then((val) => {
-    console.log(val);
   }).catch((err) => {
-    console.log(err);
   })
 }
 
 function handleSubmitSchedule(){
   showScheduleModal.value = false;
   postHorario().then((val) => {
-    console.log(val)
   });
   /*events.value[modifiedBlock].classroom_id = value;
   events.value[modifiedBlock].classroom = value ;
@@ -233,15 +217,6 @@ function handleSubmit(){
 }
 
 
-fetchAulas().then((value) => {
-  aulas = value
-  fetchBlocos().then((value) => {
-    convertToEvents(aulas)
-    value.forEach((bloco) => {
-      events.value.push(convertToEvent(bloco))
-    })
-  })
-});
 function onDragEnd(i){
   if(events.value[i].table == 0 && events.value[i].classroom_id == null ){
     modifiedBlock = i;
@@ -277,10 +252,11 @@ function getSala(fk : string){
 
 function convertToEvent(val){
   var aula = getAula(val.aulaFK);
+  if(aula == null)
+    return null;
   var sala = getSala(val.salaFK);
   var time = timeToY(val.hora_Inicio)
   var duracao = 4
-  console.log(val)
   return generateEvent(val.id.toString(), 0, val.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, sala.sala, aula.professor.userName, val.aulaFK, sala.id)
 }
 
@@ -327,7 +303,6 @@ function generateEvent(id, table, weekday, timeslot, time, name, type, classroom
 }
 
 fetchHorarioId().then((val) => {
-  horarioId.value = val;
   connection.invoke(ON_CONNECTION_START, horarioId.value)
       .then(()=>{
         console.log("CONNECTED TO SCHEDULE " + horarioId.value);
@@ -337,7 +312,7 @@ fetchHorarioId().then((val) => {
   })
   console.log("Sucessfully connected to schedule: " + horarioId.value);
 }).catch((result) => {
-  console.log("AIAIIA:" + result)
+
 });
 
 
@@ -368,9 +343,29 @@ function submeter(){
     }
     updateEstadoHorario();
   }).catch((err) =>{
-    console.log(err.toString())
+
   });
 }
+
+function updateHorario(){
+  updateEstadoHorario();
+  events.value = []
+  fetchAulas().then((value) => {
+    aulas = value
+    fetchBlocos().then((value) => {
+      convertToEvents(aulas)
+      value[0].forEach((bloco) => {
+        var event = convertToEvent(bloco)
+        if(event)
+          events.value.push(event)
+      })
+    })
+  });
+}
+
+watch(horarioId, () => {
+  updateHorario()
+})
 
 onMounted(async () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -379,9 +374,19 @@ onMounted(async () => {
   const decodedToken = parseJwt(token);
   userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
-  console.log("HELP", userRoles.value)
   fetchTurma().then((val) =>{
     isCoordenadorCurso.value = isValidTeacher(val.curso.professorFK) || userIsAdmin(userRoles)
+  })
+
+  fetchHorarios().then((val) => {
+    horarios.value = val
+    if(horarios.value.length > 0){
+      horarioId.value = horarios.value[0].id
+      updateHorario();
+    }
+    if(val.length == 0)
+      connectionState.value = "Não existem horários criados para esta turma.";
+    //horarios = val
   })
   try {
     turmaSelecionada.value = await fetchTurmaById(turmaId.value);
@@ -403,9 +408,7 @@ function updateEstadoHorario(){
   })
 }
 
-watch(horarioId, () => {
-  updateEstadoHorario();
-})
+
 
 </script>
 
