@@ -12,6 +12,16 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import type { Localidade } from '../interfaces'
 import { getLocalidades } from '@/api/localidades'
 import { createSala } from '@/api/salas'
+import { parseJwt } from '@/utils/user-utils.js'
+import { userIsAdmin } from '@/utils/user-utils.js'
+
+
+const userRoles = ref<string[]>([]);
+
+let token = localStorage.getItem('token')
+const decodedToken = parseJwt(token);
+userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
 
 const { toast } = useToast()
 
@@ -98,7 +108,7 @@ onMounted(async () => {
           @update:model-value="table.getColumn('SalaOuLocalidade')?.setFilterValue($event)" />
       </div>
 
-      <button @click="showAddModal = true"
+      <button v-if="userIsAdmin(userRoles)" @click="showAddModal = true"
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Adicionar Sala
       </button>

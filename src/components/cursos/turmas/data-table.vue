@@ -25,6 +25,16 @@ import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
 import { createTurma } from '@/api/turmas'
 import type { Curso, Turma } from '@/components/interfaces'
+import { parseJwt } from '@/utils/user-utils.js'
+import { userIsAdmin } from '@/utils/user-utils.js'
+
+
+const userRoles = ref<string[]>([]);
+
+let token = localStorage.getItem('token')
+const decodedToken = parseJwt(token);
+userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
 
 const { toast } = useToast()
 
@@ -113,7 +123,7 @@ const limitValue = (field: 'ano' | 'semestre', min: number, max: number) => {
 
   <div class="flex flex-col h-full w-full">
     <div class="flex justify-end items-center pb-4 w-full space-x-20">
-      <button @click="isCreateOpen = true"
+      <button v-if="userIsAdmin(userRoles)" @click="isCreateOpen = true"
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Criar Turma
       </button>
