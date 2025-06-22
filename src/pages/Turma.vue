@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
-import {ref, onMounted, provide, inject, useTemplateRef} from 'vue';
+import {ref, onMounted, provide, inject, useTemplateRef, watch, nextTick} from 'vue';
 import { useRoute } from 'vue-router';
 import Calendar from "@/components/ui/calendar/Calendar.vue";
 import CalendarProvider from "@/components/ui/calendar/CalendarProvider.vue";
 import type { Turma } from '@/components/interfaces';
 import { fetchTurmaById } from '@/api/turmas';
-import { useToast } from '@/components/ui/toast/use-toast'
-import { Toaster } from '@/components/ui/toast'
+import { useToast } from '@/components/ui/toast/use-toast';
+import { Toaster } from '@/components/ui/toast';
+import { parseJwt } from '@/utils/user-utils.js';
+import { userIsAdmin } from '@/utils/user-utils.js';
 
 const { toast } = useToast();
 
@@ -26,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { useSidebar } from '@/components/ui/sidebar';
 
 /**
  * SignalR-Related-Data
@@ -41,6 +44,11 @@ const API_BASE_URL = "https://localhost:7223"
 
 const open = ref(false)
 const value = ref('')
+// esta variavel vai estar responsavel pela renderização condicional dos elementos para a print do horario.
+const { printScheduleBol } = useSidebar()
+
+
+
 var modifiedBlock : number = null;
 var aulas = []
 
@@ -316,16 +324,30 @@ connection.onclose((err) => {
   connectionState.value = err.message;
 })
 
-function printSchedule(){
-
+/**
+ * 1º -> Esconde os elementos.
+ * 2º -> Faz o print do ecrã.
+ * 3º -> Mostra os elementos.
+ */
+async function printSchedule(){
+  printScheduleBol.value = true;
+  await nextTick(); // função assicrona que espera pelo proximo tick do VDOM. 
   window.print();
+  printScheduleBol.value = false;
 }
 
 const turmaSelecionada = ref<Turma | null>(null)
 const connected = ref(false)
 
+
+const userRoles = ref([]);
+
 onMounted(async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    let token = localStorage.getItem('token')
+    const decodedToken = parseJwt(token);
+    userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
     try {
       turmaSelecionada.value = await fetchTurmaById(turmaId.value);
@@ -342,7 +364,7 @@ onMounted(async () => {
 <template>
     <Toaster />
 
-    <div class="mx-auto space-y-8 mb-10">
+    <div v-if="printScheduleBol === false" class="mx-auto space-y-8 mb-10">
       <div class="border-b pb-6">
         <h1 class="text-3xl font-bold text-black">{{ turmaSelecionada?.ano }}º{{ turmaSelecionada?.letra }}</h1>
         <div class="mt-2 text-gray-600 space-y-1">
@@ -355,18 +377,18 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="w-full">
-        <select v-if="horarios.length > 0" v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
+      <div class="w-full flex gap-4 justify-center items-center">
+        <select v-if="horarios.length > 0"  v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
           <option v-for="ano in horarios.slice().reverse()" :key="ano.id" :value="ano.id">
             {{ ano.inicio }} - {{ ano.fim }}
           </option>
         </select>
-        <button v-if="horarios.length > 0" @click="removeOpen = true"
-                class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 rounded-l-none mr-5">
+        <button v-if="horarios.length > 0 && userIsAdmin(userRoles)" @click="removeOpen = true"
+                class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 rounded-l-none">
           ❌
         </button>
-        <button @click="showScheduleModal = true"
-                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 mr-5">
+        <button v-if="userIsAdmin(userRoles)" @click="showScheduleModal = true"
+                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Criar Horário
         </button>
         <button @click="printSchedule()"
@@ -381,7 +403,7 @@ onMounted(async () => {
     <CalendarProvider events="events" v-if="connected && horarios.length > 0" cell_width="148" cell_height="30" style={}>
         <div class="flex">
           <Calendar id="calendarItem" table="0" />
-          <CalendarHolder table="1" slotsW="1" slotsH="50"/>
+          <CalendarHolder v-if="printScheduleBol === false" table="1" slotsW="1" slotsH="50"/>
         </div>
     </CalendarProvider>
     <div v-else>

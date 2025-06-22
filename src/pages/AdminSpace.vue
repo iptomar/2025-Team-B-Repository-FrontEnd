@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { University, MapPin, Award, ClipboardType } from 'lucide-vue-next';
+import { University, MapPin, Award, ClipboardType, Users } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import { createColumns as columnsGraus } from '@/components/espaco_admin/graus/columns.ts';
 import DataTableGraus from '@/components/espaco_admin/graus/data-table.vue';
@@ -20,7 +20,7 @@ import { Toaster } from '@/components/ui/toast'
 
 const { toast } = useToast()
 
-const abaAtiva = ref<'Localidades' | 'Instituicao' | 'Grau' | 'Tipologia' | 'ImportacaoDeDados'>('Localidades');
+const abaAtiva = ref<'Utilizadores' | 'Localidades' | 'Instituicao' | 'Grau' | 'Tipologia' | 'ImportacaoDeDados'>('Utilizadores');
 
 const instituicoesData = ref<Instituicao[]>([]);
 const localidadesData = ref<Localidade[]>([]);
@@ -71,6 +71,15 @@ onMounted(() => {
     </div>
 
     <div class="flex gap-4 justify-center">
+      <button @click="abaAtiva = 'Utilizadores'" :class="[
+        'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
+        abaAtiva === 'Utilizadores'
+          ? 'bg-iptGreen text-white border-iptGreen shadow-md hover:border-black'
+          : 'bg-gray-100 text-black border-gray-300 hover:border-iptGreen'
+      ]">
+        <Users class="w-5 h-5 mr-2 stroke-[2.5]" />
+        Utilizadores
+      </button>
       <button @click="abaAtiva = 'Localidades'" :class="[
         'px-6 py-2 rounded-2xl font-semibold transition duration-200 inline-flex items-center border-2',
         abaAtiva === 'Localidades'
