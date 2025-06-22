@@ -8,7 +8,7 @@ import type { Turma } from '@/components/interfaces';
 import { fetchTurmaById } from '@/api/turmas';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { Toaster } from '@/components/ui/toast';
-import { parseJwt } from '@/utils/user-utils.js';
+import {isValidTeacher, parseJwt} from '@/utils/user-utils.js';
 import { userIsAdmin, canSubmit} from '@/utils/user-utils.js';
 
 const { toast } = useToast();
@@ -60,6 +60,12 @@ const salas = ref([])
 const date1 = ref()
 const date2 = ref()
 
+const turmaSelecionada = ref<Turma | null>(null)
+const connected = ref(false)
+const isCoordenadorCurso = ref(false);
+const userRoles = ref([]);
+
+
 var calendarItem = useTemplateRef('calendarItem');
 
 connection.start().then(() => {
@@ -102,6 +108,11 @@ async function fetchHorarioId() {
   return await response.json();
 }
 
+async function fetchTurma() {
+  const response = await fetch(`${API_BASE_URL}/api/Turmas/${turmaId.value}` );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
 
 
 async function fetchAulas() {
@@ -134,8 +145,10 @@ fetchSalas().then((val) =>{
 fetchHorarios().then((val) => {
   console.log("Logged schedules: ", val)
   horarios.value = val
-  horarioId.value = horarios.value[0].id
-  updateEstadoHorario();
+  if(horarios.value.length > 0){
+    horarioId.value = horarios.value[0].id
+    updateEstadoHorario();
+  }
   if(val.length == 0)
     connectionState.value = "Não existem horários criados para esta turma.";
   //horarios = val
@@ -159,6 +172,7 @@ function timeToY(time : string){
   console.log(time, h, m, h+m)
   return h+m
 }
+
 async function postHorario(){
   var block = {
     Inicio: date1.value,
@@ -344,12 +358,6 @@ async function printSchedule(){
   printScheduleBol.value = false;
 }
 
-const turmaSelecionada = ref<Turma | null>(null)
-const connected = ref(false)
-
-
-const userRoles = ref([]);
-
 function submeter(){
   postSetStatus(horarioId.value).then((val) => {
 
@@ -365,21 +373,24 @@ function submeter(){
 }
 
 onMounted(async () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    let token = localStorage.getItem('token')
-    const decodedToken = parseJwt(token);
-    userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+  let token = localStorage.getItem('token')
+  const decodedToken = parseJwt(token);
+  userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
-    console.log("HELP", userRoles.value)
-    try {
-      turmaSelecionada.value = await fetchTurmaById(turmaId.value);
-    } catch (error) {
-        toast({
-            title: 'Erro ao buscar a turma. Por favor, tente novamente mais tarde.',
-            variant: 'destructive'
-        });
-    }
+  console.log("HELP", userRoles.value)
+  fetchTurma().then((val) =>{
+    isCoordenadorCurso.value = isValidTeacher(val.curso.professorFK) || userIsAdmin(userRoles)
+  })
+  try {
+    turmaSelecionada.value = await fetchTurmaById(turmaId.value);
+  } catch (error) {
+    toast({
+      title: 'Erro ao buscar a turma. Por favor, tente novamente mais tarde.',
+      variant: 'destructive'
+    });
+  }
 });
 
 const estadoHorario = ref(0)
@@ -432,7 +443,7 @@ watch(horarioId, () => {
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Imprimir
         </button>
-        <button v-if="canSubmit(userRoles) && estadoHorario == 0" @click="submeter()"
+        <button v-if="isCoordenadorCurso && estadoHorario == 0" @click="submeter()"
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Submeter
         </button>
@@ -444,7 +455,7 @@ watch(horarioId, () => {
     <CalendarProvider events="events" v-if="connected && horarios.length > 0" cell_width="148" cell_height="30" style={}>
         <div class="flex">
           <Calendar id="calendarItem" table="0" />
-          <CalendarHolder v-if="printScheduleBol === false" table="1" slotsW="1" slotsH="50"/>
+          <CalendarHolder v-if="printScheduleBol === false && isCoordenadorCurso" table="1" slotsW="1" slotsH="50"/>
         </div>
     </CalendarProvider>
     <div v-else>
