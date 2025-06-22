@@ -73,11 +73,6 @@ export interface Tipologia {
   tipologia: string;
 }
 
-export interface Utilizador{
-  id:number;
-  email: string
-}
-
 export interface Professor {
   id: number;
   userName: string;
@@ -128,4 +123,12 @@ export interface Sala {
     id: number
     localidade: string
   }
+}
+
+export interface Users {
+  id: string;
+  userName: string;
+  email: string;
+  password: string;
+  Roles: string[];
 }

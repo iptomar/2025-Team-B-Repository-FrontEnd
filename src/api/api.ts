@@ -7,9 +7,9 @@ export async function loginAPI(values: any) {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(values)
+      body: JSON.stringify(values),
     });
 
     if (!response.ok) {
@@ -26,5 +26,20 @@ export async function loginAPI(values: any) {
       console.error("Erro ao fazer login:", error);
     }
     throw error;
+  }
+}
+
+export async function registerAPI(values: any) {
+  const url = `${API_BASE_URL}/auth/register`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(values),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Response status: ${response.status}`);
   }
 }

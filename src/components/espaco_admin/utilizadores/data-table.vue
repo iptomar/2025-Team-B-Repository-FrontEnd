@@ -6,20 +6,22 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { valueUpdater } from '@/lib/utils'
-import { createGrau, fetchGraus } from '@/api/graus'
+import { fetchUsers, fetchRoles } from '@/api/users'
+import { registerAPI } from '@/api/api'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { Utilizador } from '@/components/interfaces'
+import type { Users } from '@/components/interfaces'
 import { createColumns } from './columns'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
 
 const { toast } = useToast()
 
-const data = ref<Utilizador[]>([])
+const data = ref<Users[]>([])
+const rolesOptions = ref<string[]>([])
 
 const refreshData = async () => {
   try {
-    data.value = await fetchGraus()
+    data.value = await fetchUsers()
   } catch (error) {
     toast({
       title: 'Erro ao atualizar dados. Por favor, tente novamente.',
@@ -28,31 +30,80 @@ const refreshData = async () => {
   }
 }
 
-onMounted(() => {
-  refreshData()
+const loadRoles = async () => {
+  try {
+    rolesOptions.value = await fetchRoles()
+  } catch (error) {
+    toast({
+      title: 'Erro ao carregar funções',
+      description: 'Não foi possível carregar as funções disponíveis',
+      variant: 'destructive'
+    })
+  }
+}
+
+onMounted(async () => {
+  await refreshData()
+  await loadRoles()
 })
 
 const showAddModal = ref(false)
-const novoGrau = ref({
-  grau: ''
+const novoUtilizador = ref({
+  nome: '',
+  email: '',
+  password: '',
+  roles: [] as string[]
 })
 
-// alterar submit
 const handleSubmit = async () => {
+  if (!novoUtilizador.value.email.includes('@')) {
+    toast({
+      title: 'E-mail inválido',
+      variant: 'destructive'
+    })
+    return
+  }
+
+  if (novoUtilizador.value.password.length < 6) {
+    toast({
+      title: 'Senha muito curta',
+      description: 'A senha deve ter pelo menos 6 caracteres',
+      variant: 'destructive'
+    })
+    return
+  }
+
+  if (novoUtilizador.value.roles.length === 0) {
+    toast({
+      title: 'Selecione pelo menos uma função',
+      variant: 'destructive'
+    })
+    return
+  }
+
   try {
-    await createGrau({
-      grau: novoGrau.value.grau
+    await registerAPI({
+      nome: novoUtilizador.value.nome,
+      email: novoUtilizador.value.email,
+      password: novoUtilizador.value.password,
+      roles: novoUtilizador.value.roles
     })
     toast({
-      title: 'O grau foi adicionado com sucesso.',
+      title: 'Utilizador adicionado com sucesso!',
       variant: 'success'
     })
-    novoGrau.value.grau = ''
+    novoUtilizador.value = {
+      nome: '',
+      email: '',
+      password: '',
+      roles: []
+    }
     showAddModal.value = false
     refreshData()
   } catch (error) {
     toast({
-      title: 'Erro ao adicionar o grau. Por favor, tente novamente.',
+      title: 'Erro ao adicionar utilizador',
+      description: (error as Error).message || 'Tente novamente',
       variant: 'destructive'
     })
   }
@@ -157,25 +208,60 @@ const table = useVueTable({
         <DialogHeader>
           <DialogTitle>Adicionar utilizador</DialogTitle>
           <DialogDescription>
-            Insira um novo utilizador e clique em "Adicionar".
+            Preencha os dados do novo utilizador
           </DialogDescription>
         </DialogHeader>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
-          <div class="mb-4">
-            <label class="block mb-1">Nome do Utilizador</label>
-            <input v-model="novoGrau.grau" type="text" class="w-full border border-gray-300 rounded px-2 py-1"
-              required />
+          <div class="space-y-2">
+            <label class="block text-sm font-medium">Nome Completo</label>
+            <Input v-model="novoUtilizador.nome" required placeholder="Nome do utilizador" />
           </div>
 
-          <DialogFooter class="flex justify-end space-x-2 mt-4">
-            <Button type="submit"
-              class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium">E-mail</label>
+            <Input v-model="novoUtilizador.email" type="email" required placeholder="exemplo@email.com" />
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-medium">Senha</label>
+            <Input 
+              v-model="novoUtilizador.password" 
+              type="password" 
+              required 
+              placeholder="Mínimo 6 caracteres" 
+            />
+          </div>
+
+          <!-- Substituição do MultiSelect por checkboxes -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium">Funções</label>
+            <div class="space-y-2">
+              <div v-for="role in rolesOptions" :key="role" class="flex items-center">
+                <input 
+                  type="checkbox"
+                  :id="`role-${role}`"
+                  :value="role"
+                  v-model="novoUtilizador.roles"
+                  class="mr-2 h-4 w-4 text-iptGreen border-gray-300 rounded focus:ring-iptGreen"
+                >
+                <label :for="`role-${role}`" class="text-sm text-gray-700">{{ role }}</label>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter class="flex justify-end gap-2 mt-4">
+            <Button 
+              type="submit" 
+              class="bg-iptGreen text-white hover:bg-green-100 hover:text-iptGreen hover:border-iptGreen"
+            >
               Adicionar
             </Button>
-            <Button type="button"
+            <Button 
+              variant="ghost" 
               class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
-              variant="ghost" @click="showAddModal = false; novoGrau.grau = ''">
+              @click="showAddModal = false; novoUtilizador = { nome: '', email: '', password: '', roles: [] }"
+            >
               Cancelar
             </Button>
           </DialogFooter>

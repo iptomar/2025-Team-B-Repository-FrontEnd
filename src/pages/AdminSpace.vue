@@ -2,6 +2,7 @@
 import { University, MapPin, Award, ClipboardType, User} from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import { createColumns as columnsGraus } from '@/components/espaco_admin/graus/columns.ts';
+import { createColumns as columnsUsers } from '@/components/espaco_admin/utilizadores/columns.ts';
 import DataTableGraus from '@/components/espaco_admin/graus/data-table.vue';
 import { getColumns as columnsLocalidade } from '@/components/espaco_admin/localidades/columns.ts';
 import DataTableLocalidade from '@/components/espaco_admin/localidades/data-table.vue';
@@ -10,11 +11,12 @@ import DataTableInstituicao from '@/components/espaco_admin/instituicao/data-tab
 import DataTableTipologia from '@/components/espaco_admin/tipologia/data-table.vue';
 import DataTableUsers from '@/components/espaco_admin/utilizadores/data-table.vue';
 import { createColumns as columnsTipologia } from '@/components/espaco_admin/tipologia/columns.ts'
-import type { Instituicao, Localidade, Grau, Tipologia, Utilizador } from '@/components/interfaces';
+import type { Instituicao, Localidade, Grau, Tipologia, Users } from '@/components/interfaces';
 import csv_picker from '@/components/espaco_admin/csv_picker/csv_picker.vue';
 import { getLocalidades } from '@/api/localidades';
 import { getInstituicoes } from '@/api/instituicoes';
 import { getGrau } from '@/api/graus';
+import { getUsers } from '@/api/users';
 import { getTipologia } from '@/api/tipologias';
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
@@ -27,7 +29,7 @@ const instituicoesData = ref<Instituicao[]>([]);
 const localidadesData = ref<Localidade[]>([]);
 const grausData = ref<Grau[]>([]);
 const tipologiasData = ref<Tipologia[]>([]);
-const utilizadoresData = ref<Utilizador[]>([]);
+const utilizadoresData = ref<Users[]>([]);
 
 const fetchGraus = async () => {
   try {
@@ -43,12 +45,12 @@ const fetchGraus = async () => {
 const fetchAllData = async () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // inserir o getUtilizadores
   try {
     [localidadesData.value, instituicoesData.value, tipologiasData.value] = await Promise.all([
       getLocalidades(),
       getInstituicoes(),
-      getTipologia()
+      getTipologia(),
+      getUsers()
     ]);
 
     await fetchGraus();
@@ -144,7 +146,7 @@ onMounted(() => {
 
       <DataTableTipologia v-if="abaAtiva === 'Tipologia'" :columns="columnsTipologia" :data="tipologiasData" />
 
-      <DataTableUsers v-if="abaAtiva === 'Utilizadores'" :columns="columnsTipologia" :data="utilizadoresData" />
+      <DataTableUsers v-if="abaAtiva === 'Utilizadores'" :columns="columnsUsers" :data="utilizadoresData" />
 
       <div v-if="abaAtiva === 'ImportacaoDeDados'">
         <csv_picker />
