@@ -21,20 +21,23 @@ export function parseJwt(token) {
 }
 
 
-export function userIsAdmin(userRoles){
 
+export function userIsAdmin(userRoles){
     for (var i = 0; i < userRoles.length; i++) {
       if (userRoles[i] === 'Admistrador') return true;
     }
-
     return false;
 }
 
 export function canSubmit(userRoles){
-
   for (var i = 0; i < userRoles.length; i++) {
     if (userRoles[i] === 'Admistrador') return true;
   }
-
   return false;
+}
+
+export function isValidTeacher(professor){
+  let token = localStorage.getItem('token');
+  let profId = parseJwt(token)["sub"];
+  return profId == professor;
 }
