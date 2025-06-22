@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { DoorClosed, GraduationCap, Home, ShieldUser, Users } from "lucide-vue-next";
+import { DoorClosed, GraduationCap, ShieldUser } from "lucide-vue-next";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -20,20 +19,11 @@ const route = useRoute();
 
 const isSidebarCollapsed = ref(false)
 
-const toggleSidebar = () => {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
 const items = [
   {
     title: "Cursos",
     url: "/cursos",
     icon: GraduationCap,
-  },
-  {
-    title: "Utilizadores",
-    url: "/utilizadores",
-    icon: Users,
   },
   {
     title: "Salas",

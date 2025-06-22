@@ -21,7 +21,8 @@ onMounted(() => {
   updateState()
 
   sidebar.addEventListener('transitionend', (e) => {
-    if (e.propertyName === 'width') {
+    const event = e as TransitionEvent
+    if (event.propertyName === 'width') {
       updateState()
     }
   })
