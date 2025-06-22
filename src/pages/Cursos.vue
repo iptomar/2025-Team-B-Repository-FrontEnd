@@ -36,6 +36,7 @@ async function carregarCursos() {
   if (grauAtivo.value === null) return
   try {
     cursos.value = await fetchCursosPorGrau(grauAtivo.value)
+    console.log(cursos.value)
   } catch (error) {
     toast({
       title: 'Erro ao carregar cursos. Por favor, tente novamente mais tarde.',

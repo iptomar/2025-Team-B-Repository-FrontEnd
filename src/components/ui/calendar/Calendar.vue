@@ -10,6 +10,7 @@ var events = inject("events")
 const drop_area = useTemplateRef('drop_area')
 let registerDropTarget = inject("register_drop_target")
 
+
 const time_frames = getTimeFrames();
 registerDropTarget({drop_area, table, offsetX: cell_width, offsetY: cell_height * 2, slotsH: time_frames.length, slotsW: 6});
 

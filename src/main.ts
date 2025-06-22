@@ -7,10 +7,11 @@ import Login from './pages/Login.vue';
 import Salas from './pages/Salas.vue';
 import AdminSpace from './pages/AdminSpace.vue';
 import Cursos from './pages/Cursos.vue';
-
+import Turma from "@/pages/Turma.vue"
 
 const routes = [
   { path: "/", component: Login },
+  { path: "/signalR/:id", component: Turma},
   {
     path: "/salas",
     component: Salas,
@@ -29,16 +30,19 @@ const routes = [
   {
     path: "/curso/:id",
     name: "CursoDetalhes",
+    meta: { requiresAuth: true },
     component: () => import("./pages/CursoDetalhes.vue"),
   },
   {
     path: "/turma/:id",
     name: "Turma",
+    meta: { requiresAuth: true },
     component: () => import("./pages/Turma.vue"),
   },
   {
     path: "/cadeira/:id",
     name: "Cadeira",
+    meta: { requiresAuth: true },
     component: () => import("./pages/Cadeira.vue"),
   },
 ];
