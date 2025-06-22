@@ -9,11 +9,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
+
+const { printScheduleBol } = useSidebar()
 
 const logout = () => {
   localStorage.removeItem("token");
@@ -50,7 +53,7 @@ const items = [
 </script>
 
 <template>
-  <Sidebar>
+  <Sidebar v-if="printScheduleBol == false">
     <SidebarContent class="bg-iptGreen flex flex-col justify-between h-full">
       <div>
         <SidebarGroup>
