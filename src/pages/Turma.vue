@@ -47,7 +47,7 @@ var aulas = []
 let connectionState = ref("LOADING");
 let connection = new HubConnectionBuilder().withUrl(API_BASE_URL + CONNECTION_HUB).build();
 let horarioId = 1
-let horarios = [{id: 1, inicio: '2025-12-14', fim: '2025-12-25'}, {id: 2, inicio: '1900-01-01', fim: '1900-01-01'}]
+let horarios = ref([{id: 1, inicio: '2025-12-14', fim: '2025-12-25'}, {id: 2, inicio: '1900-01-01', fim: '1900-01-01'}])
 const salas = ref([])
 
 var calendarItem = useTemplateRef('calendarItem');
@@ -83,7 +83,7 @@ connection.on("NovoBlocoCriado", (bloco) => {
 async function fetchHorarios() {
   const response = await fetch(`${API_BASE_URL}/api/Horarios/horarios-turma` , {headers: {'content-type': 'application/json'}, method: 'POST', body: turmaId.value.toString()});
   if (!response.ok) throw new Error(response);
-  return await response.json();acho
+  return await response.json();
 }
 
 async function fetchHorarioId() {
@@ -121,6 +121,7 @@ fetchSalas().then((val) =>{
 
 fetchHorarios().then((val) => {
   console.log("Logged schedules: ", val)
+  horarios.value = val
   //horarios = val
 })
 
