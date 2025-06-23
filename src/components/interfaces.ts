@@ -124,3 +124,11 @@ export interface Sala {
     localidade: string
   }
 }
+
+export interface Users {
+  id: string;
+  userName: string;
+  email: string;
+  password: string;
+  Roles: string[];
+}
