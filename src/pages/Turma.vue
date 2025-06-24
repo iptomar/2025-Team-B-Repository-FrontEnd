@@ -443,6 +443,9 @@ watch(horarioId, () => {
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Imprimir
         </button>
+        <div class="text-iptGreen font-semibold" v-if="estadoHorario == 1">
+          Horário pendente de aprovação...
+        </div>
         <button v-if="isCoordenadorCurso && estadoHorario == 0" @click="submeter()"
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Submeter

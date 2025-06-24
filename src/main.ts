@@ -11,6 +11,7 @@ import Utilizadores from './pages/Utilizadores.vue';
 import CreateUtilizador from './pages/CreateUtilizador.vue';
 import UpdateUtilizador from './pages/UpdateUtilizador.vue';
 import Turma from "@/pages/Turma.vue"
+import Notificacoes from './pages/Notificacoes.vue';
 
 
 const routes = [
@@ -24,6 +25,11 @@ const routes = [
   {
     path: "/admin",
     component: AdminSpace,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/notificacoes",
+    component: Notificacoes,
     meta: { requiresAuth: true },
   },
   {
