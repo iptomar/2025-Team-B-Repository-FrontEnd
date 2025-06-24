@@ -31,7 +31,7 @@ export function userIsAdmin(userRoles){
 
 export function canSubmit(userRoles){
   for (var i = 0; i < userRoles.length; i++) {
-    if (userRoles[i] === 'Admistrador') return true;
+    if (userRoles[i] === 'Admistrador' || userRoles[i] === 'Comissão de Horários') return true;
   }
   return false;
 }
@@ -40,4 +40,10 @@ export function isValidTeacher(professor){
   let token = localStorage.getItem('token');
   let profId = parseJwt(token)["sub"];
   return profId == professor;
+}
+
+export function getUserName(){
+  let token = localStorage.getItem('token');
+  let username = parseJwt(token)["name"];
+  return username;
 }
