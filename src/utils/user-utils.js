@@ -42,6 +42,12 @@ export function isValidTeacher(professor){
   return profId == professor;
 }
 
+export function getUserId(){
+  let token = localStorage.getItem('token');
+  let userId = parseJwt(token)["sub"];
+  return userId;
+}
+
 export function getUserName(){
   let token = localStorage.getItem('token');
   let username = parseJwt(token)["name"];
