@@ -39,6 +39,7 @@ const events = ref([])
 const showClassModal = ref(false)
 const showScheduleModal = ref(false)
 const ON_CONNECTION_START = "JoinHorarioGroup"
+const ON_CONNECTION_SWITCH = "LeaveHorarioGroup"
 const CONNECTION_HUB = "/hubdobloco"
 const API_BASE_URL = "https://localhost:7223"
 
@@ -91,6 +92,10 @@ connection.on("NovoBlocoCriado", (bloco) => {
 
   console.log("EVENT: ", event)
   events.value.push(event)
+})
+
+connection.on("UpdateBloco", (bloco) => {
+  console.log("Bloco: ", bloco)
 })
 
 /**
@@ -194,16 +199,30 @@ async function postHorarioBlock(){
   return await response.json();
 }
 
+async function putHorarioBlock(){
+  var block = {
+    Id: parseInt(events.value[modifiedBlock].id),
+    hora_Inicio: YToTime(events.value[modifiedBlock].y),
+    DiaDaSemana: events.value[modifiedBlock].x,
+    SalaFK: events.value[modifiedBlock].classroom_id,
+    AulaFK: events.value[modifiedBlock].class_id
+  }
+  const response = await fetch(`${API_BASE_URL}/api/Blocos/` + events.value[modifiedBlock].id, {headers: {'content-type': 'application/json'}, method: 'PUT', body: JSON.stringify(block)} );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+var isNewBlock = false;
 function onClassPicked(){
-  postHorarioBlock().then((val) => {
-  }).catch((err) => {
-  })
+  if(!isNewBlock)
+    putHorarioBlock().then((val) => {}).catch((err) => {})
+  else
+    postHorarioBlock().then((val) => {}).catch((err) => {})
 }
 
 function handleSubmitSchedule(){
+
   showScheduleModal.value = false;
-  postHorario().then((val) => {
-  });
+  postHorario().then((val) => {});
   /*events.value[modifiedBlock].classroom_id = value;
   events.value[modifiedBlock].classroom = value ;
   onClassPicked();*/
@@ -211,6 +230,7 @@ function handleSubmitSchedule(){
 
 function handleSubmit(){
   showClassModal.value = false;
+  console.log("HELP:" , value, modifiedBlock)
   events.value[modifiedBlock].classroom_id = value;
   events.value[modifiedBlock].classroom = value ;
   onClassPicked();
@@ -220,6 +240,7 @@ function handleSubmit(){
 function onDragEnd(i){
   if(events.value[i].table == 0 && events.value[i].classroom_id == null ){
     modifiedBlock = i;
+    isNewBlock = true;
     showClassModal.value = true;
   }else if(events.value[i].table == 0){
     modifiedBlock = i;
@@ -227,6 +248,7 @@ function onDragEnd(i){
   }
 
 }
+provide('calendar_on_drag_end_event', onDragEnd);
 provide('calendar_on_drag_end_event', onDragEnd);
 
 function getAula(fk : string){
@@ -363,7 +385,22 @@ function updateHorario(){
   });
 }
 
-watch(horarioId, () => {
+watch(horarioId, (value, oldValue, onCleanup) => {
+  connection.invoke(ON_CONNECTION_SWITCH, oldValue)
+      .then(()=>{
+        console.log("DISCONNECTED FROM SCHEDULE " + oldValue);
+        connection.invoke(ON_CONNECTION_START, value)
+            .then(()=>{
+              console.log("DISCONNECTED FROM SCHEDULE " + value);
+            })
+            .catch((err) => {
+              console.log(err.toString())
+            }
+        )
+      })
+      .catch((err) =>{
+        console.log(err.toString())
+      })
   updateHorario()
 })
 
@@ -407,7 +444,24 @@ function updateEstadoHorario(){
     }
   })
 }
+function onDoubleClick(e){
+  modifiedBlock = -1;
+  for (var i = 0; i < events.value.length; i++) {
+    if (events.value[i].id == e) {
 
+      if(events.value[i].table != 0)
+        return
+      modifiedBlock = i
+      break;
+    }
+  }
+  if(modifiedBlock == -1)
+    return
+  isNewBlock = false;
+  showClassModal.value = true;
+}
+
+provide('calendar_on_double_click', onDoubleClick);
 
 
 </script>
@@ -429,18 +483,18 @@ function updateEstadoHorario(){
       </div>
 
       <div class="w-full flex gap-4 justify-center items-center">
-        <select v-if="horarios.length > 0"  v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
+        <button v-if="userIsAdmin(userRoles)" @click="showScheduleModal = true"
+                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
+          Criar Horário
+        </button>
+        <select v-if="horarios.length > 0"  v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1">
           <option v-for="ano in horarios.slice().reverse()" :key="ano.id" :value="ano.id">
             {{ ano.inicio }} - {{ ano.fim }}
           </option>
         </select>
         <button v-if="horarios.length > 0 && userIsAdmin(userRoles)" @click="removeOpen = true"
-                class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 rounded-l-none">
+                class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           ❌
-        </button>
-        <button v-if="userIsAdmin(userRoles)" @click="showScheduleModal = true"
-                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
-          Criar Horário
         </button>
         <button @click="printSchedule()"
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">

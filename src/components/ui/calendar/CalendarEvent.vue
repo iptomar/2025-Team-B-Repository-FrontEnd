@@ -9,6 +9,7 @@ console.log(event)
 const onDrag = inject('calendar_on_drag');
 const onDragStart = inject('calendar_on_drag_start');
 const onDragEnd = inject('calendar_on_drag_end');
+const onDoubleClick = inject('calendar_on_double_click');
 
 </script>
 
@@ -22,6 +23,7 @@ const onDragEnd = inject('calendar_on_drag_end');
        @drag="onDrag"
        @dragstart="onDragStart"
        @dragend="onDragEnd"
+       @dblclick="onDoubleClick(event.id)"
        class="calendar-event">
     <div class="calendar-event-data">
       <p class="calendar-event-header overflow-hidden whitespace-nowrap">{{event.name}}</p>

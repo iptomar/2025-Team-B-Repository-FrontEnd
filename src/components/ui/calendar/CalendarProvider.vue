@@ -14,7 +14,6 @@ var max_width = 1024.0;
 const size = useElementSize()
 var calculated_width = max_width / 7;
 var CELL_WIDTH = Math.min(calculated_width, cell_width)
-const onDragEndEvent = inject('calendar_on_drag_end_event');
 provide("cell_width", CELL_WIDTH);
 provide("cell_height", cell_height);
 
