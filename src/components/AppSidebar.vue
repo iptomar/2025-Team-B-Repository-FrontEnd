@@ -26,7 +26,7 @@ import { useRoute } from "vue-router";
 import { parseJwt } from "@/utils/user-utils.js";
 import { userIsAdmin } from "@/utils/user-utils.js";
 import { ref } from "vue";
-import { getUserName } from '@/utils/user-utils.js'
+import { getUserName } from "@/utils/user-utils.js";
 
 const route = useRoute();
 
@@ -41,8 +41,7 @@ const decodedToken = parseJwt(token);
 userRoles.value =
   decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
-
-const username = ref('');
+const username = ref("");
 username.value = getUserName();
 
 const logout = () => {
@@ -67,7 +66,7 @@ const items = [
     title: "Notificações",
     url: "/notificacoes",
     icon: Bell,
-    role: ["Admistrador", "Coordenador de Curso"]
+    role: ["Admistrador", "Coordenador de Curso"],
   },
   {
     title: "Espaço Admin",
@@ -82,7 +81,6 @@ const items = [
   const requiredRoles = Array.isArray(item.role) ? item.role : [item.role];
   return requiredRoles.some((r) => userRoles.value.includes(r));
 });
-
 </script>
 
 <template>
@@ -105,7 +103,11 @@ const items = [
                 v-for="item in items"
                 :key="item.title"
                 :class="{
-                  'active-menu-item': route.path.includes(item.url.substring(0, item.url.length - 1)),
+                  'active-menu-item':
+                    route.path.includes(
+                      item.url.substring(0, item.url.length - 1)
+                    ) ||
+                    (route.path.includes('/turma') && item.url === 'cursos'),
                   'my-1': true,
                 }"
               >
@@ -126,13 +128,24 @@ const items = [
     </SidebarContent>
 
     <div class="flex gap-8 mx-4 my-2 items-center">
-      <div class="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
-        <svg class="absolute w-12 h-12 text-gray-400 -left-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+      <div
+        class="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600"
+      >
+        <svg
+          class="absolute w-12 h-12 text-gray-400 -left-1"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+            clip-rule="evenodd"
+          ></path>
         </svg>
       </div>
       <p class="text-text font-semibold truncate" v-show="!isSidebarCollapsed">
-        {{username}}
+        {{ username }}
       </p>
     </div>
     <SidebarFooter />
