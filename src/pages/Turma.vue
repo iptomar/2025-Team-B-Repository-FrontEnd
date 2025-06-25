@@ -94,6 +94,20 @@ connection.on("NovoBlocoCriado", (bloco) => {
   events.value.push(event)
 })
 
+
+connection.on("BlocoRemovido", (bloco) => {
+  for (var i = 0; i < events.value.length; i++) {
+    console.log(events.value[i])
+    if (events.value[i].aulaId == bloco.blocoId) {
+      console.log("FOUND DELETION BLOCK", bloco.blocoId)
+      events.value.splice(i, 1);
+      break;
+    }
+  }
+
+  console.log("DELETED EVENT: ", bloco)
+})
+
 connection.on("UpdateBloco", (bloco) => {
   console.log("Bloco: ", bloco)
 })
@@ -146,9 +160,6 @@ fetchSalas().then((val) =>{
 })
 
 
-
-
-
 /**
  * Time conversions
  */
@@ -180,6 +191,12 @@ async function postHorario(){
   return await response.json();
 }
 
+async function postDeleteHorario() {
+  const response = await fetch(`${API_BASE_URL}/api/Horarios/${horarioId.value}`,{headers: {'content-type': 'application/json'}, method: 'DELETE'} );
+  if (!response.ok) throw new Error(response);
+  return response;
+}
+
 async function postSetStatus(horario : number) {
   const response = await fetch(`${API_BASE_URL}/api/Horarios/SetStatus/${horario}/1`,{headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify({status: 1})} );
   if (!response.ok) throw new Error(response);
@@ -201,16 +218,23 @@ async function postHorarioBlock(){
 
 async function putHorarioBlock(){
   var block = {
-    Id: parseInt(events.value[modifiedBlock].id),
+    Id: parseInt(events.value[modifiedBlock].aulaId),
     hora_Inicio: YToTime(events.value[modifiedBlock].y),
     DiaDaSemana: events.value[modifiedBlock].x,
     SalaFK: events.value[modifiedBlock].classroom_id,
     AulaFK: events.value[modifiedBlock].class_id
   }
-  const response = await fetch(`${API_BASE_URL}/api/Blocos/` + events.value[modifiedBlock].id, {headers: {'content-type': 'application/json'}, method: 'PUT', body: JSON.stringify(block)} );
+  const response = await fetch(`${API_BASE_URL}/api/Blocos/` + events.value[modifiedBlock].aulaId, {headers: {'content-type': 'application/json'}, method: 'PUT', body: JSON.stringify(block)} );
   if (!response.ok) throw new Error(response);
   return await response.json();
 }
+
+async function deleteHorarioBlock(aulaId){
+  const response = await fetch(`${API_BASE_URL}/api/Blocos/` + aulaId, {headers: {'content-type': 'application/json'}, method: 'DELETE'} );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
 var isNewBlock = false;
 function onClassPicked(){
   if(!isNewBlock)
@@ -237,18 +261,22 @@ function handleSubmit(){
 }
 
 
-function onDragEnd(i){
+function onDragEnd(i, aulaId){
   if(events.value[i].table == 0 && events.value[i].classroom_id == null ){
     modifiedBlock = i;
     isNewBlock = true;
     showClassModal.value = true;
   }else if(events.value[i].table == 0){
     modifiedBlock = i;
+    putHorarioBlock().then((val) => {}).catch((err) => {})
     //removeCurrentBlock();
+  }else{
+    modifiedBlock = i;
+    console.log("AULA REMOVIDA ", aulaId)
+    deleteHorarioBlock(aulaId).then((val) => {}).catch((err) => {})
   }
 
 }
-provide('calendar_on_drag_end_event', onDragEnd);
 provide('calendar_on_drag_end_event', onDragEnd);
 
 function getAula(fk : string){
@@ -444,18 +472,19 @@ function updateEstadoHorario(){
     }
   })
 }
-function onDoubleClick(e){
+
+function onDoubleClick(e) {
   modifiedBlock = -1;
   for (var i = 0; i < events.value.length; i++) {
     if (events.value[i].id == e) {
 
-      if(events.value[i].table != 0)
+      if (events.value[i].table != 0)
         return
       modifiedBlock = i
       break;
     }
   }
-  if(modifiedBlock == -1)
+  if (modifiedBlock == -1)
     return
   isNewBlock = false;
   showClassModal.value = true;
@@ -463,7 +492,22 @@ function onDoubleClick(e){
 
 provide('calendar_on_double_click', onDoubleClick);
 
+const showDeleteModal = ref(false)
+function showDeleteModalFun(){
+  showDeleteModal.value = true
+}
 
+function handleDeleteConfirm(){
+  showDeleteModal.value = false
+  postDeleteHorario()
+  for(var i = 0; i < horarios.value.length; i++){
+    if(horarios.value[i].id == horarioId.value){
+      horarios.value.splice(i, 1)
+      break;
+    }
+  }
+  horarioId.value = horarios.value[0].id;
+}
 </script>
 
 <template>
@@ -492,8 +536,8 @@ provide('calendar_on_double_click', onDoubleClick);
             {{ ano.inicio }} - {{ ano.fim }}
           </option>
         </select>
-        <button v-if="horarios.length > 0 && userIsAdmin(userRoles)" @click="removeOpen = true"
-                class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
+        <button v-if="horarios.length > 0 && userIsAdmin(userRoles)" @click="showDeleteModalFun()"
+                class="h-full text-white dark:bg-red bg-red-900 hover:bg-red-100 hover:border-red-500 hover:text-iptGreen px-4 py-2">
           ❌
         </button>
         <button @click="printSchedule()"
@@ -584,6 +628,25 @@ provide('calendar_on_double_click', onDoubleClick);
 
         </DialogFooter>
       </form>
+    </DialogContent>
+  </Dialog>
+  <Dialog v-model:open="showDeleteModal">
+    <DialogContent class="w-full max-w-md">
+      <DialogHeader>
+        <DialogTitle>Confirmar Eliminação</DialogTitle>
+        <DialogDescription>Tem certeza de que deseja apagar o horario?</DialogDescription>
+      </DialogHeader>
+      <DialogFooter class="flex justify-center gap-2">
+        <Button type="button" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white"
+                @click="handleDeleteConfirm">
+          Excluir
+        </Button>
+        <Button type="button"
+                class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+                variant="ghost" @click="showDeleteModal = false">
+          Cancelar
+        </Button>
+      </DialogFooter>
     </DialogContent>
   </Dialog>
 
