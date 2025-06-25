@@ -66,7 +66,7 @@ const items = [
     title: "Notificações",
     url: "/notificacoes",
     icon: Bell,
-    role: ["Admistrador", "Coordenador de Curso"],
+    role: ["Admistrador", "Comissão de Horários", "Diretor/a"],
   },
   {
     title: "Espaço Admin",
