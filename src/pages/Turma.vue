@@ -203,6 +203,7 @@ async function postSetStatus(horario : number) {
   return response;
 }
 
+
 async function postHorarioBlock(){
   var block = {
     HorarioId: horarioId.value,
