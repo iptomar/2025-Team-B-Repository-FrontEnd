@@ -24,7 +24,7 @@ async function aproveHorario(horarioId: number) {
 async function rejectHorario(horarioId: number) {
   console.log("Rejeitando horário com ID:", horarioId);
   const response = await fetch(
-    `${API_BASE_URL}/Horarios/SetStatus/${horarioId}/0`,
+    `${API_BASE_URL}/Horarios/SetStatus/${horarioId}/3`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

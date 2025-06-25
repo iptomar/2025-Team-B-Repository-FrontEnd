@@ -81,17 +81,20 @@ function cloneEvent(event){
 function onDragEnd(e) {
   moveToPos(e)
   clampPos(e)
+  validatePos(e)
   for (var i = 0; i < events.value.length; i++) {
-    if (events.value[i].id == draggedElement) {
+    if (events.value[i].id == draggedElement && validation) {
       onDragEndEvent(i, events.value[i].aulaId);
       break;
     }
   }
-  validatePos(e)
   draggedElement = null;
 }
 
+var validation = false;
+
 function validatePos(e) {
+  validation = true;
   var ev = null;
   var pos = -1;
   for (var i = 0; i < events.value.length; i++) {
@@ -104,6 +107,7 @@ function validatePos(e) {
   console.log(ev)
   if(ev.table == "1" && pos != -1){
     events.value.splice(pos, 1);
+    validation = false;
   }
 
   events.value.forEach(event => {
@@ -112,6 +116,7 @@ function validatePos(e) {
         ev.y = ev.tempY;
         ev.x = ev.tempX;
         ev.table = ev.oldTable;
+        validation = false;
       }
     }
   })
