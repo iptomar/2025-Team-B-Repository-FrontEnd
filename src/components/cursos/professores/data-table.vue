@@ -42,7 +42,8 @@ const props = defineProps<{
   columns: ColumnDef<TData & { id: number }, TValue>[],
   data: (TData & { id: number })[],
   cursoId: number,
-  professoresNoCurso: { id: string, userName: string }[]
+  professoresNoCurso: { id: string, userName: string }[],
+  professorId: string | null
 }>()
 
 const emit = defineEmits<{
@@ -126,7 +127,7 @@ onMounted(async () => {
           @update:model-value="table.getColumn('userName')?.setFilterValue($event)" />
       </div>
 
-      <button v-if="canSubmit(userRoles)" @click="addProfDialog = true"
+      <button v-if="canSubmit(userRoles, professorId)" @click="addProfDialog = true"
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Adicionar Professor
       </button>
