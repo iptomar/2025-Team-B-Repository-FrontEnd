@@ -39,6 +39,7 @@ const events = ref([])
 const showClassModal = ref(false)
 const showScheduleModal = ref(false)
 const ON_CONNECTION_START = "JoinHorarioGroup"
+const ON_CONNECTION_SWITCH = "LeaveHorarioGroup"
 const CONNECTION_HUB = "/hubdobloco"
 const API_BASE_URL = "https://localhost:7223"
 
@@ -93,6 +94,24 @@ connection.on("NovoBlocoCriado", (bloco) => {
   events.value.push(event)
 })
 
+
+connection.on("BlocoRemovido", (bloco) => {
+  for (var i = 0; i < events.value.length; i++) {
+    console.log(events.value[i])
+    if (events.value[i].aulaId == bloco.blocoId) {
+      console.log("FOUND DELETION BLOCK", bloco.blocoId)
+      events.value.splice(i, 1);
+      break;
+    }
+  }
+
+  console.log("DELETED EVENT: ", bloco)
+})
+
+connection.on("UpdateBloco", (bloco) => {
+  console.log("Bloco: ", bloco)
+})
+
 /**
  * POST CALLS
 */
@@ -128,7 +147,7 @@ async function fetchSalas() {
 }
 
 async function fetchBlocos(){
-  const response = await fetch(`${API_BASE_URL}/api/blocos/turma/${turmaId.value}` );
+  const response = await fetch(`${API_BASE_URL}/api/Blocos/Horario/${horarioId.value}` );
   if (!response.ok) throw new Error(response);
   return await response.json();
 }
@@ -141,19 +160,6 @@ fetchSalas().then((val) =>{
 })
 
 
-
-fetchHorarios().then((val) => {
-  console.log("Logged schedules: ", val)
-  horarios.value = val
-  if(horarios.value.length > 0){
-    horarioId.value = horarios.value[0].id
-    updateEstadoHorario();
-  }
-  if(val.length == 0)
-    connectionState.value = "Não existem horários criados para esta turma.";
-  //horarios = val
-})
-
 /**
  * Time conversions
  */
@@ -165,11 +171,11 @@ function YToTime(value : number){
   hour = hour.toString().padStart(2, '0')
   return hour + ':' + min + ":" + '00';
 }
+
 function timeToY(time : string){
   let t = time.split(':')
   let h = (parseInt(t[0])-9)*2
   let m = Math.trunc(parseInt(t[1])/30)
-  console.log(time, h, m, h+m)
   return h+m
 }
 
@@ -180,11 +186,15 @@ async function postHorario(){
     TurmaFK: turmaId.value,
     Blocos: []
   }
-
-  console.log(block)
   const response = await fetch(`${API_BASE_URL}/api/Horarios`, {headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify(block)} );
   if (!response.ok) throw new Error(response);
   return await response.json();
+}
+
+async function postDeleteHorario() {
+  const response = await fetch(`${API_BASE_URL}/api/Horarios/${horarioId.value}`,{headers: {'content-type': 'application/json'}, method: 'DELETE'} );
+  if (!response.ok) throw new Error(response);
+  return response;
 }
 
 async function postSetStatus(horario : number) {
@@ -201,25 +211,42 @@ async function postHorarioBlock(){
     SalaFK: events.value[modifiedBlock].classroom_id,
     AulaFK: events.value[modifiedBlock].class_id
   }
-  console.log(block)
   const response = await fetch(`${API_BASE_URL}/api/signalR` + "/Horariobloco", {headers: {'content-type': 'application/json'}, method: 'POST', body: JSON.stringify(block)} );
   if (!response.ok) throw new Error(response);
   return await response.json();
 }
 
+async function putHorarioBlock(){
+  var block = {
+    Id: parseInt(events.value[modifiedBlock].aulaId),
+    hora_Inicio: YToTime(events.value[modifiedBlock].y),
+    DiaDaSemana: events.value[modifiedBlock].x,
+    SalaFK: events.value[modifiedBlock].classroom_id,
+    AulaFK: events.value[modifiedBlock].class_id
+  }
+  const response = await fetch(`${API_BASE_URL}/api/Blocos/` + events.value[modifiedBlock].aulaId, {headers: {'content-type': 'application/json'}, method: 'PUT', body: JSON.stringify(block)} );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+async function deleteHorarioBlock(aulaId){
+  const response = await fetch(`${API_BASE_URL}/api/Blocos/` + aulaId, {headers: {'content-type': 'application/json'}, method: 'DELETE'} );
+  if (!response.ok) throw new Error(response);
+  return await response.json();
+}
+
+var isNewBlock = false;
 function onClassPicked(){
-  postHorarioBlock().then((val) => {
-    console.log(val);
-  }).catch((err) => {
-    console.log(err);
-  })
+  if(!isNewBlock)
+    putHorarioBlock().then((val) => {}).catch((err) => {})
+  else
+    postHorarioBlock().then((val) => {}).catch((err) => {})
 }
 
 function handleSubmitSchedule(){
+
   showScheduleModal.value = false;
-  postHorario().then((val) => {
-    console.log(val)
-  });
+  postHorario().then((val) => {});
   /*events.value[modifiedBlock].classroom_id = value;
   events.value[modifiedBlock].classroom = value ;
   onClassPicked();*/
@@ -227,28 +254,26 @@ function handleSubmitSchedule(){
 
 function handleSubmit(){
   showClassModal.value = false;
+  console.log("HELP:" , value, modifiedBlock)
   events.value[modifiedBlock].classroom_id = value;
   events.value[modifiedBlock].classroom = value ;
   onClassPicked();
 }
 
 
-fetchAulas().then((value) => {
-  aulas = value
-  fetchBlocos().then((value) => {
-    convertToEvents(aulas)
-    value.forEach((bloco) => {
-      events.value.push(convertToEvent(bloco))
-    })
-  })
-});
-function onDragEnd(i){
+function onDragEnd(i, aulaId){
   if(events.value[i].table == 0 && events.value[i].classroom_id == null ){
     modifiedBlock = i;
+    isNewBlock = true;
     showClassModal.value = true;
   }else if(events.value[i].table == 0){
     modifiedBlock = i;
+    putHorarioBlock().then((val) => {}).catch((err) => {})
     //removeCurrentBlock();
+  }else{
+    modifiedBlock = i;
+    console.log("AULA REMOVIDA ", aulaId)
+    deleteHorarioBlock(aulaId).then((val) => {}).catch((err) => {})
   }
 
 }
@@ -277,10 +302,11 @@ function getSala(fk : string){
 
 function convertToEvent(val){
   var aula = getAula(val.aulaFK);
+  if(aula == null)
+    return null;
   var sala = getSala(val.salaFK);
   var time = timeToY(val.hora_Inicio)
   var duracao = 4
-  console.log(val)
   return generateEvent(val.id.toString(), 0, val.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, sala.sala, aula.professor.userName, val.aulaFK, sala.id)
 }
 
@@ -327,7 +353,6 @@ function generateEvent(id, table, weekday, timeslot, time, name, type, classroom
 }
 
 fetchHorarioId().then((val) => {
-  horarioId.value = val;
   connection.invoke(ON_CONNECTION_START, horarioId.value)
       .then(()=>{
         console.log("CONNECTED TO SCHEDULE " + horarioId.value);
@@ -337,7 +362,7 @@ fetchHorarioId().then((val) => {
   })
   console.log("Sucessfully connected to schedule: " + horarioId.value);
 }).catch((result) => {
-  console.log("AIAIIA:" + result)
+
 });
 
 
@@ -368,9 +393,44 @@ function submeter(){
     }
     updateEstadoHorario();
   }).catch((err) =>{
-    console.log(err.toString())
+
   });
 }
+
+function updateHorario(){
+  updateEstadoHorario();
+  events.value = []
+  fetchAulas().then((value) => {
+    aulas = value
+    fetchBlocos().then((value) => {
+      convertToEvents(aulas)
+      value[0].forEach((bloco) => {
+        var event = convertToEvent(bloco)
+        if(event)
+          events.value.push(event)
+      })
+    })
+  });
+}
+
+watch(horarioId, (value, oldValue, onCleanup) => {
+  connection.invoke(ON_CONNECTION_SWITCH, oldValue)
+      .then(()=>{
+        console.log("DISCONNECTED FROM SCHEDULE " + oldValue);
+        connection.invoke(ON_CONNECTION_START, value)
+            .then(()=>{
+              console.log("DISCONNECTED FROM SCHEDULE " + value);
+            })
+            .catch((err) => {
+              console.log(err.toString())
+            }
+        )
+      })
+      .catch((err) =>{
+        console.log(err.toString())
+      })
+  updateHorario()
+})
 
 onMounted(async () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -379,9 +439,19 @@ onMounted(async () => {
   const decodedToken = parseJwt(token);
   userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
-  console.log("HELP", userRoles.value)
   fetchTurma().then((val) =>{
     isCoordenadorCurso.value = isValidTeacher(val.curso.professorFK) || userIsAdmin(userRoles)
+  })
+
+  fetchHorarios().then((val) => {
+    horarios.value = val
+    if(horarios.value.length > 0){
+      horarioId.value = horarios.value[0].id
+      updateHorario();
+    }
+    if(val.length == 0)
+      connectionState.value = "Não existem horários criados para esta turma.";
+    //horarios = val
   })
   try {
     turmaSelecionada.value = await fetchTurmaById(turmaId.value);
@@ -403,10 +473,41 @@ function updateEstadoHorario(){
   })
 }
 
-watch(horarioId, () => {
-  updateEstadoHorario();
-})
+function onDoubleClick(e) {
+  modifiedBlock = -1;
+  for (var i = 0; i < events.value.length; i++) {
+    if (events.value[i].id == e) {
 
+      if (events.value[i].table != 0)
+        return
+      modifiedBlock = i
+      break;
+    }
+  }
+  if (modifiedBlock == -1)
+    return
+  isNewBlock = false;
+  showClassModal.value = true;
+}
+
+provide('calendar_on_double_click', onDoubleClick);
+
+const showDeleteModal = ref(false)
+function showDeleteModalFun(){
+  showDeleteModal.value = true
+}
+
+function handleDeleteConfirm(){
+  showDeleteModal.value = false
+  postDeleteHorario()
+  for(var i = 0; i < horarios.value.length; i++){
+    if(horarios.value[i].id == horarioId.value){
+      horarios.value.splice(i, 1)
+      break;
+    }
+  }
+  horarioId.value = horarios.value[0].id;
+}
 </script>
 
 <template>
@@ -426,18 +527,18 @@ watch(horarioId, () => {
       </div>
 
       <div class="w-full flex gap-4 justify-center items-center">
-        <select v-if="horarios.length > 0"  v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1 rounded-r-none">
+        <button v-if="userIsAdmin(userRoles)" @click="showScheduleModal = true"
+                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
+          Criar Horário
+        </button>
+        <select v-if="horarios.length > 0"  v-model="horarioId" class="h-[2.6rem] border border-gray-300 rounded px-2 py-1">
           <option v-for="ano in horarios.slice().reverse()" :key="ano.id" :value="ano.id">
             {{ ano.inicio }} - {{ ano.fim }}
           </option>
         </select>
-        <button v-if="horarios.length > 0 && userIsAdmin(userRoles)" @click="removeOpen = true"
-                class="h-full text-white bg-red hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2 rounded-l-none">
+        <button v-if="horarios.length > 0 && userIsAdmin(userRoles)" @click="showDeleteModalFun()"
+                class="h-full text-white dark:bg-red bg-red-900 hover:bg-red-100 hover:border-red-500 hover:text-iptGreen px-4 py-2">
           ❌
-        </button>
-        <button v-if="userIsAdmin(userRoles)" @click="showScheduleModal = true"
-                class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
-          Criar Horário
         </button>
         <button @click="printSchedule()"
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
@@ -527,6 +628,25 @@ watch(horarioId, () => {
 
         </DialogFooter>
       </form>
+    </DialogContent>
+  </Dialog>
+  <Dialog v-model:open="showDeleteModal">
+    <DialogContent class="w-full max-w-md">
+      <DialogHeader>
+        <DialogTitle>Confirmar Eliminação</DialogTitle>
+        <DialogDescription>Tem certeza de que deseja apagar o horario?</DialogDescription>
+      </DialogHeader>
+      <DialogFooter class="flex justify-center gap-2">
+        <Button type="button" class="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white"
+                @click="handleDeleteConfirm">
+          Excluir
+        </Button>
+        <Button type="button"
+                class="px-4 py-2 text-white bg-gray-400 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-400"
+                variant="ghost" @click="showDeleteModal = false">
+          Cancelar
+        </Button>
+      </DialogFooter>
     </DialogContent>
   </Dialog>
 

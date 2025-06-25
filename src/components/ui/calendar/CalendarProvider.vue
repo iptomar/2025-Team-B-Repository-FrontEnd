@@ -1,5 +1,5 @@
 <script setup>
-import {getCurrentInstance, inject, provide, ref} from "vue";
+import {getCurrentInstance, inject, provide, ref, useTemplateRef} from "vue";
 import {useElementSize, useResizeObserver} from "@vueuse/core";
 
 const {
@@ -14,9 +14,9 @@ var max_width = 1024.0;
 const size = useElementSize()
 var calculated_width = max_width / 7;
 var CELL_WIDTH = Math.min(calculated_width, cell_width)
-const onDragEndEvent = inject('calendar_on_drag_end_event');
 provide("cell_width", CELL_WIDTH);
 provide("cell_height", cell_height);
+const onDragEndEvent = inject("calendar_on_drag_end_event")
 
 function onDrag(e) {
   e.dataTransfer.dropEffect = "copy";
@@ -81,13 +81,13 @@ function cloneEvent(event){
 function onDragEnd(e) {
   moveToPos(e)
   clampPos(e)
-  validatePos(e)
   for (var i = 0; i < events.value.length; i++) {
     if (events.value[i].id == draggedElement) {
-      onDragEndEvent(i);
+      onDragEndEvent(i, events.value[i].aulaId);
       break;
     }
   }
+  validatePos(e)
   draggedElement = null;
 }
 
