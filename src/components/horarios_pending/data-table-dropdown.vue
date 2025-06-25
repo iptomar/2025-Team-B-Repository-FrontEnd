@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-vue-next";
 import type { Horario } from "../interfaces";
 import { useToast } from "@/components/ui/toast/use-toast";
+import { API_BASE_URL } from "@/api/api";
 //import { aprovarHorario, rejeitarHorario } from "@/api/horarios"; // cria estas funções na tua API
 
 const props = defineProps<{ horario: Horario; onRefresh: () => void }>();
@@ -11,7 +12,7 @@ const { toast } = useToast();
 
 const aprovar = async () => {
   try {
-    //await aprovarHorario(props.horario.id);
+    //await aproveHorario(props.horario.id);
     props.onRefresh();
     toast({ title: "Horário aprovado com sucesso.", variant: "success" });
   } catch {
@@ -21,7 +22,7 @@ const aprovar = async () => {
 
 const rejeitar = async () => {
   try {
-    //await rejeitarHorario(props.horario.id);
+    //await rejectHorario(props.horario.id);
     props.onRefresh();
     toast({ title: "Horário rejeitado com sucesso.", variant: "success" });
   } catch {
