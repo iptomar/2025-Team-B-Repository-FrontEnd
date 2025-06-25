@@ -2,11 +2,8 @@
 import {
   DoorClosed,
   GraduationCap,
-  Radio,
-  Home,
   ShieldUser,
-  Users,
-  LogOut,
+  User,
   Bell,
 } from "lucide-vue-next";
 import {
@@ -24,7 +21,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useRoute } from "vue-router";
 import { parseJwt } from "@/utils/user-utils.js";
-import { userIsAdmin } from "@/utils/user-utils.js";
 import { ref } from "vue";
 import { getUserName } from "@/utils/user-utils.js";
 
@@ -43,11 +39,6 @@ userRoles.value =
 
 const username = ref("");
 username.value = getUserName();
-
-const logout = () => {
-  localStorage.removeItem("token");
-  router.push("/");
-};
 
 const items = [
   {
@@ -72,7 +63,7 @@ const items = [
     title: "Espaço Admin",
     url: "/admin",
     icon: ShieldUser,
-    role: "Admistrador", //anteriormente Administrador
+    role: "Admistrador", 
   },
 ].filter((item) => {
   if (!item.role) return true;
@@ -108,7 +99,7 @@ const items = [
                       item.url.substring(0, item.url.length - 1)
                     ) ||
                     (route.path.includes('/turma') && item.url === 'cursos'),
-                  'my-1': true,
+                  'my-1 mt-3': true,
                 }"
               >
                 <SidebarMenuButton asChild>
@@ -127,24 +118,13 @@ const items = [
       </div>
     </SidebarContent>
 
-    <div class="flex gap-8 mx-4 my-2 items-center">
+    <div class="flex gap-4 mx-3 my-2 mb-3 items-center">
       <div
-        class="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600"
+        class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center"
       >
-        <svg
-          class="absolute w-12 h-12 text-gray-400 -left-1"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
+        <User class="w-6 h-6 text-black" />
       </div>
-      <p class="text-text font-semibold truncate" v-show="!isSidebarCollapsed">
+      <p class="text-white font-semibold truncate" v-show="!isSidebarCollapsed">
         {{ username }}
       </p>
     </div>
