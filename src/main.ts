@@ -7,11 +7,8 @@ import Login from './pages/Login.vue';
 import Salas from './pages/Salas.vue';
 import AdminSpace from './pages/AdminSpace.vue';
 import Cursos from './pages/Cursos.vue';
-import Utilizadores from './pages/Utilizadores.vue';
-import CreateUtilizador from './pages/CreateUtilizador.vue';
-import UpdateUtilizador from './pages/UpdateUtilizador.vue';
 import Turma from "@/pages/Turma.vue"
-
+import Notificacoes from './pages/Notificacoes.vue';
 
 const routes = [
   { path: "/", component: Login },
@@ -24,6 +21,11 @@ const routes = [
   {
     path: "/admin",
     component: AdminSpace,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/notificacoes",
+    component: Notificacoes,
     meta: { requiresAuth: true },
   },
   {
