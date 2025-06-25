@@ -34,9 +34,9 @@ export function userIsAdmin(userRoles){
  * @param {*} userRoles 
  * @returns 
  */
-export function canSubmit(userRoles){
+export function canSubmit(userRoles, professor){
   for (var i = 0; i < userRoles.length; i++) {
-    if (userRoles[i] === 'Admistrador' || userRoles[i] === 'Comissão de Cursos' || isValidTeacher) return true;
+    if (userRoles[i] === 'Admistrador' || userRoles[i] === 'Comissão de Cursos' || isValidTeacher(professor)) return true;
   }
   return false;
 }

@@ -8,7 +8,8 @@ export const getAulas = (
   cursoId: number,
   professoresNoCurso: { id: string; userName: string }[],
   semestreCadeira: number,
-  anoCadeira: number
+  anoCadeira: number, 
+  professorId: string
 ): ColumnDef<Aula>[] => [
   {
     accessorKey: "tipologia.tipologia",

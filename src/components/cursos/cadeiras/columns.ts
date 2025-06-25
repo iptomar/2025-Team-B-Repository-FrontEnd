@@ -2,21 +2,23 @@ import { h, ref } from "vue";
 import type { ColumnDef } from "@tanstack/vue-table";
 import DropdownAction from "./data-table-dropdown.vue";
 import type { Cadeira } from "../../interfaces";
-import { canSubmit, parseJwt} from '@/utils/user-utils.js'
-
+import { canSubmit, parseJwt } from '@/utils/user-utils.js'
 
 const userRoles = ref<string[]>([]);
+const token = localStorage.getItem('token');
 
-let token = localStorage.getItem('token')
-const decodedToken = parseJwt(token);
-userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
-
+if (token) {
+  const decodedToken = parseJwt(token);
+  userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || [];
+}
 
 export const getCadeiras = (
   onRefresh: () => void,
-  cursoId: number
+  cursoId: number, 
+  professorId: string
 ): ColumnDef<Cadeira>[] => {
-  return [
+  // Colunas base (sempre presentes)
+  const baseColumns: ColumnDef<Cadeira>[] = [
     {
       accessorKey: "cadeira",
       header: ({ column }) => {
@@ -89,7 +91,11 @@ export const getCadeiras = (
       header: () => h("div", "ECTS"),
       cell: ({ row }) => h("div", { class: "text-left" }, row.getValue("ects")),
     },
-    {
+  ];
+
+  // Adiciona coluna de ações apenas se o usuário tiver permissão
+  if (canSubmit(userRoles.value, professorId)) {
+    baseColumns.push({
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
@@ -103,13 +109,8 @@ export const getCadeiras = (
           h(DropdownAction, { cadeira, cursoId, onRefresh })
         );
       },
-    },
-  ].map((column) => {
-    if (canSubmit(userRoles) && column.id === "actions") {
-      column.enableHiding = true;
-    }else{
-      column.enableHiding = false;
-    }
-    return column;
-  })
+    });
+  }
+
+  return baseColumns;
 };

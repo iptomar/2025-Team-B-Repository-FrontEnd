@@ -119,10 +119,10 @@ onMounted(async () => {
     </div>
 
     <div class="mt-6">
-      <DataTableTurmas v-if="abaAtiva === 'turmas'" :columns="getTurmas(carregarTurmas)" :data="turmasCurso"
-        @refresh="carregarTurmas" :curso-selecionado="cursoSelecionado" />
-      <DataTableCadeiras v-if="abaAtiva === 'cadeiras'" :columns="getCadeiras(carregarCadeiras, cursoId)" :data="cadeirasCurso" @refresh="carregarCadeiras"  :curso-selecionado="cursoSelecionado" />
-      <DataTableProfessores v-if="abaAtiva === 'professores'" :columns="getProfessores(carregarProfessores, cursoId)" :data="professoresCurso" @refresh="carregarProfessores"  :curso-id="cursoId" :professores-no-curso="professoresCurso.map(p => ({ ...p, id: String(p.id) }))" />
+      <DataTableTurmas v-if="abaAtiva === 'turmas'" :columns="getTurmas(carregarTurmas, cursoSelecionado?.professor.id || '')" :data="turmasCurso"
+        @refresh="carregarTurmas" :curso-selecionado="cursoSelecionado" :professor-id="cursoSelecionado?.professor.id || ''"/>
+      <DataTableCadeiras v-if="abaAtiva === 'cadeiras'" :columns="getCadeiras(carregarCadeiras, cursoId, cursoSelecionado?.professor.id || '')" :data="cadeirasCurso" @refresh="carregarCadeiras"  :curso-selecionado="cursoSelecionado" :professor-id="cursoSelecionado?.professor.id || ''" />
+      <DataTableProfessores v-if="abaAtiva === 'professores'" :columns="getProfessores(carregarProfessores, cursoId, cursoSelecionado?.professor.id || '')" :data="professoresCurso" @refresh="carregarProfessores"  :curso-id="cursoId" :professores-no-curso="professoresCurso.map(p => ({ ...p, id: String(p.id) }))" :professor-id="cursoSelecionado?.professor.id || ''" />
     </div>
   </div>
 </template>
