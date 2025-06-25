@@ -89,7 +89,7 @@ const table = useVueTable({
             </TableRow>
           </template>
           <template v-else>
-            <TableRow><TableCell :colspan="6" class="text-center px-6 py-4">Nenhum horário pendente encontrado.</TableCell></TableRow>
+            <TableRow><TableCell :colspan="6" class="text-center px-6 py-4">Nenhum horário pendente de verificação encontrado.</TableCell></TableRow>
           </template>
         </TableBody>
       </Table>

@@ -3,6 +3,39 @@ import { h } from 'vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import type { Horario } from '../interfaces';
 import { Check, X } from 'lucide-vue-next';
+import { API_BASE_URL } from '@/api/api';
+
+async function aproveHorario(horarioId: number) {
+  console.log("Aprovando horário com ID:", horarioId);
+  const response = await fetch(
+    `${API_BASE_URL}/Horarios/SetStatus/${horarioId}/2`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+  return response;
+}
+
+async function rejectHorario(horarioId: number) {
+  console.log("Rejeitando horário com ID:", horarioId);
+  const response = await fetch(
+    `${API_BASE_URL}/Horarios/SetStatus/${horarioId}/3`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+  return response;
+}
 
 export const getColumnsHorarios = (onRefresh: () => void): ColumnDef<Horario>[] => [
   {
@@ -27,7 +60,7 @@ export const getColumnsHorarios = (onRefresh: () => void): ColumnDef<Horario>[] 
     header: "Turma",
     cell: ({ row }) => h("div", row.original.turma.letra),
   },
-  {
+    {
     id: "actions",
     enableHiding: false,
     header: "Ações",
@@ -36,9 +69,15 @@ export const getColumnsHorarios = (onRefresh: () => void): ColumnDef<Horario>[] 
         h("button", { 
           class: "p-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors",
           onClick: () => {
-            // Função temporária para aprovar
-            console.log("Aprovar horário:", row.original.id);
-            onRefresh();
+            aproveHorario(row.original.id)
+              .then(() => {
+                console.log("Horário aprovado com sucesso");
+                onRefresh();
+                console.log("onRefresh chamado após aprovação");
+              })
+              .catch(error => {
+                console.error("Erro ao aprovar horário:", error);
+              });
           }
         }, [
           h(Check, { class: "w-4 h-4" })
@@ -46,9 +85,14 @@ export const getColumnsHorarios = (onRefresh: () => void): ColumnDef<Horario>[] 
         h("button", { 
           class: "p-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors",
           onClick: () => {
-            // Função temporária para rejeitar
-            console.log("Rejeitar horário:", row.original.id);
-            onRefresh();
+            rejectHorario(row.original.id)
+              .then(() => {
+                console.log("Horário rejeitado com sucesso");
+                onRefresh();
+              })
+              .catch(error => {
+                console.error("Erro ao rejeitar horário:", error);
+              });
           }
         }, [
           h(X, { class: "w-4 h-4" })

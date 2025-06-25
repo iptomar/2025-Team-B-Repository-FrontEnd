@@ -203,6 +203,7 @@ async function postSetStatus(horario : number) {
   return response;
 }
 
+
 async function postHorarioBlock(){
   var block = {
     HorarioId: horarioId.value,
@@ -547,6 +548,12 @@ function handleDeleteConfirm(){
         <div class="text-iptGreen font-semibold" v-if="estadoHorario == 1">
           Horário pendente de aprovação...
         </div>
+        <div class="text-iptGreen font-semibold" v-if="estadoHorario == 2">
+          Horário aprovado
+        </div>
+        <div class="text-red-500 font-semibold" v-if="estadoHorario == 3">
+          Horário rejeitado
+        </div>
         <button v-if="isCoordenadorCurso && estadoHorario == 0" @click="submeter()"
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Submeter
@@ -558,8 +565,8 @@ function handleDeleteConfirm(){
 
     <CalendarProvider events="events" v-if="connected && horarios.length > 0" cell_width="148" cell_height="30" style={}>
         <div class="flex">
-          <Calendar id="calendarItem" table="0" />
-          <CalendarHolder v-if="printScheduleBol === false && isCoordenadorCurso" table="1" slotsW="1" slotsH="50"/>
+          <Calendar :style="{ pointerEvents: estadoHorario != 0 ? 'none' : 'auto' }" id="calendarItem" table="0" />
+          <CalendarHolder :style="{ pointerEvents: estadoHorario != 0 ? 'none' : 'auto' }" v-if="printScheduleBol === false && isCoordenadorCurso" table="1" slotsW="1" slotsH="50"/>
         </div>
     </CalendarProvider>
     <div v-else>
