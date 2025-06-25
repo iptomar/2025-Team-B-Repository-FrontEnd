@@ -28,7 +28,6 @@ import { getTipologia } from "@/api/tipologias";
 import { createAula } from '@/api/aulas'
 import { parseJwt } from '@/utils/user-utils.js'
 import { canSubmit } from '@/utils/user-utils.js'
-import { getUserId } from '@/utils/user-utils.js'
 
 
 const userRoles = ref<string[]>([]);
@@ -51,7 +50,8 @@ const props = defineProps<{
   cursoId: number,
   professoresNoCurso: { id: string, userName: string }[],
   semestreCadeira: number,
-  anoCadeira: number
+  anoCadeira: number,
+  professorId: string | null
 }>()
 
 const tipologias = ref<Tipologia[]>([]);

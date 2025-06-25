@@ -7,12 +7,22 @@ import type { Curso } from '@/components/interfaces'
 import { fetchGraus } from '@/api/graus'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
+import { parseJwt } from "@/utils/user-utils.js";
 
 const { toast } = useToast()
 
 const cursos = ref<Curso[]>([])
 const grauAtivo = ref<number | null>(null)
 const grausDisponiveis = ref<{ id: number; grau: string }[]>([])
+
+
+const userRoles = ref<string[]>([]);
+
+let token = localStorage.getItem("token");
+const decodedToken = parseJwt(token);
+userRoles.value =
+  decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
 
 const cursosFiltrados = computed(() => cursos.value)
 
@@ -71,6 +81,6 @@ onMounted(async () => {
   </div>
 
   <div class="w-full">
-    <DataTable :columns="getColumns(carregarCursos)" :data="cursosFiltrados" @refresh="carregarCursos" />
+    <DataTable :columns="getColumns(carregarCursos, userRoles)" :data="cursosFiltrados" @refresh="carregarCursos" />
   </div>
 </template>
