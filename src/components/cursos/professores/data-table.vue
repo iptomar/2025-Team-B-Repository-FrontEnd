@@ -26,7 +26,7 @@ import { adicionarProfessorAoCurso } from '@/api/professores';
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Toaster } from '@/components/ui/toast'
 import { parseJwt } from '@/utils/user-utils.js'
-import { userIsAdmin } from '@/utils/user-utils.js'
+import { canSubmit } from '@/utils/user-utils.js'
 
 
 const userRoles = ref<string[]>([]);
@@ -126,7 +126,7 @@ onMounted(async () => {
           @update:model-value="table.getColumn('userName')?.setFilterValue($event)" />
       </div>
 
-      <button v-if="userIsAdmin(userRoles)" @click="addProfDialog = true"
+      <button v-if="canSubmit(userRoles)" @click="addProfDialog = true"
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Adicionar Professor
       </button>

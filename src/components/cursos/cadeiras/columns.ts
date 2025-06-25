@@ -1,7 +1,16 @@
-import { h } from "vue";
+import { h, ref } from "vue";
 import type { ColumnDef } from "@tanstack/vue-table";
 import DropdownAction from "./data-table-dropdown.vue";
 import type { Cadeira } from "../../interfaces";
+import { canSubmit, parseJwt} from '@/utils/user-utils.js'
+
+
+const userRoles = ref<string[]>([]);
+
+let token = localStorage.getItem('token')
+const decodedToken = parseJwt(token);
+userRoles.value = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
 
 export const getCadeiras = (
   onRefresh: () => void,
@@ -95,5 +104,12 @@ export const getCadeiras = (
         );
       },
     },
-  ];
+  ].map((column) => {
+    if (canSubmit(userRoles) && column.id === "actions") {
+      column.enableHiding = true;
+    }else{
+      column.enableHiding = false;
+    }
+    return column;
+  })
 };
