@@ -132,3 +132,23 @@ export interface Users {
   password: string;
   Roles: string[];
 }
+
+export interface Horario {
+  id: number;
+  inicio: string;
+  fim: string;
+  estado: number;
+  turmaFK: number;
+  turma: {
+    id: number;
+    letra: string;
+    ano: number;
+    semestre: number;
+    cursoFK: number;
+    curso: {
+      id: number;
+      curso: string;
+    };
+  };
+  blocos: any[];
+}

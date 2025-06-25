@@ -28,7 +28,7 @@ import type { Cadeira, Curso } from '@/components/interfaces'
 import { createCadeira } from '@/api/cadeiras'
 import { addCadeiraAoCurso } from '@/api/cursos'
 import { parseJwt } from '@/utils/user-utils.js'
-import { userIsAdmin } from '@/utils/user-utils.js'
+import { canSubmit } from '@/utils/user-utils.js'
 
 
 const userRoles = ref<string[]>([]);
@@ -130,7 +130,7 @@ const limitValue = (field: 'ano' | 'semestre' | 'ects', min: number, max: number
           @update:model-value="table.getColumn('cadeira')?.setFilterValue($event)" />
       </div>
 
-      <button v-if="userIsAdmin(userRoles)" @click="isCreateOpen = true"
+      <button v-if="canSubmit(userRoles)" @click="isCreateOpen = true"
         class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
         Criar Cadeira
       </button>

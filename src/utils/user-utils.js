@@ -29,9 +29,14 @@ export function userIsAdmin(userRoles){
     return false;
 }
 
+/**
+ * Esta função esta a ser usada para verificar os botões de submissão das salas, cadeiras e professores.
+ * @param {*} userRoles 
+ * @returns 
+ */
 export function canSubmit(userRoles){
   for (var i = 0; i < userRoles.length; i++) {
-    if (userRoles[i] === 'Admistrador' || userRoles[i] === 'Comissão de Horários') return true;
+    if (userRoles[i] === 'Admistrador' || userRoles[i] === 'Comissão de Cursos' || isValidTeacher) return true;
   }
   return false;
 }
@@ -40,6 +45,12 @@ export function isValidTeacher(professor){
   let token = localStorage.getItem('token');
   let profId = parseJwt(token)["sub"];
   return profId == professor;
+}
+
+export function getUserId(){
+  let token = localStorage.getItem('token');
+  let userId = parseJwt(token)["sub"];
+  return userId;
 }
 
 export function getUserName(){
