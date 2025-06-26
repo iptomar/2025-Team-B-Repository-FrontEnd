@@ -25,14 +25,11 @@ const onDoubleClick = inject('calendar_on_double_click');
        @dragend="onDragEnd"
        @dblclick="onDoubleClick(event.id)"
        class="calendar-event">
-    <div v-if="event.time > 1" class="calendar-event-data">
+    <div class="calendar-event-data">
       <p class="calendar-event-header overflow-hidden whitespace-nowrap">{{event.name}}</p>
-      <p v-if="event.time > 2" class="calendar-event-label">{{event.type}}</p>
+      <p class="calendar-event-label">{{event.type}}</p>
       <p class="calendar-event-label">{{event.teacher}}</p>
       <p class="calendar-event-label">{{event.classroom}}</p>
-    </div>
-    <div v-else class="calendar-event-data">
-      <p class="calendar-event-label">{{event.name}} {{event.classroom}}</p>
     </div>
   </div>
 </template>
