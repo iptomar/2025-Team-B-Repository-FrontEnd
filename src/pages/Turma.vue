@@ -76,6 +76,8 @@ connection.start().then(() => {
 });
 
 connection.on("NovoBlocoCriado", (bloco) => {
+
+
   var aula = getAula(bloco.aulaFK);
   var sala = getSala(bloco.salaFK);
   var time = timeToY(bloco.horaInicio)
@@ -84,6 +86,11 @@ connection.on("NovoBlocoCriado", (bloco) => {
   var event = generateEvent(bloco.id, 0, bloco.diaDaSemana, time, duracao, aula.cadeira.cadeira, aula.tipologia.tipologia, sala.sala, aula.professor.userName, bloco.aulaFK, sala.id)
 
   for (var i = 0; i < events.value.length; i++) {
+    if (events.value[i].aulaId == bloco.id){
+      events.value[i] = event;
+      return
+    }
+
     if (events.value[i].table == 0 && events.value[i].x == event.x && events.value[i].y == event.y) {
       events.value.splice(i, 1);
       break;
