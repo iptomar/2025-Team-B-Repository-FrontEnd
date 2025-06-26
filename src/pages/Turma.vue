@@ -8,7 +8,7 @@ import type { Turma } from '@/components/interfaces';
 import { fetchTurmaById } from '@/api/turmas';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { Toaster } from '@/components/ui/toast';
-import {isValidTeacher, parseJwt} from '@/utils/user-utils.js';
+import {isValidTeacher, parseJwt, userIsComissao} from '@/utils/user-utils.js';
 import { userIsAdmin, canSubmit} from '@/utils/user-utils.js';
 
 const { toast } = useToast();
@@ -554,7 +554,7 @@ function handleDeleteConfirm(){
         <div class="text-red-500 font-semibold" v-if="estadoHorario == 3">
           Horário rejeitado
         </div>
-        <button v-if="isCoordenadorCurso && estadoHorario == 0" @click="submeter()"
+        <button v-if="(isCoordenadorCurso || userIsAdmin(userRoles) || userIsComissao(userRoles)) && estadoHorario == 0" @click="submeter()"
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Submeter
         </button>
@@ -566,7 +566,7 @@ function handleDeleteConfirm(){
     <CalendarProvider events="events" v-if="connected && horarios.length > 0" cell_width="148" cell_height="30" style={}>
         <div class="flex">
           <Calendar :style="{ pointerEvents: estadoHorario != 0 ? 'none' : 'auto' }" id="calendarItem" table="0" />
-          <CalendarHolder :style="{ pointerEvents: estadoHorario != 0 ? 'none' : 'auto' }" v-if="printScheduleBol === false && isCoordenadorCurso" table="1" slotsW="1" slotsH="50"/>
+          <CalendarHolder :style="{ pointerEvents: estadoHorario != 0 ? 'none' : 'auto' }" v-if="printScheduleBol === false && (isCoordenadorCurso || userIsAdmin(userRoles) || userIsComissao(userRoles))" table="1" slotsW="1" slotsH="50"/>
         </div>
     </CalendarProvider>
     <div v-else>

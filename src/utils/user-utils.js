@@ -28,6 +28,12 @@ export function userIsAdmin(userRoles){
     }
     return false;
 }
+export function userIsComissao(userRoles){
+    for (var i = 0; i < userRoles.length; i++) {
+        if (userRoles[i] === 'Comissão de Cursos') return true;
+    }
+    return false;
+}
 
 /**
  * Esta função esta a ser usada para verificar os botões de submissão das salas, cadeiras e professores.
