@@ -528,7 +528,7 @@ function handleDeleteConfirm(){
       </div>
 
       <div class="w-full flex gap-4 justify-center items-center">
-        <button v-if="userIsAdmin(userRoles)" @click="showScheduleModal = true"
+        <button v-if="userIsAdmin(userRoles) || isCoordenadorCurso" @click="showScheduleModal = true"
                 class="h-full text-white bg-iptGreen hover:bg-green-100 hover:border-iptGreen hover:text-iptGreen px-4 py-2">
           Criar Horário
         </button>
