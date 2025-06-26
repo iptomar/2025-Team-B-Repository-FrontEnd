@@ -79,22 +79,27 @@ function cloneEvent(event){
 }
 
 function onDragEnd(e) {
+  var element = false
+  var pos = -1
+  for (var i = 0; i < events.value.length; i++) {
+    if (events.value[i].id == draggedElement) {
+      element = JSON.parse(JSON.stringify((events.value[i])))
+      pos = i
+    }
+  }
   moveToPos(e)
   clampPos(e)
   validatePos(e)
-  for (var i = 0; i < events.value.length; i++) {
-    if (events.value[i].id == draggedElement && validation) {
-      onDragEndEvent(i, events.value[i].aulaId);
-      break;
-    }
-  }
+  onDragEndEvent(pos, element.aulaId, deletion);
   draggedElement = null;
 }
 
 var validation = false;
+var deletion = false;
 
 function validatePos(e) {
   validation = true;
+  deletion = false;
   var ev = null;
   var pos = -1;
   for (var i = 0; i < events.value.length; i++) {
@@ -106,8 +111,8 @@ function validatePos(e) {
   }
   console.log(ev)
   if(ev.table == "1" && pos != -1){
-    events.value.splice(pos, 1);
-    validation = false;
+    deletion = true;
+    return;
   }
 
   events.value.forEach(event => {

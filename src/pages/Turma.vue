@@ -262,7 +262,7 @@ function handleSubmit(){
 }
 
 
-function onDragEnd(i, aulaId){
+function onDragEnd(i, aulaId, remove){
   if(events.value[i].table == 0 && events.value[i].classroom_id == null ){
     modifiedBlock = i;
     isNewBlock = true;
@@ -271,8 +271,9 @@ function onDragEnd(i, aulaId){
     modifiedBlock = i;
     putHorarioBlock().then((val) => {}).catch((err) => {})
     //removeCurrentBlock();
-  }else{
+  }else if(remove){
     modifiedBlock = i;
+    events.value.splice(i, 1);
     console.log("AULA REMOVIDA ", aulaId)
     deleteHorarioBlock(aulaId).then((val) => {}).catch((err) => {})
   }
